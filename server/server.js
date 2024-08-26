@@ -25,6 +25,7 @@ io.on("connection", (socket) => {
       players: [],
       board: initialBoard(),
       capturedPieces: { 先手: [], 後手: [] },
+      availableSides: ["先手", "後手"],
     });
     socket.join(gameId);
     console.log("Game created:", gameId);
@@ -40,13 +41,19 @@ io.on("connection", (socket) => {
     if (game) {
       console.log("Game found:", gameId);
       console.log("Current players:", game.players);
-      if (game.players.length < 2) {
+      console.log("Available sides:", game.availableSides);
+      if (game.players.length < 2 && game.availableSides.includes(side)) {
         game.players.push({ id: socket.id, side });
+        game.availableSides = game.availableSides.filter((s) => s !== side);
         socket.join(gameId);
         console.log("Player joined game:", gameId, side);
         socket.emit("gameJoined", { gameId, side });
+        io.to(gameId).emit("sideSelected", {
+          side,
+          availableSides: game.availableSides,
+        });
         if (game.players.length === 2) {
-          game.currentPlayer = "先手"; // 2人目のプレイヤーが参加したときに初期の手番を設定
+          game.currentPlayer = "先手";
           console.log(
             "Game started:",
             gameId,
@@ -59,9 +66,12 @@ io.on("connection", (socket) => {
             currentPlayer: game.currentPlayer,
           });
         }
-      } else {
+      } else if (game.players.length >= 2) {
         console.log("Game is full:", gameId);
         socket.emit("gameError", "Game is full");
+      } else {
+        console.log("Side not available:", side);
+        socket.emit("gameError", "Selected side is not available");
       }
     } else {
       console.log("Game not found:", gameId);
@@ -69,7 +79,7 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("move", ({ gameId, from, to, player }) => {
+  socket.on("move", ({ gameId, from, to, player, piece, promotion }) => {
     const game = games.get(gameId);
     if (!game) {
       socket.emit("gameError", "Game not found");
@@ -94,25 +104,33 @@ io.on("connection", (socket) => {
         return;
       }
 
-      const pieceToPlace = game.capturedPieces[player].pop();
-      if (!pieceToPlace) {
-        socket.emit("gameError", "No captured pieces to place");
+      if (!piece) {
+        socket.emit("gameError", "Piece type is not specified");
         return;
       }
 
-      if (
-        pieceToPlace.type === "歩" &&
-        hasPawnInColumn(game.board, toCol, player)
-      ) {
-        socket.emit(
-          "gameError",
-          "Cannot place a second pawn in the same column"
-        );
-        game.capturedPieces[player].push(pieceToPlace);
+      // 持ち駒の検索方法を修正
+      const pieceIndex = game.capturedPieces[player].findIndex(
+        (p) => p.type === piece
+      );
+
+      console.log("Captured pieces:", game.capturedPieces[player]);
+      console.log("Piece to place:", piece);
+      console.log("Piece index:", pieceIndex);
+
+      if (pieceIndex === -1) {
+        socket.emit("gameError", "No such captured piece to place");
         return;
       }
 
+      if (piece === "歩" && hasPawnInColumn(game.board, toCol, player)) {
+        socket.emit("gameError", "二歩になってしまいます。");
+        return;
+      }
+
+      const pieceToPlace = game.capturedPieces[player][pieceIndex];
       game.board[toRow][toCol] = { ...pieceToPlace, promoted: false };
+      game.capturedPieces[player].splice(pieceIndex, 1);
     } else {
       // 既存の駒を動かす場合の処理
       const [fromRow, fromCol] = from;
@@ -143,9 +161,16 @@ io.on("connection", (socket) => {
       }
 
       // 成りの処理
+      // if (canPromote(from, to, piece)) {
+      //   const shouldPromote = Math.random() < 0.5; // クライアントからの入力を模倣
+      //   if (shouldPromote) {
+      //     piece.promoted = true;
+      //     piece.type = getPromotedType(piece.type);
+      //   }
+      // }
+      // 成りの処理
       if (canPromote(from, to, piece)) {
-        const shouldPromote = Math.random() < 0.5; // クライアントからの入力を模倣
-        if (shouldPromote) {
+        if (promotion) {
           piece.promoted = true;
           piece.type = getPromotedType(piece.type);
         }
