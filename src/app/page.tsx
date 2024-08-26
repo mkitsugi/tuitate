@@ -604,21 +604,19 @@ export default function ImprovedFogOfWarShogi() {
                 row.map((cell, colIndex) => (
                   <button
                     key={`${rowIndex}-${colIndex}`}
-                    className={`w-12 h-12 flex items-center justify-center border-2 ${
+                    className={`w-12 h-12 flex items-center justify-center ${
                       selectedCell &&
                       selectedCell[0] === rowIndex &&
                       selectedCell[1] === colIndex
-                        ? "border-blue-500"
+                        ? "bg-blue-200"
                         : lastMove &&
                           lastMove[0] === rowIndex &&
                           lastMove[1] === colIndex
-                        ? "border-yellow-400"
-                        : "border-gray-300"
+                        ? "bg-yellow-200"
+                        : "bg-yellow-100"
                     } ${
-                      cell.isVisible
-                        ? "bg-white hover:bg-gray-100"
-                        : "bg-gray-800"
-                    } rounded-md transition-colors duration-200`}
+                      cell.isVisible ? "hover:bg-yellow-50" : "bg-gray-800"
+                    } transition-colors duration-200`}
                     onClick={() => handleCellClick(rowIndex, colIndex)}
                     aria-label={
                       cell.isVisible
@@ -632,7 +630,7 @@ export default function ImprovedFogOfWarShogi() {
                   >
                     {cell.isVisible && cell.piece && (
                       <span
-                        className={`text-lg font-semibold ${
+                        className={`text-2xl font-bold ${
                           cell.piece.player !== playerSide
                             ? "transform rotate-180 text-blue-600"
                             : "text-red-600"
