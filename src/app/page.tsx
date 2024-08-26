@@ -541,7 +541,7 @@ export default function ImprovedFogOfWarShogi() {
   return (
     <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-4xl mx-auto bg-white shadow-xl">
-        <CardContent className="p-6">
+        <CardContent className="p-2 pb-4">
           <h1 className="text-3xl font-bold mb-6 text-center text-gray-800">
             霧の将棋
           </h1>
@@ -596,7 +596,7 @@ export default function ImprovedFogOfWarShogi() {
               />
             </div>
             <div
-              className="grid grid-cols-9 gap-1 bg-yellow-100 p-4 rounded-lg"
+              className="grid grid-cols-9 gap-[1px] bg-yellow-100 p-4 rounded-lg"
               role="grid"
               aria-label="将棋盤"
             >
@@ -604,7 +604,7 @@ export default function ImprovedFogOfWarShogi() {
                 row.map((cell, colIndex) => (
                   <button
                     key={`${rowIndex}-${colIndex}`}
-                    className={`w-12 h-12 flex items-center justify-center border border-yellow-800 ${
+                    className={`w-8 h-8 flex items-center justify-center border border-yellow-800 ${
                       selectedCell &&
                       selectedCell[0] === rowIndex &&
                       selectedCell[1] === colIndex
