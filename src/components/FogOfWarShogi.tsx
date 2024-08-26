@@ -9,9 +9,11 @@ import WaitingOverlay from "./WaitingOverlay";
 import useSocket from "@/hooks/useSocket";
 import useGameLogic from "@/hooks/useGameLogic";
 import { Player, Piece } from "@/types/shogi";
+import { Loader2, Copy } from "lucide-react";
 
 export default function ImprovedFogOfWarShogi() {
   const [inputGameId, setInputGameId] = useState<string>("");
+  const [selectedSide, setSelectedSide] = useState<Player | null>(null);
   const {
     socket,
     gameId,
@@ -56,9 +58,21 @@ export default function ImprovedFogOfWarShogi() {
     }
   };
 
+  const handleJoinGame = (side: Player) => {
+    setSelectedSide(side);
+    joinGame(side, gameId || inputGameId);
+  };
+
+  const copyGameId = useCallback(() => {
+    navigator.clipboard.writeText(gameId || "");
+    toast({
+      description: "ルームIDをクリップボードにコピーしました。",
+    });
+  }, [gameId]);
+
   return (
-    <div className="flex justify-center items-center h-full">
-      <div className="space-y-6 px-4 w-fit">
+    <div className="flex justify-center items-center w-full h-full">
+      <div className="space-y-6 px-4 w-full">
         {!gameStarted && (
           <div className="flex flex-col justify-between items-start gap-4">
             <div className="w-full space-y-4">
@@ -66,12 +80,15 @@ export default function ImprovedFogOfWarShogi() {
                 {!gameCreated && (
                   <>
                     {!inputGameId && (
-                      <Button onClick={createGame} className="w-full sm:w-auto">
+                      <Button
+                        onClick={createGame}
+                        className="w-full sm:w-auto mt-4"
+                      >
                         新しいルームを作成
                       </Button>
                     )}
 
-                    <div className="w-full sm:w-auto">
+                    <div className="w-full sm:w-auto mt-2">
                       <Label htmlFor="gameId">友達のルームに参加</Label>
                       <Input
                         id="gameId"
@@ -85,25 +102,31 @@ export default function ImprovedFogOfWarShogi() {
                 )}
                 {(gameCreated || inputGameId) && (
                   <>
-                    {availableSides.includes("先手") && (
+                    {availableSides.includes("先手") && !selectedSide && (
                       <Button
-                        onClick={() =>
-                          joinGame("先手" as Player, gameId || inputGameId)
-                        }
-                        className="mt-4 w-full bg-sky-600"
+                        onClick={() => handleJoinGame("先手" as Player)}
+                        className="mt-4 w-full bg-sky-600 hover:bg-sky-700"
                       >
                         先手として参加
                       </Button>
                     )}
-                    {availableSides.includes("後手") && (
+                    {availableSides.includes("後手") && !selectedSide && (
                       <Button
-                        onClick={() =>
-                          joinGame("後手" as Player, gameId || inputGameId)
-                        }
-                        className="mt-2 w-full bg-rose-600"
+                        onClick={() => handleJoinGame("後手" as Player)}
+                        className="mt-2 w-full bg-rose-600 hover:bg-rose-700"
                       >
                         後手として参加
                       </Button>
+                    )}
+                    {selectedSide && !gameStarted && (
+                      <div className="mt-4 text-center w-full">
+                        <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
+                        <p>
+                          {selectedSide === "先手" ? "先手" : "後手"}
+                          として参加しました
+                        </p>
+                        <p>相手のプレイヤーを待っています...</p>
+                      </div>
                     )}
                   </>
                 )}
@@ -113,8 +136,16 @@ export default function ImprovedFogOfWarShogi() {
         )}
 
         {gameId && (
-          <div className="text-sm text-gray-600 text-center">
+          <div className="text-sm text-gray-600 text-center flex items-center justify-center space-x-2">
             <p>作成したルームID: {gameId}</p>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={copyGameId}
+              title="ルームIDをコピー"
+            >
+              <Copy className="h-4 w-4" />
+            </Button>
           </div>
         )}
 
@@ -132,7 +163,7 @@ export default function ImprovedFogOfWarShogi() {
           </div>
         )}
         <div className="flex justify-between gap-4">
-          {playerSide === "先手" && (
+          {playerSide === "先手" && gameStarted && (
             <CapturedPieces
               title="あなた（先手）の持ち駒"
               pieces={capturedPieces["先手"]}
@@ -144,7 +175,7 @@ export default function ImprovedFogOfWarShogi() {
               }
             />
           )}
-          {playerSide === "後手" && (
+          {playerSide === "後手" && gameStarted && (
             <CapturedPieces
               title="あなた（後手）の持ち駒"
               pieces={capturedPieces["後手"]}
