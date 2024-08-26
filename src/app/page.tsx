@@ -604,7 +604,7 @@ export default function ImprovedFogOfWarShogi() {
                 row.map((cell, colIndex) => (
                   <button
                     key={`${rowIndex}-${colIndex}`}
-                    className={`w-12 h-12 flex items-center justify-center ${
+                    className={`w-12 h-12 flex items-center justify-center border border-yellow-800 ${
                       selectedCell &&
                       selectedCell[0] === rowIndex &&
                       selectedCell[1] === colIndex
