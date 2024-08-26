@@ -274,8 +274,18 @@ export default function ImprovedFogOfWarShogi() {
               isVisible: true,
             };
           });
-          // 自分の駒の位置も可視にする
-          newVisibleBoard[row][col] = { piece, isVisible: true };
+          newVisibleBoard[row][col] = {
+            piece: {
+              ...piece,
+              player:
+                piece.player === playerSide
+                  ? playerSide
+                  : piece.player === "先手"
+                  ? "後手"
+                  : "先手",
+            },
+            isVisible: true,
+          };
         }
       }
     }
@@ -746,7 +756,8 @@ export default function ImprovedFogOfWarShogi() {
                 [actualRow, actualCol],
                 selectedPiece
               );
-              let promotedPiece = selectedPiece;
+
+              let promotedPiece = { ...selectedPiece };
 
               if (canPromote) {
                 const shouldPromote = window.confirm("駒を成りますか？");
@@ -760,10 +771,7 @@ export default function ImprovedFogOfWarShogi() {
               }
 
               // 駒を移動
-              newBoard[actualRow][actualCol] = {
-                ...promotedPiece,
-                promoted: promotedPiece.promoted || selectedPiece.promoted,
-              };
+              newBoard[actualRow][actualCol] = promotedPiece;
               newBoard[actualSelectedRow][actualSelectedCol] = null;
 
               // ローカルの状態を更新
@@ -895,11 +903,14 @@ export default function ImprovedFogOfWarShogi() {
                     </Button>
                   </div>
                 </div>
-                {gameId && (
-                  <div className="text-sm text-gray-600">
-                    <p>現在のゲームID: {gameId}</p>
-                    {playerSide && <p>あなたの手番: {playerSide}</p>}
-                  </div>
+              </div>
+            )}
+
+            {gameId && (
+              <div className="text-sm text-gray-600">
+                <p>現在のゲームID: {gameId}</p>
+                {playerSide && (
+                  <p>あなたの手番: {playerSide === "先手" ? "先手" : "後手"}</p>
                 )}
               </div>
             )}
