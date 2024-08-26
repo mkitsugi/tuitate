@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
+import { io, Socket } from "socket.io-client";
 
 type PieceType = "歩" | "香" | "桂" | "銀" | "金" | "角" | "飛" | "玉" | null;
 type Player = "先手" | "後手";
@@ -62,6 +63,14 @@ const initialBoard = (): (Piece | null)[][] => {
 };
 
 export default function ImprovedFogOfWarShogi() {
+  const [socket, setSocket] = useState<Socket | null>(null);
+  const [gameId, setGameId] = useState<string | null>(null);
+  const [inputGameId, setInputGameId] = useState<string>("");
+
+  const [playerSide, setPlayerSide] = useState<Player | null>(null);
+  const [gameCreated, setGameCreated] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<string>("");
+
   const [board, setBoard] = useState<(Piece | null)[][]>(initialBoard());
   const [visibleBoard, setVisibleBoard] = useState<VisibleCell[][]>(
     Array(9)
@@ -81,79 +90,77 @@ export default function ImprovedFogOfWarShogi() {
   const getVisibleCellsForPiece = useCallback(
     (row: number, col: number, piece: Piece): [number, number][] => {
       const visibleCells: [number, number][] = [];
-      // const directions: [number, number][] = [];
       const addVisibleCell = (r: number, c: number) => {
         if (r >= 0 && r < 9 && c >= 0 && c < 9) {
           visibleCells.push([r, c]);
-          return board[r][c] === null;
         }
-        return false;
       };
 
-      const checkDirection = (
-        dRow: number,
-        dCol: number,
-        maxSteps: number = 8
-      ) => {
-        let steps = 0;
-        let newRow = row + dRow;
-        let newCol = col + dCol;
-        while (steps < maxSteps && addVisibleCell(newRow, newCol)) {
-          newRow += dRow;
-          newCol += dCol;
-          steps++;
-        }
-      };
+      const direction = piece.player === "先手" ? -1 : 1;
 
       switch (piece.type) {
         case "歩":
-          addVisibleCell(row + (piece.player === "先手" ? -1 : 1), col);
+          addVisibleCell(row + direction, col);
           break;
         case "香":
-          checkDirection(piece.player === "先手" ? -1 : 1, 0);
+          for (let r = row + direction; r >= 0 && r < 9; r += direction) {
+            addVisibleCell(r, col);
+            if (board[r][col]) break;
+          }
           break;
         case "桂":
-          addVisibleCell(row + (piece.player === "先手" ? -2 : 2), col - 1);
-          addVisibleCell(row + (piece.player === "先手" ? -2 : 2), col + 1);
+          addVisibleCell(row + 2 * direction, col - 1);
+          addVisibleCell(row + 2 * direction, col + 1);
           break;
         case "銀":
-          [
-            [-1, -1],
-            [-1, 1],
-            [1, -1],
-            [1, 1],
-            [piece.player === "先手" ? -1 : 1, 0],
-          ].forEach(([dRow, dCol]) => addVisibleCell(row + dRow, col + dCol));
+          addVisibleCell(row + direction, col - 1);
+          addVisibleCell(row + direction, col);
+          addVisibleCell(row + direction, col + 1);
+          addVisibleCell(row - direction, col - 1);
+          addVisibleCell(row - direction, col + 1);
           break;
         case "金":
         case "玉":
-          [
-            [-1, 0],
-            [1, 0],
-            [0, -1],
-            [0, 1],
-            [-1, -1],
-            [-1, 1],
-          ].forEach(([dRow, dCol]) => addVisibleCell(row + dRow, col + dCol));
-          if (piece.type === "金") {
-            addVisibleCell(row + (piece.player === "先手" ? 1 : -1), col);
-          }
+          addVisibleCell(row + direction, col - 1);
+          addVisibleCell(row + direction, col);
+          addVisibleCell(row + direction, col + 1);
+          addVisibleCell(row, col - 1);
+          addVisibleCell(row, col + 1);
+          addVisibleCell(row - direction, col);
           break;
         case "角":
-          [
+          for (const [dr, dc] of [
             [-1, -1],
             [-1, 1],
             [1, -1],
             [1, 1],
-          ].forEach(([dRow, dCol]) => checkDirection(dRow, dCol));
+          ]) {
+            let r = row + dr,
+              c = col + dc;
+            while (r >= 0 && r < 9 && c >= 0 && c < 9) {
+              addVisibleCell(r, c);
+              if (board[r][c]) break;
+              r += dr;
+              c += dc;
+            }
+          }
           break;
         case "飛":
-          [
+          for (const [dr, dc] of [
             [-1, 0],
             [1, 0],
             [0, -1],
             [0, 1],
-          ].forEach(([dRow, dCol]) => checkDirection(dRow, dCol));
+          ]) {
+            let r = row + dr,
+              c = col + dc;
+            while (r >= 0 && r < 9 && c >= 0 && c < 9) {
+              addVisibleCell(r, c);
+              if (board[r][c]) break;
+              r += dr;
+              c += dc;
+            }
+          }
           break;
       }
 
@@ -163,41 +170,39 @@ export default function ImprovedFogOfWarShogi() {
   );
 
   const updateVisibleBoard = useCallback(() => {
-    try {
-      const newVisibleBoard: VisibleCell[][] = Array(9)
-        .fill(null)
-        .map(() =>
-          Array(9)
-            .fill(null)
-            .map(() => ({ piece: null, isVisible: false }))
-        );
+    if (!playerSide) return;
 
-      for (let row = 0; row < 9; row++) {
-        for (let col = 0; col < 9; col++) {
-          const piece = board[row][col];
-          if (piece && piece.player === currentPlayer) {
-            newVisibleBoard[row][col] = { piece, isVisible: true };
-            const visibleCells = getVisibleCellsForPiece(row, col, piece);
-            visibleCells.forEach(([r, c]) => {
-              newVisibleBoard[r][c] = {
-                piece: board[r][c],
-                isVisible: true,
-              };
-            });
-          }
+    const newVisibleBoard: VisibleCell[][] = Array(9)
+      .fill(null)
+      .map(() => Array(9).fill({ piece: null, isVisible: false }));
+
+    for (let row = 0; row < 9; row++) {
+      for (let col = 0; col < 9; col++) {
+        const actualRow: number = playerSide === "後手" ? 8 - row : row;
+        const actualCol: number = playerSide === "後手" ? 8 - col : col;
+        const piece: Piece | null = board[actualRow][actualCol];
+        if (piece && piece.player === playerSide) {
+          const visibleCells = getVisibleCellsForPiece(
+            actualRow,
+            actualCol,
+            piece
+          );
+          visibleCells.forEach(([r, c]) => {
+            const visibleRow = playerSide === "後手" ? 8 - r : r;
+            const visibleCol = playerSide === "後手" ? 8 - c : c;
+            newVisibleBoard[visibleRow][visibleCol] = {
+              piece: board[r][c],
+              isVisible: true,
+            };
+          });
+          // 自分の駒の位置も可視にする
+          newVisibleBoard[row][col] = { piece, isVisible: true };
         }
       }
-
-      setVisibleBoard(newVisibleBoard);
-    } catch (error) {
-      console.error("Error in updateVisibleBoard:", error);
-      toast({
-        title: "エラーが発生しました",
-        description: "盤面の更新中にエラーが発生しました。",
-        variant: "destructive",
-      });
     }
-  }, [board, currentPlayer, getVisibleCellsForPiece]);
+
+    setVisibleBoard(newVisibleBoard);
+  }, [board, playerSide, getVisibleCellsForPiece]);
 
   useEffect(() => {
     updateVisibleBoard();
@@ -209,92 +214,241 @@ export default function ImprovedFogOfWarShogi() {
       const [toRow, toCol] = to;
       const rowDiff = toRow - fromRow;
       const colDiff = toCol - fromCol;
-
-      const targetPiece = board[toRow][toCol];
-      if (targetPiece && targetPiece.player === piece.player) {
-        return false; // 自分の駒がある場所には移動できない
-      }
-
-      const visibleCells = getVisibleCellsForPiece(fromRow, fromCol, piece);
-      if (!visibleCells.some(([r, c]) => r === toRow && c === toCol)) {
-        return false; // 移動先が見えない場所の場合は移動できない
-      }
-
-      // 角と飛車の移動経路をチェックする関数
-      const checkPath = (rowStep: number, colStep: number): boolean => {
-        let currentRow = fromRow + rowStep;
-        let currentCol = fromCol + colStep;
-        while (currentRow !== toRow || currentCol !== toCol) {
-          if (board[currentRow][currentCol] !== null) {
-            return false; // 経路上に駒があれば移動できない
-          }
-          currentRow += rowStep;
-          currentCol += colStep;
-        }
-        return true;
-      };
+      const direction = piece.player === "先手" ? -1 : 1;
 
       switch (piece.type) {
         case "歩":
-          return (
-            colDiff === 0 &&
-            (piece.player === "先手" ? rowDiff === -1 : rowDiff === 1)
-          );
+          return colDiff === 0 && rowDiff === direction;
         case "香":
           return (
             colDiff === 0 &&
-            (piece.player === "先手" ? rowDiff < 0 : rowDiff > 0) &&
-            checkPath(Math.sign(rowDiff), 0)
+            rowDiff * direction > 0 &&
+            !board
+              .slice(Math.min(fromRow, toRow) + 1, Math.max(fromRow, toRow))
+              .some((row) => row[fromCol] !== null)
           );
         case "桂":
-          return (
-            Math.abs(colDiff) === 1 &&
-            (piece.player === "先手" ? rowDiff === -2 : rowDiff === 2)
-          );
+          return Math.abs(colDiff) === 1 && rowDiff === 2 * direction;
         case "銀":
           return (
             (Math.abs(rowDiff) === 1 && Math.abs(colDiff) === 1) ||
-            (colDiff === 0 &&
-              (piece.player === "先手" ? rowDiff === -1 : rowDiff === 1))
+            (rowDiff === direction && colDiff === 0)
           );
         case "金":
+        case "玉":
           return (
             Math.abs(rowDiff) <= 1 &&
             Math.abs(colDiff) <= 1 &&
-            !(Math.abs(rowDiff) === 1 && Math.abs(colDiff) === 1)
+            !(
+              Math.abs(rowDiff) === 1 &&
+              Math.abs(colDiff) === 1 &&
+              rowDiff === -direction
+            )
           );
         case "角":
           return (
             Math.abs(rowDiff) === Math.abs(colDiff) &&
-            checkPath(Math.sign(rowDiff), Math.sign(colDiff))
+            !board
+              .slice(Math.min(fromRow, toRow) + 1, Math.max(fromRow, toRow))
+              .some(
+                (row, index) =>
+                  row[fromCol + (index + 1) * Math.sign(colDiff)] !== null
+              )
           );
         case "飛":
           return (
-            ((rowDiff === 0 && colDiff !== 0) ||
-              (rowDiff !== 0 && colDiff === 0)) &&
-            checkPath(Math.sign(rowDiff), Math.sign(colDiff))
+            (rowDiff === 0 || colDiff === 0) &&
+            !board
+              .slice(Math.min(fromRow, toRow) + 1, Math.max(fromRow, toRow))
+              .some((row) => row[fromCol] !== null) &&
+            !board[fromRow]
+              .slice(Math.min(fromCol, toCol) + 1, Math.max(fromCol, toCol))
+              .some((cell) => cell !== null)
           );
-        case "玉":
-          return Math.abs(rowDiff) <= 1 && Math.abs(colDiff) <= 1;
         default:
           return false;
       }
     },
-    [board, getVisibleCellsForPiece]
+    [board]
+  );
+
+  useEffect(() => {
+    const newSocket = io("http://localhost:3001", {
+      withCredentials: true,
+      transports: ["websocket"],
+    });
+    setSocket(newSocket);
+
+    newSocket.on("connect", () => {
+      console.log("Connected to WebSocket server");
+    });
+
+    newSocket.on("connect_error", (error) => {
+      console.error("WebSocket connection error:", error);
+      toast({
+        title: "接続エラー",
+        description: "サーバーに接続できません。",
+        variant: "destructive",
+      });
+    });
+
+    return () => {
+      newSocket.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.on("connect", () => {
+      console.log("Connected to WebSocket server");
+      setDebugInfo((prev) => prev + "\nConnected to WebSocket server");
+    });
+
+    socket.on("gameCreated", (id: string) => {
+      console.log("Game created with ID:", id);
+      // ゲームID設定時にトリムして余分な空白を削除
+      setGameId(id.trim());
+      setGameCreated(true);
+      setDebugInfo((prev) => prev + `\nGame created with ID: ${id.trim()}`);
+      toast({
+        title: "ゲームが作成されました",
+        description: `ゲームID: ${id.trim()}`,
+      });
+    });
+
+    socket.on("gameJoined", ({ gameId, side }) => {
+      console.log("Joined game:", gameId, "as", side);
+      setGameId(gameId);
+      setPlayerSide(side);
+      setDebugInfo((prev) => prev + `\nJoined game: ${gameId} as ${side}`);
+      toast({
+        title: "ゲームに参加しました",
+        description: `ゲームID: ${gameId}, 手番: ${side}`,
+      });
+    });
+
+    socket.on("gameStarted", ({ gameId, board, currentPlayer }) => {
+      console.log("Game started:", gameId, "Current player:", currentPlayer);
+      setBoard(board);
+      setCurrentPlayer(currentPlayer);
+      setDebugInfo(
+        (prev) =>
+          prev + `\nGame started: ${gameId}, Current player: ${currentPlayer}`
+      );
+      toast({
+        title: "ゲームが開始されました",
+        description: `現在の手番: ${currentPlayer}`,
+      });
+    });
+
+    socket.on("boardUpdated", ({ board, currentPlayer }) => {
+      console.log("Board updated:", board);
+      console.log("Current player:", currentPlayer);
+      setBoard(board);
+      setCurrentPlayer(currentPlayer);
+      setSelectedCell(null); // 選択状態をリセット
+      setDebugInfo(
+        (prev) => prev + `\nBoard updated, current player: ${currentPlayer}`
+      );
+    });
+
+    socket.on("gameError", (message: string) => {
+      console.error("Game error:", message);
+      setDebugInfo((prev) => prev + `\nGame error: ${message}`);
+      toast({
+        title: "エラー",
+        description: message,
+        variant: "destructive",
+      });
+    });
+
+    return () => {
+      socket.off("connect");
+      socket.off("gameCreated");
+      socket.off("gameJoined");
+      socket.off("gameStarted");
+      socket.off("boardUpdated");
+      socket.off("gameError");
+    };
+  }, [socket]);
+
+  const createGame = useCallback(() => {
+    if (socket) {
+      console.log("Requesting to create a new game");
+      setDebugInfo((prev) => prev + "\nRequesting to create a new game");
+      socket.emit("createGame");
+    } else {
+      console.error("Socket is not initialized");
+      setDebugInfo((prev) => prev + "\nError: Socket is not initialized");
+      toast({
+        title: "エラー",
+        description: "サーバーに接続されていません。",
+        variant: "destructive",
+      });
+    }
+  }, [socket]);
+
+  const joinGame = useCallback(
+    (side: Player) => {
+      const idToJoin = gameId || inputGameId;
+      if (socket && idToJoin) {
+        console.log("Joining game:", idToJoin, "as", side);
+        setDebugInfo((prev) => prev + `\nJoining game: ${idToJoin} as ${side}`);
+        socket.emit("joinGame", { gameId: idToJoin.trim(), side });
+      } else {
+        console.error("Socket is not initialized or gameId is missing");
+        setDebugInfo(
+          (prev) =>
+            prev + "\nError: Socket is not initialized or gameId is missing"
+        );
+        toast({
+          title: "エラー",
+          description: "ゲームに参加できません。",
+          variant: "destructive",
+        });
+      }
+    },
+    [socket, gameId, inputGameId]
   );
 
   const handleCellClick = useCallback(
     (row: number, col: number) => {
       try {
+        if (currentPlayer !== playerSide) {
+          toast({
+            title: "相手の手番です",
+            description: "自分の手番をお待ちください。",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        const actualRow = playerSide === "後手" ? 8 - row : row;
+        const actualCol = playerSide === "後手" ? 8 - col : col;
+
         if (selectedCell) {
           const [selectedRow, selectedCol] = selectedCell;
-          const selectedPiece = board[selectedRow][selectedCol];
+          const actualSelectedRow =
+            playerSide === "後手" ? 8 - selectedRow : selectedRow;
+          const actualSelectedCol =
+            playerSide === "後手" ? 8 - selectedCol : selectedCol;
+          const selectedPiece = board[actualSelectedRow][actualSelectedCol];
+
           if (selectedPiece && selectedPiece.player === currentPlayer) {
-            if (isValidMove(selectedCell, [row, col], selectedPiece)) {
-              const newBoard = board.map((row) => [...row]);
-              const targetPiece = newBoard[row][col];
+            if (
+              isValidMove(
+                [actualSelectedRow, actualSelectedCol],
+                [actualRow, actualCol],
+                selectedPiece
+              )
+            ) {
+              // 新しい盤面を作成
+              const newBoard = board.map((r) => [...r]);
+              const targetPiece = newBoard[actualRow][actualCol];
+
+              // 駒を取る処理
               if (targetPiece) {
-                // 相手の駒を取る
                 setCapturedPieces((prev) => ({
                   ...prev,
                   [currentPlayer]: [
@@ -303,18 +457,49 @@ export default function ImprovedFogOfWarShogi() {
                   ],
                 }));
               }
-              newBoard[row][col] = selectedPiece;
-              newBoard[selectedRow][selectedCol] = null;
+
+              // 駒を移動
+              newBoard[actualRow][actualCol] = selectedPiece;
+              newBoard[actualSelectedRow][actualSelectedCol] = null;
+
+              // ローカルの状態を更新
               setBoard(newBoard);
               setCurrentPlayer(currentPlayer === "先手" ? "後手" : "先手");
               setLastMove([row, col]);
+              updateVisibleBoard();
+
+              // WebSocket経由で移動を送信
+              if (socket && gameId) {
+                socket.emit("move", {
+                  gameId,
+                  from: [actualSelectedRow, actualSelectedCol],
+                  to: [actualRow, actualCol],
+                  player: playerSide,
+                });
+              }
+            } else {
+              // 無効な移動の場合
+              toast({
+                title: "無効な移動です",
+                description: "選択した駒はそこに移動できません。",
+                variant: "destructive",
+              });
             }
           }
+          // 選択状態をリセット
           setSelectedCell(null);
         } else {
-          const piece = board[row][col];
+          // 新しい駒を選択
+          const piece = board[actualRow][actualCol];
           if (piece && piece.player === currentPlayer) {
             setSelectedCell([row, col]);
+          } else if (piece) {
+            // 相手の駒を選択した場合
+            toast({
+              title: "無効な選択です",
+              description: "自分の駒を選択してください。",
+              variant: "destructive",
+            });
           }
         }
       } catch (error) {
@@ -326,7 +511,16 @@ export default function ImprovedFogOfWarShogi() {
         });
       }
     },
-    [board, currentPlayer, selectedCell, isValidMove]
+    [
+      board,
+      currentPlayer,
+      playerSide,
+      selectedCell,
+      isValidMove,
+      socket,
+      gameId,
+      setCapturedPieces,
+    ]
   );
 
   const resetGame = useCallback(() => {
@@ -344,16 +538,46 @@ export default function ImprovedFogOfWarShogi() {
           霧の将棋
         </h1>
         <div className="flex justify-between items-start mb-6">
-          <div
-            className={`text-2xl font-semibold p-2 rounded ${
-              currentPlayer === "先手"
-                ? "bg-red-100 text-red-800"
-                : "bg-blue-100 text-blue-800"
-            }`}
-          >
-            現在の手番: {currentPlayer}
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center">
+              {/* <input
+                type="text"
+                placeholder="ゲームIDを入力"
+                className="border p-2 mr-2"
+                onChange={(e) => setGameId(e.target.value)}
+              /> */}
+              <div className="flex justify-between items-center space-x-2">
+                {!gameCreated && (
+                  <Button onClick={createGame}>新しいゲームを作成</Button>
+                )}
+                <input
+                  type="text"
+                  placeholder="ゲームIDを入力"
+                  className="border p-2 mr-2"
+                  value={inputGameId}
+                  onChange={(e) => setInputGameId(e.target.value)}
+                />
+                <Button onClick={() => joinGame("先手")}>先手として参加</Button>
+                <Button onClick={() => joinGame("後手")}>後手として参加</Button>
+                {/* {gameCreated && !playerSide && (
+                  <>
+                    <Button onClick={() => joinGame("先手")}>
+                      先手として参加
+                    </Button>
+                    <Button onClick={() => joinGame("後手")}>
+                      後手として参加
+                    </Button>
+                  </>
+                )} */}
+              </div>
+            </div>
           </div>
-          <Button onClick={resetGame}>ゲームをリセット</Button>
+          {gameId && (
+            <div className="mb-4">
+              <p>現在のゲームID: {gameId}</p>
+              {playerSide && <p>あなたの手番: {playerSide}</p>}
+            </div>
+          )}
         </div>
         <div className="flex justify-between mb-4">
           <div className="grid grid-cols-3 gap-2 bg-bgaccent p-4 rounded-lg">
@@ -421,7 +645,7 @@ export default function ImprovedFogOfWarShogi() {
                 {cell.isVisible && cell.piece && (
                   <span
                     className={`text-lg font-semibold ${
-                      cell.piece.player === "後手"
+                      cell.piece.player !== playerSide
                         ? "transform rotate-180 text-blue-600"
                         : "text-red-600"
                     }`}
@@ -432,6 +656,10 @@ export default function ImprovedFogOfWarShogi() {
               </button>
             ))
           )}
+        </div>
+        <div className="mt-4 p-2 bg-gray-100 rounded">
+          <h3 className="font-bold">デバッグ情報:</h3>
+          <pre className="whitespace-pre-wrap">{debugInfo}</pre>
         </div>
       </CardContent>
     </Card>
