@@ -3,6 +3,9 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
 import { io, Socket } from "socket.io-client";
 
 type PieceType = "歩" | "香" | "桂" | "銀" | "金" | "角" | "飛" | "玉" | null;
@@ -536,136 +539,133 @@ export default function ImprovedFogOfWarShogi() {
   }, []);
 
   return (
-    <Card className="w-full max-w-4xl mx-auto bg-bgprimary">
-      <CardContent className="p-6">
-        <h1 className="text-3xl font-bold mb-6 text-center text-textprimary">
-          霧の将棋
-        </h1>
-        <div className="flex justify-between items-start mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <div className="flex items-center">
-              {/* <input
-                type="text"
-                placeholder="ゲームIDを入力"
-                className="border p-2 mr-2"
-                onChange={(e) => setGameId(e.target.value)}
-              /> */}
-              <div className="flex justify-between items-center space-x-2">
+    <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+      <Card className="w-full max-w-4xl mx-auto bg-white shadow-xl">
+        <CardContent className="p-6">
+          <h1 className="text-3xl font-bold mb-6 text-center text-gray-800">
+            霧の将棋
+          </h1>
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+              <div className="w-full sm:w-auto space-y-4">
                 {!gameCreated && (
-                  <Button onClick={createGame}>新しいゲームを作成</Button>
+                  <Button onClick={createGame} className="w-full sm:w-auto">
+                    新しいゲームを作成
+                  </Button>
                 )}
-                <input
-                  type="text"
-                  placeholder="ゲームIDを入力"
-                  className="border p-2 mr-2"
-                  value={inputGameId}
-                  onChange={(e) => setInputGameId(e.target.value)}
-                />
-                <Button onClick={() => joinGame("先手")}>先手として参加</Button>
-                <Button onClick={() => joinGame("後手")}>後手として参加</Button>
-                {/* {gameCreated && !playerSide && (
-                  <>
-                    <Button onClick={() => joinGame("先手")}>
-                      先手として参加
-                    </Button>
-                    <Button onClick={() => joinGame("後手")}>
-                      後手として参加
-                    </Button>
-                  </>
-                )} */}
-              </div>
-            </div>
-          </div>
-          {gameId && (
-            <div className="mb-4">
-              <p>現在のゲームID: {gameId}</p>
-              {playerSide && <p>あなたの手番: {playerSide}</p>}
-            </div>
-          )}
-        </div>
-        <div className="flex justify-between mb-4">
-          <div className="grid grid-cols-3 gap-2 bg-bgaccent p-4 rounded-lg">
-            <div className="text-center font-semibold mb-2 col-span-3">
-              先手の持ち駒
-            </div>
-            {capturedPieces["先手"].map((piece, index) => (
-              <div
-                key={index}
-                className="w-8 h-8 flex items-center justify-center bg-bgprimary rounded text-red-600"
-              >
-                {piece.type}
-              </div>
-            ))}
-          </div>
-          <div className="grid grid-cols-3 gap-2 bg-bgaccent p-4 rounded-lg">
-            <div className="text-center font-semibold mb-2 col-span-3">
-              後手の持ち駒
-            </div>
-            {capturedPieces["後手"].map((piece, index) => (
-              <div
-                key={index}
-                className="w-8 h-8 flex items-center justify-center bg-bgprimary rounded text-blue-600"
-              >
-                {piece.type}
-              </div>
-            ))}
-          </div>
-        </div>
-        <div
-          className="grid grid-cols-9 gap-1 mb-4 bg-bgaccent p-4 rounded-lg"
-          role="grid"
-          aria-label="将棋盤"
-        >
-          {visibleBoard.map((row, rowIndex) =>
-            row.map((cell, colIndex) => (
-              <button
-                key={`${rowIndex}-${colIndex}`}
-                className={`w-12 h-12 flex items-center justify-center border-2 ${
-                  selectedCell &&
-                  selectedCell[0] === rowIndex &&
-                  selectedCell[1] === colIndex
-                    ? "border-textaccent"
-                    : lastMove &&
-                      lastMove[0] === rowIndex &&
-                      lastMove[1] === colIndex
-                    ? "border-yellow-400"
-                    : "border-borderprimary"
-                } ${
-                  cell.isVisible
-                    ? "bg-bgprimary hover:bg-bgaccent/80"
-                    : "bg-gray-800"
-                }`}
-                onClick={() => handleCellClick(rowIndex, colIndex)}
-                aria-label={
-                  cell.isVisible
-                    ? cell.piece
-                      ? `${cell.piece.player}の${cell.piece.type}`
-                      : `空のマス (${rowIndex + 1}, ${colIndex + 1})`
-                    : "不可視のマス"
-                }
-                role="gridcell"
-                disabled={!cell.isVisible}
-              >
-                {cell.isVisible && cell.piece && (
-                  <span
-                    className={`text-lg font-semibold ${
-                      cell.piece.player !== playerSide
-                        ? "transform rotate-180 text-blue-600"
-                        : "text-red-600"
-                    }`}
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <div className="w-full sm:w-auto">
+                    <Label htmlFor="gameId">ゲームID</Label>
+                    <Input
+                      id="gameId"
+                      placeholder="ゲームIDを入力"
+                      value={inputGameId}
+                      onChange={(e) => setInputGameId(e.target.value)}
+                      className="mt-1"
+                    />
+                  </div>
+                  <Button
+                    onClick={() => joinGame("先手")}
+                    className="mt-6 sm:mt-0"
                   >
-                    {cell.piece.type}
-                  </span>
-                )}
-              </button>
-            ))
-          )}
-        </div>
-        <div className="mt-4 p-2 bg-gray-100 rounded">
-          <h3 className="font-bold">デバッグ情報:</h3>
-          <pre className="whitespace-pre-wrap">{debugInfo}</pre>
-        </div>
-      </CardContent>
-    </Card>
+                    先手として参加
+                  </Button>
+                  <Button
+                    onClick={() => joinGame("後手")}
+                    className="mt-2 sm:mt-0"
+                  >
+                    後手として参加
+                  </Button>
+                </div>
+              </div>
+              {gameId && (
+                <div className="text-sm text-gray-600">
+                  <p>現在のゲームID: {gameId}</p>
+                  {playerSide && <p>あなたの手番: {playerSide}</p>}
+                </div>
+              )}
+            </div>
+            <div className="flex justify-between gap-4">
+              <CapturedPieces
+                title="先手の持ち駒"
+                pieces={capturedPieces["先手"]}
+              />
+              <CapturedPieces
+                title="後手の持ち駒"
+                pieces={capturedPieces["後手"]}
+              />
+            </div>
+            <div
+              className="grid grid-cols-9 gap-1 bg-yellow-100 p-4 rounded-lg"
+              role="grid"
+              aria-label="将棋盤"
+            >
+              {visibleBoard.map((row, rowIndex) =>
+                row.map((cell, colIndex) => (
+                  <button
+                    key={`${rowIndex}-${colIndex}`}
+                    className={`w-12 h-12 flex items-center justify-center border-2 ${
+                      selectedCell &&
+                      selectedCell[0] === rowIndex &&
+                      selectedCell[1] === colIndex
+                        ? "border-blue-500"
+                        : lastMove &&
+                          lastMove[0] === rowIndex &&
+                          lastMove[1] === colIndex
+                        ? "border-yellow-400"
+                        : "border-gray-300"
+                    } ${
+                      cell.isVisible
+                        ? "bg-white hover:bg-gray-100"
+                        : "bg-gray-800"
+                    } rounded-md transition-colors duration-200`}
+                    onClick={() => handleCellClick(rowIndex, colIndex)}
+                    aria-label={
+                      cell.isVisible
+                        ? cell.piece
+                          ? `${cell.piece.player}の${cell.piece.type}`
+                          : `空のマス (${rowIndex + 1}, ${colIndex + 1})`
+                        : "不可視のマス"
+                    }
+                    role="gridcell"
+                    disabled={!cell.isVisible}
+                  >
+                    {cell.isVisible && cell.piece && (
+                      <span
+                        className={`text-lg font-semibold ${
+                          cell.piece.player !== playerSide
+                            ? "transform rotate-180 text-blue-600"
+                            : "text-red-600"
+                        }`}
+                      >
+                        {cell.piece.type}
+                      </span>
+                    )}
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function CapturedPieces({ title, pieces }: { title: string; pieces: Piece[] }) {
+  return (
+    <div className="bg-gray-100 p-4 rounded-lg flex-1">
+      <h3 className="text-center font-semibold mb-2 text-gray-700">{title}</h3>
+      <div className="grid grid-cols-3 gap-2">
+        {pieces.map((piece, index) => (
+          <div
+            key={index}
+            className="w-8 h-8 flex items-center justify-center bg-white rounded shadow text-gray-800"
+          >
+            {piece.type}
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
