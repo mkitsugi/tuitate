@@ -9,11 +9,13 @@ import { Label } from "@/components/ui/label";
 import { io, Socket } from "socket.io-client";
 
 type PieceType = "歩" | "香" | "桂" | "銀" | "金" | "角" | "飛" | "玉" | null;
+type PromotedPieceType = "と" | "成香" | "成桂" | "成銀" | "馬" | "龍";
 type Player = "先手" | "後手";
 
 interface Piece {
-  type: PieceType;
+  type: PieceType | PromotedPieceType;
   player: Player;
+  promoted: boolean;
 }
 
 interface VisibleCell {
@@ -28,38 +30,38 @@ const initialBoard = (): (Piece | null)[][] => {
 
   // 先手の駒を配置
   board[8] = [
-    { type: "香", player: "先手" },
-    { type: "桂", player: "先手" },
-    { type: "銀", player: "先手" },
-    { type: "金", player: "先手" },
-    { type: "玉", player: "先手" },
-    { type: "金", player: "先手" },
-    { type: "銀", player: "先手" },
-    { type: "桂", player: "先手" },
-    { type: "香", player: "先手" },
+    { type: "香", player: "先手", promoted: false },
+    { type: "桂", player: "先手", promoted: false },
+    { type: "銀", player: "先手", promoted: false },
+    { type: "金", player: "先手", promoted: false },
+    { type: "玉", player: "先手", promoted: false },
+    { type: "金", player: "先手", promoted: false },
+    { type: "銀", player: "先手", promoted: false },
+    { type: "桂", player: "先手", promoted: false },
+    { type: "香", player: "先手", promoted: false },
   ];
-  board[7][1] = { type: "角", player: "先手" };
-  board[7][7] = { type: "飛", player: "先手" };
+  board[7][1] = { type: "角", player: "先手", promoted: false };
+  board[7][7] = { type: "飛", player: "先手", promoted: false };
   for (let i = 0; i < 9; i++) {
-    board[6][i] = { type: "歩", player: "先手" };
+    board[6][i] = { type: "歩", player: "先手", promoted: false };
   }
 
   // 後手の駒を配置
   board[0] = [
-    { type: "香", player: "後手" },
-    { type: "桂", player: "後手" },
-    { type: "銀", player: "後手" },
-    { type: "金", player: "後手" },
-    { type: "玉", player: "後手" },
-    { type: "金", player: "後手" },
-    { type: "銀", player: "後手" },
-    { type: "桂", player: "後手" },
-    { type: "香", player: "後手" },
+    { type: "香", player: "後手", promoted: false },
+    { type: "桂", player: "後手", promoted: false },
+    { type: "銀", player: "後手", promoted: false },
+    { type: "金", player: "後手", promoted: false },
+    { type: "玉", player: "後手", promoted: false },
+    { type: "金", player: "後手", promoted: false },
+    { type: "銀", player: "後手", promoted: false },
+    { type: "桂", player: "後手", promoted: false },
+    { type: "香", player: "後手", promoted: false },
   ];
-  board[1][7] = { type: "角", player: "後手" };
-  board[1][1] = { type: "飛", player: "後手" };
+  board[1][7] = { type: "角", player: "後手", promoted: false };
+  board[1][1] = { type: "飛", player: "後手", promoted: false };
   for (let i = 0; i < 9; i++) {
-    board[2][i] = { type: "歩", player: "後手" };
+    board[2][i] = { type: "歩", player: "後手", promoted: false };
   }
 
   return board;
@@ -72,7 +74,11 @@ export default function ImprovedFogOfWarShogi() {
 
   const [playerSide, setPlayerSide] = useState<Player | null>(null);
   const [gameCreated, setGameCreated] = useState(false);
+  const [gameStarted, setGameStarted] = useState(false);
   const [debugInfo, setDebugInfo] = useState<string>("");
+
+  const [selectedCapturedPiece, setSelectedCapturedPiece] =
+    useState<Piece | null>(null);
 
   const [board, setBoard] = useState<(Piece | null)[][]>(initialBoard());
   const [visibleBoard, setVisibleBoard] = useState<VisibleCell[][]>(
@@ -101,19 +107,35 @@ export default function ImprovedFogOfWarShogi() {
 
       const direction = piece.player === "先手" ? -1 : 1;
 
+      const addLineOfSight = (
+        startRow: number,
+        startCol: number,
+        rowStep: number,
+        colStep: number
+      ) => {
+        let r = startRow + rowStep;
+        let c = startCol + colStep;
+        while (r >= 0 && r < 9 && c >= 0 && c < 9) {
+          addVisibleCell(r, c);
+          if (board[r][c] !== null) break; // 駒があれば、そこで視線が遮られる
+          r += rowStep;
+          c += colStep;
+        }
+      };
+
       switch (piece.type) {
         case "歩":
           addVisibleCell(row + direction, col);
           break;
         case "香":
-          for (let r = row + direction; r >= 0 && r < 9; r += direction) {
-            addVisibleCell(r, col);
-            if (board[r][col]) break;
-          }
+          addLineOfSight(row, col, direction, 0);
           break;
         case "桂":
           addVisibleCell(row + 2 * direction, col - 1);
           addVisibleCell(row + 2 * direction, col + 1);
+          if (piece.promoted) {
+            addGoldMoves(row, col, direction, addVisibleCell);
+          }
           break;
         case "銀":
           addVisibleCell(row + direction, col - 1);
@@ -121,49 +143,51 @@ export default function ImprovedFogOfWarShogi() {
           addVisibleCell(row + direction, col + 1);
           addVisibleCell(row - direction, col - 1);
           addVisibleCell(row - direction, col + 1);
+          if (piece.promoted) {
+            addGoldMoves(row, col, direction, addVisibleCell);
+          }
           break;
         case "金":
-        case "玉":
-          addVisibleCell(row + direction, col - 1);
-          addVisibleCell(row + direction, col);
-          addVisibleCell(row + direction, col + 1);
-          addVisibleCell(row, col - 1);
-          addVisibleCell(row, col + 1);
-          addVisibleCell(row - direction, col);
+        case "と":
+        case "成香":
+        case "成桂":
+        case "成銀":
+          addGoldMoves(row, col, direction, addVisibleCell);
           break;
         case "角":
-          for (const [dr, dc] of [
-            [-1, -1],
-            [-1, 1],
-            [1, -1],
-            [1, 1],
-          ]) {
-            let r = row + dr,
-              c = col + dc;
-            while (r >= 0 && r < 9 && c >= 0 && c < 9) {
-              addVisibleCell(r, c);
-              if (board[r][c]) break;
-              r += dr;
-              c += dc;
-            }
+          addLineOfSight(row, col, 1, 1);
+          addLineOfSight(row, col, 1, -1);
+          addLineOfSight(row, col, -1, 1);
+          addLineOfSight(row, col, -1, -1);
+          if (piece.promoted) {
+            addKingMoves(row, col, addVisibleCell);
           }
           break;
         case "飛":
-          for (const [dr, dc] of [
-            [-1, 0],
-            [1, 0],
-            [0, -1],
-            [0, 1],
-          ]) {
-            let r = row + dr,
-              c = col + dc;
-            while (r >= 0 && r < 9 && c >= 0 && c < 9) {
-              addVisibleCell(r, c);
-              if (board[r][c]) break;
-              r += dr;
-              c += dc;
-            }
+          addLineOfSight(row, col, 0, 1);
+          addLineOfSight(row, col, 0, -1);
+          addLineOfSight(row, col, 1, 0);
+          addLineOfSight(row, col, -1, 0);
+          if (piece.promoted) {
+            addKingMoves(row, col, addVisibleCell);
           }
+          break;
+        case "玉":
+          addKingMoves(row, col, addVisibleCell);
+          break;
+        case "馬":
+          addLineOfSight(row, col, 1, 1);
+          addLineOfSight(row, col, 1, -1);
+          addLineOfSight(row, col, -1, 1);
+          addLineOfSight(row, col, -1, -1);
+          addKingMoves(row, col, addVisibleCell);
+          break;
+        case "龍":
+          addLineOfSight(row, col, 0, 1);
+          addLineOfSight(row, col, 0, -1);
+          addLineOfSight(row, col, 1, 0);
+          addLineOfSight(row, col, -1, 0);
+          addKingMoves(row, col, addVisibleCell);
           break;
       }
 
@@ -172,8 +196,60 @@ export default function ImprovedFogOfWarShogi() {
     [board]
   );
 
+  const addGoldMoves = (
+    row: number,
+    col: number,
+    direction: number,
+    addVisibleCell: (r: number, c: number) => void
+  ) => {
+    addVisibleCell(row + direction, col - 1);
+    addVisibleCell(row + direction, col);
+    addVisibleCell(row + direction, col + 1);
+    addVisibleCell(row, col - 1);
+    addVisibleCell(row, col + 1);
+    addVisibleCell(row - direction, col);
+  };
+
+  const addDiagonalMoves = (
+    row: number,
+    col: number,
+    addVisibleCell: (r: number, c: number) => void
+  ) => {
+    for (let i = 1; i < 9; i++) {
+      addVisibleCell(row + i, col + i);
+      addVisibleCell(row + i, col - i);
+      addVisibleCell(row - i, col + i);
+      addVisibleCell(row - i, col - i);
+    }
+  };
+
+  const addStraightMoves = (
+    row: number,
+    col: number,
+    addVisibleCell: (r: number, c: number) => void
+  ) => {
+    for (let i = 0; i < 9; i++) {
+      if (i !== row) addVisibleCell(i, col);
+      if (i !== col) addVisibleCell(row, i);
+    }
+  };
+
+  const addKingMoves = (
+    row: number,
+    col: number,
+    addVisibleCell: (r: number, c: number) => void
+  ) => {
+    for (let r = row - 1; r <= row + 1; r++) {
+      for (let c = col - 1; c <= col + 1; c++) {
+        if (r !== row || c !== col) {
+          addVisibleCell(r, c);
+        }
+      }
+    }
+  };
+
   const updateVisibleBoard = useCallback(() => {
-    if (!playerSide) return;
+    if (!playerSide || !gameStarted) return;
 
     const newVisibleBoard: VisibleCell[][] = Array(9)
       .fill(null)
@@ -205,7 +281,7 @@ export default function ImprovedFogOfWarShogi() {
     }
 
     setVisibleBoard(newVisibleBoard);
-  }, [board, playerSide, getVisibleCellsForPiece]);
+  }, [board, playerSide, getVisibleCellsForPiece, gameStarted]);
 
   useEffect(() => {
     updateVisibleBoard();
@@ -218,6 +294,22 @@ export default function ImprovedFogOfWarShogi() {
       const rowDiff = toRow - fromRow;
       const colDiff = toCol - fromCol;
       const direction = piece.player === "先手" ? -1 : 1;
+
+      const isDiagonalMove = Math.abs(rowDiff) === Math.abs(colDiff);
+      const isStraightMove = rowDiff === 0 || colDiff === 0;
+
+      const checkPath = (rowStep: number, colStep: number): boolean => {
+        let r = fromRow + rowStep;
+        let c = fromCol + colStep;
+        while (r !== toRow || c !== toCol) {
+          if (board[r][c] !== null) {
+            return false; // Path is blocked
+          }
+          r += rowStep;
+          c += colStep;
+        }
+        return true; // Path is clear
+      };
 
       switch (piece.type) {
         case "歩":
@@ -238,6 +330,11 @@ export default function ImprovedFogOfWarShogi() {
             (rowDiff === direction && colDiff === 0)
           );
         case "金":
+        case "と":
+        case "成香":
+        case "成桂":
+        case "成銀":
+          return isValidGoldMove(rowDiff, colDiff, direction);
         case "玉":
           return (
             Math.abs(rowDiff) <= 1 &&
@@ -249,15 +346,19 @@ export default function ImprovedFogOfWarShogi() {
             )
           );
         case "角":
-          return (
-            Math.abs(rowDiff) === Math.abs(colDiff) &&
-            !board
-              .slice(Math.min(fromRow, toRow) + 1, Math.max(fromRow, toRow))
-              .some(
-                (row, index) =>
-                  row[fromCol + (index + 1) * Math.sign(colDiff)] !== null
-              )
-          );
+          if (isDiagonalMove) {
+            const rowStep = rowDiff > 0 ? 1 : -1;
+            const colStep = colDiff > 0 ? 1 : -1;
+            return checkPath(rowStep, colStep);
+          }
+          if (
+            piece.promoted &&
+            Math.abs(rowDiff) <= 1 &&
+            Math.abs(colDiff) <= 1
+          ) {
+            return true; // Promoted bishop can move one square in any direction
+          }
+          return false;
         case "飛":
           return (
             (rowDiff === 0 || colDiff === 0) &&
@@ -268,12 +369,37 @@ export default function ImprovedFogOfWarShogi() {
               .slice(Math.min(fromCol, toCol) + 1, Math.max(fromCol, toCol))
               .some((cell) => cell !== null)
           );
+        case "馬":
+          if (isDiagonalMove) {
+            const rowStep = rowDiff > 0 ? 1 : -1;
+            const colStep = colDiff > 0 ? 1 : -1;
+            return checkPath(rowStep, colStep);
+          }
+          return Math.abs(rowDiff) <= 1 && Math.abs(colDiff) <= 1;
+        case "龍":
+          return (
+            (rowDiff === 0 && colDiff !== 0) ||
+            (rowDiff !== 0 && colDiff === 0) ||
+            (Math.abs(rowDiff) <= 1 && Math.abs(colDiff) <= 1)
+          );
         default:
           return false;
       }
     },
     [board]
   );
+
+  const isValidGoldMove = (
+    rowDiff: number,
+    colDiff: number,
+    direction: number
+  ): boolean => {
+    return (
+      Math.abs(rowDiff) <= 1 &&
+      Math.abs(colDiff) <= 1 &&
+      !(rowDiff === -direction && Math.abs(colDiff) === 1)
+    );
+  };
 
   useEffect(() => {
     const WEBSOCKET_URL =
@@ -303,6 +429,30 @@ export default function ImprovedFogOfWarShogi() {
       newSocket.disconnect();
     };
   }, []);
+
+  const initializeVisibleBoard = useCallback(() => {
+    const newVisibleBoard: VisibleCell[][] = Array(9)
+      .fill(null)
+      .map(() => Array(9).fill({ piece: null, isVisible: false }));
+
+    if (playerSide) {
+      const playerRows = playerSide === "先手" ? [6, 7, 8] : [0, 1, 2];
+      playerRows.forEach((row) => {
+        for (let col = 0; col < 9; col++) {
+          const actualRow: number = playerSide === "後手" ? 8 - row : row;
+          const actualCol: number = playerSide === "後手" ? 8 - col : col;
+          const piece: Piece | null = board[actualRow][actualCol];
+          if (piece && piece.player === playerSide) {
+            newVisibleBoard[row][col] = {
+              piece: piece,
+              isVisible: true,
+            };
+          }
+        }
+      });
+    }
+    setVisibleBoard(newVisibleBoard);
+  }, [board, playerSide]);
 
   useEffect(() => {
     if (!socket) return;
@@ -338,7 +488,9 @@ export default function ImprovedFogOfWarShogi() {
     socket.on("gameStarted", ({ gameId, board, currentPlayer }) => {
       console.log("Game started:", gameId, "Current player:", currentPlayer);
       setBoard(board);
+      setGameStarted(true);
       setCurrentPlayer(currentPlayer);
+      initializeVisibleBoard();
       setDebugInfo(
         (prev) =>
           prev + `\nGame started: ${gameId}, Current player: ${currentPlayer}`
@@ -378,7 +530,11 @@ export default function ImprovedFogOfWarShogi() {
       socket.off("boardUpdated");
       socket.off("gameError");
     };
-  }, [socket]);
+  }, [socket, initializeVisibleBoard]);
+
+  useEffect(() => {
+    console.log("visibleBoard updated:", visibleBoard);
+  }, [visibleBoard]);
 
   const createGame = useCallback(() => {
     if (socket) {
@@ -419,6 +575,78 @@ export default function ImprovedFogOfWarShogi() {
     [socket, gameId, inputGameId]
   );
 
+  // 駒の成りを確認する関数
+  const checkPromotion = (
+    from: [number, number],
+    to: [number, number],
+    piece: Piece
+  ): boolean => {
+    const [fromRow] = from;
+    const [toRow] = to;
+
+    if (piece.promoted) {
+      return false; // すでに成っている駒は成れない
+    }
+
+    // 成れない駒の種類をチェック
+    if (
+      ["金", "玉", "と", "成香", "成桂", "成銀", "馬", "龍"].includes(
+        piece.type as string
+      )
+    ) {
+      return false;
+    }
+
+    if (piece.player === "先手") {
+      // 先手の場合、相手陣地（0, 1, 2行目）に入るか、そこから出る場合に成れる
+      return toRow <= 2 || (fromRow <= 2 && toRow > 2);
+    } else {
+      // 後手の場合、相手陣地（6, 7, 8行目）に入るか、そこから出る場合に成れる
+      return toRow >= 6 || (fromRow >= 6 && toRow < 6);
+    }
+  };
+
+  // 成った駒の種類を返す関数
+  const getPromotedType = (
+    type: PieceType | PromotedPieceType
+  ): PromotedPieceType => {
+    switch (type) {
+      case "歩":
+        return "と";
+      case "香":
+        return "成香";
+      case "桂":
+        return "成桂";
+      case "銀":
+        return "成銀";
+      case "角":
+        return "馬";
+      case "飛":
+        return "龍";
+      default:
+        return type as PromotedPieceType;
+    }
+  };
+
+  const getOriginalType = (type: PieceType | PromotedPieceType): PieceType => {
+    switch (type) {
+      case "と":
+        return "歩";
+      case "成香":
+        return "香";
+      case "成桂":
+        return "桂";
+      case "成銀":
+        return "銀";
+      case "馬":
+        return "角";
+      case "龍":
+        return "飛";
+      default:
+        return type as PieceType;
+    }
+  };
+
   const handleCellClick = useCallback(
     (row: number, col: number) => {
       try {
@@ -433,6 +661,48 @@ export default function ImprovedFogOfWarShogi() {
 
         const actualRow = playerSide === "後手" ? 8 - row : row;
         const actualCol = playerSide === "後手" ? 8 - col : col;
+
+        // 持ち駒を打つ場合の処理
+        if (selectedCapturedPiece) {
+          if (board[actualRow][actualCol] === null) {
+            // 持ち駒を打つ処理
+            const newBoard = board.map((r) => [...r]);
+            newBoard[actualRow][actualCol] = {
+              ...selectedCapturedPiece,
+              promoted: false,
+            };
+            setBoard(newBoard);
+            setCapturedPieces((prev) => ({
+              ...prev,
+              [playerSide]: prev[playerSide].filter(
+                (p) => p !== selectedCapturedPiece
+              ),
+            }));
+            setCurrentPlayer(currentPlayer === "先手" ? "後手" : "先手");
+            setLastMove([row, col]);
+            updateVisibleBoard();
+
+            // WebSocket経由で移動を送信
+            if (socket && gameId) {
+              socket.emit("move", {
+                gameId,
+                from: null,
+                to: [actualRow, actualCol],
+                player: playerSide,
+              });
+            }
+            setSelectedCapturedPiece(null);
+            return;
+          } else {
+            toast({
+              title: "無効な移動です",
+              description: "空のマスにのみ持ち駒を打つことができます。",
+              variant: "destructive",
+            });
+            setSelectedCapturedPiece(null);
+            return;
+          }
+        }
 
         if (selectedCell) {
           const [selectedRow, selectedCol] = selectedCell;
@@ -456,17 +726,44 @@ export default function ImprovedFogOfWarShogi() {
 
               // 駒を取る処理
               if (targetPiece) {
+                const capturedPieceType = getOriginalType(targetPiece.type);
                 setCapturedPieces((prev) => ({
                   ...prev,
-                  [currentPlayer]: [
-                    ...prev[currentPlayer],
-                    { ...targetPiece, player: currentPlayer },
+                  [playerSide]: [
+                    ...prev[playerSide],
+                    {
+                      type: capturedPieceType,
+                      player: playerSide,
+                      promoted: false,
+                    },
                   ],
                 }));
               }
 
+              // 駒の成りを確認
+              const canPromote = checkPromotion(
+                [actualSelectedRow, actualSelectedCol],
+                [actualRow, actualCol],
+                selectedPiece
+              );
+              let promotedPiece = selectedPiece;
+
+              if (canPromote) {
+                const shouldPromote = window.confirm("駒を成りますか？");
+                if (shouldPromote) {
+                  promotedPiece = {
+                    ...selectedPiece,
+                    type: getPromotedType(selectedPiece.type),
+                    promoted: true,
+                  };
+                }
+              }
+
               // 駒を移動
-              newBoard[actualRow][actualCol] = selectedPiece;
+              newBoard[actualRow][actualCol] = {
+                ...promotedPiece,
+                promoted: promotedPiece.promoted || selectedPiece.promoted,
+              };
               newBoard[actualSelectedRow][actualSelectedCol] = null;
 
               // ローカルの状態を更新
@@ -482,6 +779,7 @@ export default function ImprovedFogOfWarShogi() {
                   from: [actualSelectedRow, actualSelectedCol],
                   to: [actualRow, actualCol],
                   player: playerSide,
+                  promotion: promotedPiece.promoted,
                 });
               }
             } else {
@@ -523,7 +821,11 @@ export default function ImprovedFogOfWarShogi() {
       currentPlayer,
       playerSide,
       selectedCell,
+      selectedCapturedPiece,
       isValidMove,
+      checkPromotion,
+      getPromotedType,
+      updateVisibleBoard,
       socket,
       gameId,
       setCapturedPieces,
@@ -538,6 +840,20 @@ export default function ImprovedFogOfWarShogi() {
     setCapturedPieces({ 先手: [], 後手: [] });
   }, []);
 
+  // 持ち駒をクリックしたときの処理を追加
+  const handleCapturedPieceClick = (piece: Piece, side: Player) => {
+    if (currentPlayer !== side || playerSide !== side) {
+      toast({
+        title: "無効な操作です",
+        description: "自分の手番で自分の持ち駒を選択してください。",
+        variant: "destructive",
+      });
+      return;
+    }
+    setSelectedCell(null);
+    setSelectedCapturedPiece(piece);
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-4xl mx-auto bg-white shadow-xl">
@@ -546,103 +862,117 @@ export default function ImprovedFogOfWarShogi() {
             霧の将棋
           </h1>
           <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-              <div className="w-full sm:w-auto space-y-4">
-                {!gameCreated && (
-                  <Button onClick={createGame} className="w-full sm:w-auto">
-                    新しいゲームを作成
-                  </Button>
-                )}
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <div className="w-full sm:w-auto">
-                    <Label htmlFor="gameId">ゲームID</Label>
-                    <Input
-                      id="gameId"
-                      placeholder="ゲームIDを入力"
-                      value={inputGameId}
-                      onChange={(e) => setInputGameId(e.target.value)}
-                      className="mt-1"
-                    />
+            {!gameStarted && (
+              <div className="flex flex-col justify-between items-start gap-4">
+                <div className="w-full sm:w-auto space-y-4">
+                  {!gameCreated && (
+                    <Button onClick={createGame} className="w-full sm:w-auto">
+                      新しいゲームを作成
+                    </Button>
+                  )}
+                  <div className="flex flex-col sm:flex-row sm:items-end gap-2">
+                    <div className="w-full sm:w-auto">
+                      <Label htmlFor="gameId">ゲームID</Label>
+                      <Input
+                        id="gameId"
+                        placeholder="ゲームIDを入力"
+                        value={inputGameId}
+                        onChange={(e) => setInputGameId(e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
+                    <Button
+                      onClick={() => joinGame("先手")}
+                      className="mt-6 sm:mt-0"
+                    >
+                      先手として参加
+                    </Button>
+                    <Button
+                      onClick={() => joinGame("後手")}
+                      className="mt-2 sm:mt-0"
+                    >
+                      後手として参加
+                    </Button>
                   </div>
-                  <Button
-                    onClick={() => joinGame("先手")}
-                    className="mt-6 sm:mt-0"
-                  >
-                    先手として参加
-                  </Button>
-                  <Button
-                    onClick={() => joinGame("後手")}
-                    className="mt-2 sm:mt-0"
-                  >
-                    後手として参加
-                  </Button>
                 </div>
+                {gameId && (
+                  <div className="text-sm text-gray-600">
+                    <p>現在のゲームID: {gameId}</p>
+                    {playerSide && <p>あなたの手番: {playerSide}</p>}
+                  </div>
+                )}
               </div>
-              {gameId && (
-                <div className="text-sm text-gray-600">
-                  <p>現在のゲームID: {gameId}</p>
-                  {playerSide && <p>あなたの手番: {playerSide}</p>}
-                </div>
-              )}
-            </div>
+            )}
+
             <div className="flex justify-between gap-4">
               <CapturedPieces
                 title="先手の持ち駒"
                 pieces={capturedPieces["先手"]}
+                onPieceClick={(piece) =>
+                  handleCapturedPieceClick(piece, "先手")
+                }
               />
               <CapturedPieces
                 title="後手の持ち駒"
                 pieces={capturedPieces["後手"]}
+                onPieceClick={(piece) =>
+                  handleCapturedPieceClick(piece, "後手")
+                }
               />
             </div>
-            <div
-              className="grid grid-cols-9 gap-[1px] bg-yellow-100 p-4 rounded-lg"
-              role="grid"
-              aria-label="将棋盤"
-            >
-              {visibleBoard.map((row, rowIndex) =>
-                row.map((cell, colIndex) => (
-                  <button
-                    key={`${rowIndex}-${colIndex}`}
-                    className={`w-8 h-8 flex items-center justify-center border border-yellow-800 ${
-                      selectedCell &&
-                      selectedCell[0] === rowIndex &&
-                      selectedCell[1] === colIndex
-                        ? "bg-blue-200"
-                        : lastMove &&
-                          lastMove[0] === rowIndex &&
-                          lastMove[1] === colIndex
-                        ? "bg-yellow-200"
-                        : "bg-yellow-100"
-                    } ${
-                      cell.isVisible ? "hover:bg-yellow-50" : "bg-gray-800"
-                    } transition-colors duration-200`}
-                    onClick={() => handleCellClick(rowIndex, colIndex)}
-                    aria-label={
-                      cell.isVisible
-                        ? cell.piece
-                          ? `${cell.piece.player}の${cell.piece.type}`
-                          : `空のマス (${rowIndex + 1}, ${colIndex + 1})`
-                        : "不可視のマス"
-                    }
-                    role="gridcell"
-                    disabled={!cell.isVisible}
-                  >
-                    {cell.isVisible && cell.piece && (
-                      <span
-                        className={`text-2xl font-bold ${
-                          cell.piece.player !== playerSide
-                            ? "transform rotate-180 text-blue-600"
-                            : "text-red-600"
-                        }`}
+            {gameStarted && (
+              <div className="relative">
+                <div
+                  className="grid grid-cols-9 gap-[1px] bg-yellow-100 p-4 rounded-lg"
+                  role="grid"
+                  aria-label="将棋盤"
+                >
+                  {visibleBoard.map((row, rowIndex) =>
+                    row.map((cell, colIndex) => (
+                      <button
+                        key={`${rowIndex}-${colIndex}`}
+                        className={`w-8 h-8 flex items-center justify-center border border-yellow-800 ${
+                          selectedCell &&
+                          selectedCell[0] === rowIndex &&
+                          selectedCell[1] === colIndex
+                            ? "bg-blue-200"
+                            : lastMove &&
+                              lastMove[0] === rowIndex &&
+                              lastMove[1] === colIndex
+                            ? "bg-yellow-200"
+                            : "bg-yellow-100"
+                        } ${
+                          cell.isVisible ? "hover:bg-yellow-50" : "bg-gray-800"
+                        } transition-colors duration-200`}
+                        onClick={() => handleCellClick(rowIndex, colIndex)}
+                        aria-label={
+                          cell.isVisible
+                            ? cell.piece
+                              ? `${cell.piece.player}の${cell.piece.type}`
+                              : `空のマス (${rowIndex + 1}, ${colIndex + 1})`
+                            : "不可視のマス"
+                        }
+                        role="gridcell"
+                        disabled={!cell.isVisible}
                       >
-                        {cell.piece.type}
-                      </span>
-                    )}
-                  </button>
-                ))
-              )}
-            </div>
+                        {cell.isVisible && cell.piece && (
+                          <span
+                            className={`text-2xl font-bold ${
+                              cell.piece.player !== playerSide
+                                ? "transform rotate-180 text-blue-600"
+                                : "text-red-600"
+                            }`}
+                          >
+                            {cell.piece.type}
+                          </span>
+                        )}
+                      </button>
+                    ))
+                  )}
+                </div>
+                {currentPlayer !== playerSide && <WaitingOverlay />}
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -650,18 +980,38 @@ export default function ImprovedFogOfWarShogi() {
   );
 }
 
-function CapturedPieces({ title, pieces }: { title: string; pieces: Piece[] }) {
+function WaitingOverlay() {
+  return (
+    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10">
+      <div className="bg-white p-4 rounded-lg shadow-lg">
+        <p className="text-lg font-semibold">相手のアクションを待っています</p>
+      </div>
+    </div>
+  );
+}
+
+// CapturedPieces コンポーネントを更新
+function CapturedPieces({
+  title,
+  pieces,
+  onPieceClick,
+}: {
+  title: string;
+  pieces: Piece[];
+  onPieceClick: (piece: Piece) => void;
+}) {
   return (
     <div className="bg-gray-100 p-4 rounded-lg flex-1">
       <h3 className="text-center font-semibold mb-2 text-gray-700">{title}</h3>
       <div className="grid grid-cols-3 gap-2">
         {pieces.map((piece, index) => (
-          <div
+          <button
             key={index}
-            className="w-8 h-8 flex items-center justify-center bg-white rounded shadow text-gray-800"
+            className="w-8 h-8 flex items-center justify-center bg-white rounded shadow text-gray-800 hover:bg-gray-200"
+            onClick={() => onPieceClick(piece)}
           >
             {piece.type}
-          </div>
+          </button>
         ))}
       </div>
     </div>

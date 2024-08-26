@@ -24,7 +24,7 @@ io.on("connection", (socket) => {
     games.set(gameId, {
       players: [],
       board: initialBoard(),
-      currentPlayer: null, // 初期化時にnullを設定
+      capturedPieces: { 先手: [], 後手: [] },
     });
     socket.join(gameId);
     console.log("Game created:", gameId);
@@ -71,35 +71,149 @@ io.on("connection", (socket) => {
 
   socket.on("move", ({ gameId, from, to, player }) => {
     const game = games.get(gameId);
-    if (game && game.currentPlayer === player) {
-      // 移動のバリデーションと盤面の更新ロジックを実装
+    if (!game) {
+      socket.emit("gameError", "Game not found");
+      return;
+    }
+
+    if (game.currentPlayer !== player) {
+      socket.emit("gameError", "Not your turn");
+      return;
+    }
+
+    // capturedPieces の初期化を確認
+    if (!game.capturedPieces) {
+      game.capturedPieces = { 先手: [], 後手: [] };
+    }
+
+    if (from === null) {
+      // 持ち駒を打つ場合の処理
+      const [toRow, toCol] = to;
+      if (game.board[toRow][toCol]) {
+        socket.emit("gameError", "Invalid move: destination is not empty");
+        return;
+      }
+
+      const pieceToPlace = game.capturedPieces[player].pop();
+      if (!pieceToPlace) {
+        socket.emit("gameError", "No captured pieces to place");
+        return;
+      }
+
+      if (
+        pieceToPlace.type === "歩" &&
+        hasPawnInColumn(game.board, toCol, player)
+      ) {
+        socket.emit(
+          "gameError",
+          "Cannot place a second pawn in the same column"
+        );
+        game.capturedPieces[player].push(pieceToPlace);
+        return;
+      }
+
+      game.board[toRow][toCol] = { ...pieceToPlace, promoted: false };
+    } else {
+      // 既存の駒を動かす場合の処理
       const [fromRow, fromCol] = from;
       const [toRow, toCol] = to;
       const piece = game.board[fromRow][fromCol];
 
-      if (piece && piece.player === player) {
-        // 駒を移動
-        game.board[toRow][toCol] = piece;
-        game.board[fromRow][fromCol] = null;
-
-        // 手番を交代
-        game.currentPlayer = game.currentPlayer === "先手" ? "後手" : "先手";
-
-        console.log("Move made:", gameId, from, to, player);
-        console.log("New board state:", game.board);
-
-        io.to(gameId).emit("boardUpdated", {
-          board: game.board,
-          currentPlayer: game.currentPlayer,
-        });
-      } else {
-        socket.emit("gameError", "Invalid move");
+      if (!piece || piece.player !== player) {
+        socket.emit("gameError", "Invalid move: no piece or wrong player");
+        return;
       }
-    } else {
-      socket.emit("gameError", "Invalid move or not your turn");
+
+      if (!isValidMove(game.board, from, to, piece)) {
+        socket.emit("gameError", "Invalid move");
+        return;
+      }
+
+      // 駒を取る処理
+      if (game.board[toRow][toCol]) {
+        const capturedPiece = {
+          type: game.board[toRow][toCol].type,
+          player: player,
+          promoted: false,
+        };
+        if (!game.capturedPieces[player]) {
+          game.capturedPieces[player] = [];
+        }
+        game.capturedPieces[player].push(capturedPiece);
+      }
+
+      // 成りの処理
+      if (canPromote(from, to, piece)) {
+        const shouldPromote = Math.random() < 0.5; // クライアントからの入力を模倣
+        if (shouldPromote) {
+          piece.promoted = true;
+          piece.type = getPromotedType(piece.type);
+        }
+      }
+
+      // 駒を移動
+      game.board[toRow][toCol] = piece;
+      game.board[fromRow][fromCol] = null;
     }
+
+    // 手番を交代
+    game.currentPlayer = game.currentPlayer === "先手" ? "後手" : "先手";
+
+    // 更新された盤面を全プレイヤーに送信
+    io.to(gameId).emit("boardUpdated", {
+      board: game.board,
+      currentPlayer: game.currentPlayer,
+      capturedPieces: game.capturedPieces,
+    });
   });
 });
+
+// 補助関数
+function isValidMove(board, from, to, piece) {
+  // ここに駒の動きの妥当性チェックを実装
+  // 簡単な例として、同じ場所への移動を禁止
+  return from[0] !== to[0] || from[1] !== to[1];
+}
+
+function canPromote(from, to, piece) {
+  const [fromRow] = from;
+  const [toRow] = to;
+
+  if (piece.promoted) {
+    return false;
+  }
+
+  if (piece.player === "先手") {
+    return toRow <= 2 || (fromRow <= 2 && toRow > 2);
+  } else {
+    return toRow >= 6 || (fromRow >= 6 && toRow < 6);
+  }
+}
+
+function hasPawnInColumn(board, col, player) {
+  for (let row = 0; row < 9; row++) {
+    if (
+      board[row][col] &&
+      board[row][col].type === "歩" &&
+      board[row][col].player === player
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function getPromotedType(type) {
+  const promotionMap = {
+    歩: "と",
+    香: "成香",
+    桂: "成桂",
+    銀: "成銀",
+    角: "馬",
+    飛: "龍",
+  };
+  return promotionMap[type] || type;
+}
 
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
@@ -107,30 +221,63 @@ server.listen(PORT, () => {
 });
 
 function initialBoard() {
-  // 9x9の空の盤面を作成
   const board = Array(9)
     .fill(null)
     .map(() => Array(9).fill(null));
 
   // 先手の駒を配置
   board[8] = ["香", "桂", "銀", "金", "玉", "金", "銀", "桂", "香"].map(
-    (type) => ({ type, player: "先手" })
+    (type) => ({ type, player: "先手", promoted: false })
   );
-  board[7][1] = { type: "角", player: "先手" };
-  board[7][7] = { type: "飛", player: "先手" };
+  board[7][1] = { type: "角", player: "先手", promoted: false };
+  board[7][7] = { type: "飛", player: "先手", promoted: false };
   for (let i = 0; i < 9; i++) {
-    board[6][i] = { type: "歩", player: "先手" };
+    board[6][i] = { type: "歩", player: "先手", promoted: false };
   }
 
   // 後手の駒を配置
   board[0] = ["香", "桂", "銀", "金", "玉", "金", "銀", "桂", "香"].map(
-    (type) => ({ type, player: "後手" })
+    (type) => ({ type, player: "後手", promoted: false })
   );
-  board[1][7] = { type: "角", player: "後手" };
-  board[1][1] = { type: "飛", player: "後手" };
+  board[1][7] = { type: "角", player: "後手", promoted: false };
+  board[1][1] = { type: "飛", player: "後手", promoted: false };
   for (let i = 0; i < 9; i++) {
-    board[2][i] = { type: "歩", player: "後手" };
+    board[2][i] = { type: "歩", player: "後手", promoted: false };
   }
 
   return board;
+}
+
+function isValidMove(board, from, to, piece) {
+  // ここに駒の動きの妥当性チェックを実装
+  // 簡単な例として、同じ場所への移動を禁止
+  return from[0] !== to[0] || from[1] !== to[1];
+}
+
+function canPromote(from, to, piece) {
+  const [fromRow] = from;
+  const [toRow] = to;
+
+  if (piece.promoted) {
+    return false;
+  }
+
+  if (piece.player === "先手") {
+    return toRow <= 2 || (fromRow <= 2 && toRow > 2);
+  } else {
+    return toRow >= 6 || (fromRow >= 6 && toRow < 6);
+  }
+}
+
+function hasPawnInColumn(board, col, player) {
+  for (let row = 0; row < 9; row++) {
+    if (
+      board[row][col] &&
+      board[row][col].type === "歩" &&
+      board[row][col].player === player
+    ) {
+      return true;
+    }
+  }
+  return false;
 }
