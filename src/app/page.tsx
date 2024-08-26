@@ -273,7 +273,11 @@ export default function ImprovedFogOfWarShogi() {
   );
 
   useEffect(() => {
-    const newSocket = io("http://localhost:3001", {
+    const WEBSOCKET_URL =
+      process.env.NEXT_PUBLIC_WEBSOCKET_URL || "http://localhost:3001";
+    console.log("Connecting to WebSocket server:", WEBSOCKET_URL);
+
+    const newSocket = io(WEBSOCKET_URL, {
       withCredentials: true,
       transports: ["websocket"],
     });
