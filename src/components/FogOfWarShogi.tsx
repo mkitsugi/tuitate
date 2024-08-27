@@ -86,14 +86,15 @@ export default function ImprovedFogOfWarShogi() {
                           createGame();
                           playMoveSound();
                         }}
-                        className="w-full sm:w-auto mt-4"
+                        className="w-full sm:w-auto mt-4 bg-black/60 backdrop-blur-sm border border-white/20 text-white hover:bg-black transition-colors"
+                        // className="w-full sm:w-auto mt-4"
                       >
                         新しいルームを作成
                       </Button>
                     )}
 
                     <div className="w-full sm:w-auto mt-2">
-                      <Label htmlFor="gameId">友達のルームに参加</Label>
+                      <Label htmlFor="gameId" className="text-white">友達のルームに参加</Label>
                       <Input
                         id="gameId"
                         placeholder="ルームIDを入力"
@@ -112,7 +113,8 @@ export default function ImprovedFogOfWarShogi() {
                           handleJoinGame("先手" as Player);
                           playMoveSound();
                         }}
-                        className="mt-4 w-full bg-sky-600 hover:bg-sky-700"
+                        className="mt-4 w-full bg-sky-600/80 backdrop-blur-sm border-2 border-sky-400/20 text-white hover:bg-sky-700/80 transition-colors"
+                        // className="mt-4 w-full bg-sky-600 hover:bg-sky-700"
                       >
                         先手として参加
                       </Button>
@@ -123,7 +125,8 @@ export default function ImprovedFogOfWarShogi() {
                           handleJoinGame("後手" as Player);
                           playMoveSound();
                         }}
-                        className="mt-2 w-full bg-rose-600 hover:bg-rose-700"
+                        className="mt-2 w-full bg-rose-600/80 backdrop-blur-sm border-2 border-rose-400/20 text-white hover:bg-rose-700/80 transition-colors"
+                        // className="mt-2 w-full bg-rose-600 hover:bg-rose-700"
                       >
                         後手として参加
                       </Button>
