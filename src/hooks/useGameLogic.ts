@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { Socket } from "socket.io-client";
 import { toast } from "sonner";
 import { Player, Piece, PieceType, PromotedPieceType } from "@/types/shogi";
+import { usePromotionDialog } from "@/components/PromotionDialog";
 import {
   initialBoard,
   getVisibleCellsForPiece,
@@ -35,6 +36,14 @@ export default function useGameLogic(
   }>({ 先手: [], 後手: [] });
   const [selectedCapturedPiece, setSelectedCapturedPiece] =
     useState<Piece | null>(null);
+
+  const [showPromotionDialog, setShowPromotionDialog] = useState(false);
+  const [pendingMove, setPendingMove] = useState<{
+    from: [number, number];
+    to: [number, number];
+    piece: Piece;
+  } | null>(null);
+  const { openPromotionDialog, PromotionDialog } = usePromotionDialog();
 
   const moveAudioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -80,6 +89,279 @@ export default function useGameLogic(
     updateVisibleBoard();
   }, [updateVisibleBoard, currentPlayer]);
 
+  //   const handleCellClick = useCallback(
+  //     (row: number, col: number) => {
+  //       if (currentPlayer !== playerSide) {
+  //         toast.info("相手の手番です", {
+  //           description: "自分の手番をお待ちください。",
+  //           position: "bottom-center",
+  //         });
+  //         return;
+  //       }
+
+  //       if (selectedCapturedPiece) {
+  //         if (board[row][col] === null) {
+  //           // 二歩チェックを追加
+  //           if (selectedCapturedPiece.type === "歩") {
+  //             const isNifu = board.some(
+  //               (rowPieces, r) =>
+  //                 r !== row &&
+  //                 rowPieces[col] &&
+  //                 rowPieces[col]?.type === "歩" &&
+  //                 rowPieces[col]?.player === playerSide
+  //             );
+  //             if (isNifu) {
+  //               toast.error("二歩は禁止されています", {
+  //                 description: "同じ列に2つの歩を置くことはできません。",
+  //                 position: "bottom-center",
+  //               });
+  //               setSelectedCapturedPiece(null);
+  //               return;
+  //             }
+  //           }
+
+  //           playMoveSound();
+
+  //           const newBoard = board.map((r) => [...r]);
+  //           newBoard[row][col] = { ...selectedCapturedPiece, promoted: false };
+  //           setBoard(newBoard);
+  //           setCapturedPieces((prev) => ({
+  //             ...prev,
+  //             [playerSide as Player]: prev[playerSide as Player].filter(
+  //               (p) => p !== selectedCapturedPiece
+  //             ),
+  //           }));
+  //           setCurrentPlayer(currentPlayer === "先手" ? "後手" : "先手");
+  //           setLastMove([row, col]);
+  //           updateVisibleBoard();
+
+  //           if (socket && gameId) {
+  //             socket.emit("move", {
+  //               gameId,
+  //               from: null,
+  //               to: [row, col],
+  //               player: playerSide,
+  //               piece: selectedCapturedPiece.type,
+  //               promotion: false,
+  //             });
+  //           }
+  //         } else {
+  //           toast.info("無効な移動です", {
+  //             description: "空いているマスにのみ持ち駒を打てます。",
+  //             position: "bottom-center",
+  //           });
+  //         }
+  //         setSelectedCapturedPiece(null);
+  //         return;
+  //       }
+
+  //       if (selectedCell) {
+  //         const [selectedRow, selectedCol] = selectedCell;
+  //         const selectedPiece = board[selectedRow][selectedCol];
+
+  //         if (selectedRow === row && selectedCol === col) {
+  //           // 同じ位置が選択された場合、選択を解除
+  //           setSelectedCell(null);
+  //           return;
+  //         }
+
+  //         if (selectedPiece && selectedPiece.player === currentPlayer) {
+  //           if (
+  //             isValidMove(
+  //               [selectedRow, selectedCol],
+  //               [row, col],
+  //               selectedPiece,
+  //               board
+  //             )
+  //           ) {
+  //             playMoveSound();
+  //             const targetPiece = board[row][col];
+
+  //             // 自分の駒を取ろうとしている場合は移動を無効にする
+  //             if (targetPiece && targetPiece.player === currentPlayer) {
+  //               toast.info("無効な移動です", {
+  //                 description: "自分の駒は取れません。",
+  //                 position: "bottom-center",
+  //               });
+  //               setSelectedCell(null);
+  //               return;
+  //             }
+
+  //             const newBoard = board.map((r) => [...r]);
+
+  //             if (targetPiece) {
+  //               const capturedPieceType = getOriginalType(targetPiece.type);
+  //               setCapturedPieces((prev) => ({
+  //                 ...prev,
+  //                 [playerSide as Player]: [
+  //                   ...prev[playerSide as Player],
+  //                   {
+  //                     type: capturedPieceType,
+  //                     player: playerSide as Player,
+  //                     promoted: false,
+  //                   },
+  //                 ],
+  //               }));
+  //             }
+
+  //             const canPromote = checkPromotion(
+  //               [selectedRow, selectedCol],
+  //               [row, col],
+  //               selectedPiece
+  //             );
+  //             let promotedPiece = { ...selectedPiece };
+
+  //             if (canPromote) {
+  //               if (
+  //                 ["歩", "香", "桂", "銀"].includes(
+  //                   selectedPiece.type as string
+  //                 ) &&
+  //                 (row === 0 || row === 8)
+  //               ) {
+  //                 // 自動的に成る
+  //                 promotedPiece = {
+  //                   ...selectedPiece,
+  //                   type: getPromotedType(selectedPiece.type as PieceType),
+  //                   promoted: true,
+  //                 };
+  //               } else {
+  //                 // プレイヤーに選択させる
+  //                 const shouldPromote = window.confirm("駒を成りますか？");
+  //                 // if (shouldPromote) {
+  //                 //   promotedPiece = {
+  //                 //     ...selectedPiece,
+  //                 //     type: getPromotedType(selectedPiece.type as PieceType),
+  //                 //     promoted: true,
+  //                 //   };
+  //                 // }
+  //                 setPendingMove({
+  //                   from: [selectedRow, selectedCol],
+  //                   to: [row, col],
+  //                   piece: selectedPiece,
+  //                 });
+  //                 openPromotionDialog();
+  //                 return;
+  //               }
+  //             } else {
+  //               executeMove(
+  //                 promotedPiece,
+  //                 [selectedRow, selectedCol],
+  //                 [row, col]
+  //               );
+  //             }
+
+  //             newBoard[row][col] = promotedPiece;
+  //             newBoard[selectedRow][selectedCol] = null;
+
+  //             setBoard(newBoard);
+  //             setCurrentPlayer(currentPlayer === "先手" ? "後手" : "先手");
+  //             setLastMove([row, col]);
+  //             updateVisibleBoard();
+
+  //             if (socket && gameId) {
+  //               socket.emit("move", {
+  //                 gameId,
+  //                 from: [selectedRow, selectedCol],
+  //                 to: [row, col],
+  //                 player: playerSide,
+  //                 promotion: promotedPiece.promoted,
+  //               });
+  //             }
+  //           } else {
+  //             toast.info("無効な移動です", {
+  //               description: "選択した駒はそこに移動できません。",
+  //               position: "bottom-center",
+  //             });
+  //           }
+  //         }
+  //         setSelectedCell(null);
+  //       } else {
+  //         const piece = board[row][col];
+  //         if (piece && piece.player === currentPlayer) {
+  //           setSelectedCell([row, col]);
+  //         } else if (piece) {
+  //           toast.error("無効な選択です", {
+  //             description: "自分の駒を選択してください。",
+  //             position: "bottom-center",
+  //           });
+  //         }
+  //       }
+  //     },
+  //     [
+  //       board,
+  //       currentPlayer,
+  //       playerSide,
+  //       selectedCell,
+  //       selectedCapturedPiece,
+  //       socket,
+  //       gameId,
+  //       updateVisibleBoard,
+  //       playMoveSound,
+  //     ]
+  //   );
+
+  const executeMove = useCallback(
+    (piece: Piece, from: [number, number] | null, to: [number, number]) => {
+      //   const [fromRow, fromCol] = from;
+      const [toRow, toCol] = to;
+
+      const newBoard = board.map((row) => [...row]);
+      const targetPiece = newBoard[toRow][toCol];
+
+      // 相手の駒を取る場合
+      if (targetPiece) {
+        const capturedPieceType = getOriginalType(targetPiece.type);
+        setCapturedPieces((prev) => ({
+          ...prev,
+          [playerSide as Player]: [
+            ...prev[playerSide as Player],
+            {
+              type: capturedPieceType,
+              player: playerSide as Player,
+              promoted: false,
+            },
+          ],
+        }));
+      }
+
+      // 駒を移動
+      newBoard[toRow][toCol] = piece;
+      if (from) {
+        const [fromRow, fromCol] = from;
+        newBoard[fromRow][fromCol] = null;
+      }
+      //   newBoard[fromRow][fromCol] = null;
+
+      setBoard(newBoard);
+      setCurrentPlayer(currentPlayer === "先手" ? "後手" : "先手");
+      setLastMove([toRow, toCol]);
+      setSelectedCell(null);
+      updateVisibleBoard();
+
+      // サーバーに移動を通知
+      if (socket && gameId) {
+        socket.emit("move", {
+          gameId,
+          from,
+          to,
+          player: playerSide,
+          promotion: piece.promoted,
+        });
+      }
+
+      playMoveSound();
+    },
+    [
+      board,
+      playerSide,
+      currentPlayer,
+      socket,
+      gameId,
+      updateVisibleBoard,
+      playMoveSound,
+    ]
+  );
+
   const handleCellClick = useCallback(
     (row: number, col: number) => {
       if (currentPlayer !== playerSide) {
@@ -92,30 +374,35 @@ export default function useGameLogic(
 
       if (selectedCapturedPiece) {
         if (board[row][col] === null) {
-          playMoveSound();
-          const newBoard = board.map((r) => [...r]);
-          newBoard[row][col] = { ...selectedCapturedPiece, promoted: false };
-          setBoard(newBoard);
+          // 二歩チェックを追加
+          if (selectedCapturedPiece.type === "歩") {
+            const isNifu = board.some(
+              (rowPieces, r) =>
+                r !== row &&
+                rowPieces[col] &&
+                rowPieces[col]?.type === "歩" &&
+                rowPieces[col]?.player === playerSide
+            );
+            if (isNifu) {
+              toast.error("二歩は禁止されています", {
+                description: "同じ列に2つの歩を置くことはできません。",
+                position: "bottom-center",
+              });
+              setSelectedCapturedPiece(null);
+              return;
+            }
+          }
+
+          executeMove({ ...selectedCapturedPiece, promoted: false }, null, [
+            row,
+            col,
+          ]);
           setCapturedPieces((prev) => ({
             ...prev,
             [playerSide as Player]: prev[playerSide as Player].filter(
               (p) => p !== selectedCapturedPiece
             ),
           }));
-          setCurrentPlayer(currentPlayer === "先手" ? "後手" : "先手");
-          setLastMove([row, col]);
-          updateVisibleBoard();
-
-          if (socket && gameId) {
-            socket.emit("move", {
-              gameId,
-              from: null,
-              to: [row, col],
-              player: playerSide,
-              piece: selectedCapturedPiece.type,
-              promotion: false,
-            });
-          }
         } else {
           toast.info("無効な移動です", {
             description: "空いているマスにのみ持ち駒を打てます。",
@@ -145,7 +432,6 @@ export default function useGameLogic(
               board
             )
           ) {
-            playMoveSound();
             const targetPiece = board[row][col];
 
             // 自分の駒を取ろうとしている場合は移動を無効にする
@@ -158,29 +444,11 @@ export default function useGameLogic(
               return;
             }
 
-            const newBoard = board.map((r) => [...r]);
-
-            if (targetPiece) {
-              const capturedPieceType = getOriginalType(targetPiece.type);
-              setCapturedPieces((prev) => ({
-                ...prev,
-                [playerSide as Player]: [
-                  ...prev[playerSide as Player],
-                  {
-                    type: capturedPieceType,
-                    player: playerSide as Player,
-                    promoted: false,
-                  },
-                ],
-              }));
-            }
-
             const canPromote = checkPromotion(
               [selectedRow, selectedCol],
               [row, col],
               selectedPiece
             );
-            let promotedPiece = { ...selectedPiece };
 
             if (canPromote) {
               if (
@@ -190,40 +458,32 @@ export default function useGameLogic(
                 (row === 0 || row === 8)
               ) {
                 // 自動的に成る
-                promotedPiece = {
+                const promotedPiece = {
                   ...selectedPiece,
                   type: getPromotedType(selectedPiece.type as PieceType),
                   promoted: true,
                 };
+                executeMove(
+                  promotedPiece,
+                  [selectedRow, selectedCol],
+                  [row, col]
+                );
               } else {
                 // プレイヤーに選択させる
-                const shouldPromote = window.confirm("駒を成りますか？");
-                if (shouldPromote) {
-                  promotedPiece = {
-                    ...selectedPiece,
-                    type: getPromotedType(selectedPiece.type as PieceType),
-                    promoted: true,
-                  };
-                }
+                setPendingMove({
+                  from: [selectedRow, selectedCol],
+                  to: [row, col],
+                  piece: selectedPiece,
+                });
+                openPromotionDialog();
+                return;
               }
-            }
-
-            newBoard[row][col] = promotedPiece;
-            newBoard[selectedRow][selectedCol] = null;
-
-            setBoard(newBoard);
-            setCurrentPlayer(currentPlayer === "先手" ? "後手" : "先手");
-            setLastMove([row, col]);
-            updateVisibleBoard();
-
-            if (socket && gameId) {
-              socket.emit("move", {
-                gameId,
-                from: [selectedRow, selectedCol],
-                to: [row, col],
-                player: playerSide,
-                promotion: promotedPiece.promoted,
-              });
+            } else {
+              executeMove(
+                selectedPiece,
+                [selectedRow, selectedCol],
+                [row, col]
+              );
             }
           } else {
             toast.info("無効な移動です", {
@@ -231,8 +491,8 @@ export default function useGameLogic(
               position: "bottom-center",
             });
           }
+          setSelectedCell(null);
         }
-        setSelectedCell(null);
       } else {
         const piece = board[row][col];
         if (piece && piece.player === currentPlayer) {
@@ -251,10 +511,8 @@ export default function useGameLogic(
       playerSide,
       selectedCell,
       selectedCapturedPiece,
-      socket,
-      gameId,
-      updateVisibleBoard,
-      playMoveSound,
+      executeMove,
+      openPromotionDialog,
     ]
   );
 
@@ -292,6 +550,24 @@ export default function useGameLogic(
     };
   }, [socket, updateVisibleBoard, playMoveSound]);
 
+  const handlePromotionChoice = useCallback(
+    (shouldPromote: boolean) => {
+      if (pendingMove) {
+        const { from, to, piece } = pendingMove;
+        const promotedPiece = shouldPromote
+          ? {
+              ...piece,
+              type: getPromotedType(piece.type as PieceType),
+              promoted: true,
+            }
+          : piece;
+        executeMove(promotedPiece, from, to);
+        setPendingMove(null);
+      }
+    },
+    [pendingMove, executeMove]
+  );
+
   return {
     board,
     visibleBoard,
@@ -300,6 +576,8 @@ export default function useGameLogic(
     lastMove,
     capturedPieces,
     selectedCapturedPiece,
+    PromotionDialog,
+    handlePromotionChoice,
     playMoveSound,
     handleCellClick,
     handleCapturedPieceClick,

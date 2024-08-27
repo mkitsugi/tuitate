@@ -1,5 +1,6 @@
 import React from "react";
 import { Player, Piece, VisibleCell } from "@/types/shogi";
+import { cn } from "@/lib/utils";
 
 interface BoardProps {
   visibleBoard: VisibleCell[][];
@@ -26,7 +27,7 @@ export default function Board({
 
   return (
     <div
-      className="grid grid-cols-9 gap-[1px] bg-slate-50/10 backdrop-blur-sm p-4 rounded-lg shadow-lg"
+      className="grid grid-cols-9 mx-1 bg-slate-50/10 backdrop-blur-sm p-4 rounded-lg shadow-lg"
       role="grid"
       aria-label="将棋盤"
     >
@@ -42,19 +43,28 @@ export default function Board({
           return (
             <button
               key={`${rowIndex}-${colIndex}`}
-              className={`w-8 h-8 rounded-sm flex items-center justify-center border ${
-                isSelected ? "border-yellow-500 border-2" : "border-yellow-800"
-              } ${
+              className={cn(
+                "w-9 h-9 rounded-[4px] flex items-center justify-center border transition-colors duration-200",
+
                 isSelected
-                  ? "bg-green-300"
-                  : lastMove &&
+                  ? "border-yellow-500 border-4 "
+                  : "border-yellow-800",
+                {
+                  "bg-green-300": isSelected,
+                  "bg-yellow-200":
+                    lastMove &&
                     lastMove[0] === actualRow &&
-                    lastMove[1] === actualCol
-                  ? "bg-yellow-200"
-                  : "bg-yellow-100"
-              } ${
-                cell.isVisible ? "bg-yellow-100" : "bg-gray-800"
-              } transition-colors duration-200`}
+                    lastMove[1] === actualCol,
+                  "bg-yellow-100":
+                    !isSelected &&
+                    (!lastMove ||
+                      lastMove[0] !== actualRow ||
+                      lastMove[1] !== actualCol),
+                },
+                cell.isVisible
+                  ? "bg-yellow-100 border-yellow-500"
+                  : "bg-white/10 border-white/10"
+              )}
               onClick={() => onCellClick(actualRow, actualCol)}
               aria-label={
                 cell.isVisible
@@ -68,15 +78,16 @@ export default function Board({
             >
               {cell.isVisible && cell.piece && (
                 <span
-                  className={`text-2xl font-bold ${
+                  className={cn(
+                    "font-bold",
                     cell.piece.player !== playerSide
                       ? "transform rotate-180 text-blue-600"
-                      : "text-rose-700"
-                  } ${
-                    isSelected
-                      ? "ring-2 ring-yellow-500 bg-yellow-300 px-0.5"
-                      : ""
-                  }`}
+                      : "text-rose-700",
+                    isSelected && "ring-2 ring-yellow-500 bg-yellow-300 px-0.5",
+                    cell.piece.type && cell.piece.type.length > 1
+                      ? "text-md tracking-tight"
+                      : "text-2xl"
+                  )}
                 >
                   {cell.piece.type}
                 </span>
