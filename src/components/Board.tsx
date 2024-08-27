@@ -79,7 +79,7 @@ export default function Board({
               {cell.isVisible && cell.piece && (
                 <span
                   className={cn(
-                    "font-bold",
+                    "font-bold select-none",
                     cell.piece.player !== playerSide
                       ? "transform rotate-180 text-blue-600"
                       : "text-rose-700",
