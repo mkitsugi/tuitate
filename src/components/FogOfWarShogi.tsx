@@ -202,7 +202,11 @@ export default function ImprovedFogOfWarShogi() {
                 )}
               </div>
 
-              {isLoadingRooms && <p>ルームを検索中...</p>}
+              {isLoadingRooms && (
+                <p className="px-4 pt-4 text-white text-sm">
+                  ルームを検索中...
+                </p>
+              )}
               {existingRooms.length > 0 && (
                 <div className="mt-4 px-4">
                   <h3 className="text-sm text-white mb-2">利用可能なルーム:</h3>
