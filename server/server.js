@@ -153,7 +153,7 @@ io.on("connection", (socket) => {
 
       // 持ち駒の検索方法を修正
       const pieceIndex = game.capturedPieces[player].findIndex(
-        (p) => p.type === piece
+        (p) => p.type === piece || getOriginalType(p.type) === piece
       );
 
       console.log("Captured pieces:", game.capturedPieces[player]);
@@ -192,7 +192,7 @@ io.on("connection", (socket) => {
       // 駒を取る処理
       if (game.board[toRow][toCol]) {
         const capturedPiece = {
-          type: game.board[toRow][toCol].type,
+          type: getOriginalType(game.board[toRow][toCol].type),
           player: player,
           promoted: false,
         };
@@ -314,6 +314,18 @@ function getPromotedType(type) {
     飛: "龍",
   };
   return promotionMap[type] || type;
+}
+
+function getOriginalType(type) {
+  const originalTypeMap = {
+    と: "歩",
+    成香: "香",
+    成桂: "桂",
+    成銀: "銀",
+    馬: "角",
+    龍: "飛",
+  };
+  return originalTypeMap[type] || type;
 }
 
 const PORT = process.env.PORT || 3001;

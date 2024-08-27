@@ -27,7 +27,7 @@ export default function Board({
 
   return (
     <div
-      className="w-full grid grid-cols-9 bg-slate-50/10 backdrop-blur-sm rounded-lg shadow-lg"
+      className="w-full grid grid-cols-9 bg-slate-50/10 backdrop-blur-sm rounded-md shadow-lg"
       role="grid"
       aria-label="将棋盤"
     >
