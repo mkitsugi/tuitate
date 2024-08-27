@@ -86,7 +86,7 @@ export default function ImprovedFogOfWarShogi() {
 
   return (
     <div className="flex justify-center items-center w-full h-full z-10">
-      <div className="space-y-6 px-4 w-full">
+      <div className="space-y-6 w-full">
         {!gameStarted && (
           <Card className="mx-auto bg-white/10 backdrop-blur-md border border-white/20 shadow-lg w-full max-w-[450px] py-8 overflow-hidden">
             <CardContent className="p-2">
@@ -230,7 +230,7 @@ export default function ImprovedFogOfWarShogi() {
 
         {gameStarted && (
           <>
-            <div className="flex flex-col justify-center items-center space-y-4">
+            <div className="flex flex-col justify-center items-center space-y-4 w-full">
               <div className="relative max-w-[450px]">
                 <Board
                   visibleBoard={visibleBoard}
@@ -243,7 +243,7 @@ export default function ImprovedFogOfWarShogi() {
                 {currentPlayer !== playerSide && <WaitingOverlay />}
               </div>
 
-              <div className="flex justify-between gap-4 max-w-[400px] px-6 w-full">
+              <div className="flex justify-between gap-4 max-w-[450px] w-full px-2 md:px-10">
                 {playerSide === "先手" && gameStarted && (
                   <CapturedPieces
                     title="あなた（先手）の持ち駒"

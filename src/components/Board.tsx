@@ -27,7 +27,7 @@ export default function Board({
 
   return (
     <div
-      className="grid grid-cols-9 mx-1 bg-slate-50/10 backdrop-blur-sm p-4 rounded-lg shadow-lg"
+      className="w-full grid grid-cols-9 bg-slate-50/10 backdrop-blur-sm rounded-lg shadow-lg"
       role="grid"
       aria-label="将棋盤"
     >
@@ -44,7 +44,7 @@ export default function Board({
             <button
               key={`${rowIndex}-${colIndex}`}
               className={cn(
-                "w-9 h-9 rounded-[4px] flex items-center justify-center border transition-colors duration-200",
+                "w-10 h-10 rounded-[4px] flex items-center justify-center border transition-colors duration-200",
 
                 isSelected
                   ? "border-yellow-500 border-4 "
