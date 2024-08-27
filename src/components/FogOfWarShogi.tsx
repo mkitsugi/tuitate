@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/components/ui/use-toast";
+// import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Board from "./Board";
@@ -66,16 +67,18 @@ export default function ImprovedFogOfWarShogi() {
 
   const copyGameId = useCallback(() => {
     navigator.clipboard.writeText(gameId || "");
-    toast({
-      description: "ルームIDをクリップボードにコピーしました。",
-    });
+    toast.success("ルームIDをクリップボードにコピーしました。", {position: "bottom-center"});
   }, [gameId]);
 
   return (
     <div className="flex justify-center items-center w-full h-full">
+      
       <div className="space-y-6 px-4 w-full">
         {!gameStarted && (
           <div className="flex flex-col justify-between items-start gap-4">
+            <h1 className="text-3xl w-full font-black mt-4 mb-4 text-center text-black">
+            霧将棋
+          </h1>
             <div className="w-full space-y-4">
               <div className="flex flex-col gap-2 w-full">
                 {!gameCreated && (
@@ -86,7 +89,7 @@ export default function ImprovedFogOfWarShogi() {
                           createGame();
                           playMoveSound();
                         }}
-                        className="w-full sm:w-auto mt-4 bg-black/60 backdrop-blur-sm border border-white/20 text-white hover:bg-black transition-colors"
+                        className="w-full sm:w-auto mt-4 bg-black/80 backdrop-blur-sm border border-white/50 text-white hover:bg-black transition-colors"
                         // className="w-full sm:w-auto mt-4"
                       >
                         新しいルームを作成
@@ -132,8 +135,8 @@ export default function ImprovedFogOfWarShogi() {
                       </Button>
                     )}
                     {selectedSide && !gameStarted && (
-                      <div className="mt-4 text-center w-full">
-                        <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
+                      <div className="mt-4 text-center w-full text-white">
+                        <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-white" />
                         <p>
                           {selectedSide === "先手" ? "先手" : "後手"}
                           として参加しました
@@ -149,15 +152,18 @@ export default function ImprovedFogOfWarShogi() {
         )}
 
         {gameId && (
-          <div className="text-sm text-gray-600 text-center flex items-center justify-center space-x-2">
-            <p>作成したルームID: {gameId}</p>
+          <div className="flex w-full items-center text-sm text-white text-center justify-center space-x-2">
             <Button
               variant="ghost"
               size="icon"
               onClick={copyGameId}
               title="ルームIDをコピー"
+              className="w-fit px-4 rounded-full bg-black/80 backdrop-blur-sm hover:none"
             >
-              <Copy className="h-4 w-4" />
+              <div className="flex items-center justify-center space-x-2">
+                <p>ルームID : {gameId}</p>
+                <Copy className="h-4 w-4" />
+              </div>
             </Button>
           </div>
         )}

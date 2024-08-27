@@ -26,7 +26,7 @@ export default function Board({
 
   return (
     <div
-      className="grid grid-cols-9 gap-[1px] bg-yellow-100 p-4 rounded-lg"
+      className="grid grid-cols-9 gap-[1px] bg-slate-50/10 backdrop-blur-sm p-4 rounded-lg shadow-lg"
       role="grid"
       aria-label="将棋盤"
     >
@@ -42,18 +42,18 @@ export default function Board({
           return (
             <button
               key={`${rowIndex}-${colIndex}`}
-              className={`w-8 h-8 flex items-center justify-center border ${
-                isSelected ? "border-green-500 border-2" : "border-yellow-800"
+              className={`w-8 h-8 rounded-sm flex items-center justify-center border ${
+                isSelected ? "border-yellow-500 border-2" : "border-yellow-800"
               } ${
                 isSelected
                   ? "bg-green-300"
                   : lastMove &&
                     lastMove[0] === actualRow &&
                     lastMove[1] === actualCol
-                  ? "bg-yellow-300"
+                  ? "bg-yellow-200"
                   : "bg-yellow-100"
               } ${
-                cell.isVisible ? "bg-yellow-50" : "bg-gray-800"
+                cell.isVisible ? "bg-yellow-100" : "bg-gray-800"
               } transition-colors duration-200`}
               onClick={() => onCellClick(actualRow, actualCol)}
               aria-label={
@@ -71,10 +71,10 @@ export default function Board({
                   className={`text-2xl font-bold ${
                     cell.piece.player !== playerSide
                       ? "transform rotate-180 text-blue-600"
-                      : "text-red-600"
+                      : "text-rose-700"
                   } ${
                     isSelected
-                      ? "ring-2 ring-green-500 bg-green-300 px-0.5"
+                      ? "ring-2 ring-yellow-500 bg-yellow-300 px-0.5"
                       : ""
                   }`}
                 >

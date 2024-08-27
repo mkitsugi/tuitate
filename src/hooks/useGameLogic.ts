@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { Socket } from "socket.io-client";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { Player, Piece, PieceType, PromotedPieceType } from "@/types/shogi";
 import {
   initialBoard,
@@ -83,10 +83,9 @@ export default function useGameLogic(
   const handleCellClick = useCallback(
     (row: number, col: number) => {
       if (currentPlayer !== playerSide) {
-        toast({
-          title: "相手の手番です",
+        toast.info("相手の手番です", {
           description: "自分の手番をお待ちください。",
-          variant: "destructive",
+          position: "bottom-center",
         });
         return;
       }
@@ -118,10 +117,9 @@ export default function useGameLogic(
             });
           }
         } else {
-          toast({
-            title: "無効な移動です",
+          toast.info("無効な移動です", {
             description: "空いているマスにのみ持ち駒を打てます。",
-            variant: "destructive",
+            position: "bottom-center",
           });
         }
         setSelectedCapturedPiece(null);
@@ -152,10 +150,9 @@ export default function useGameLogic(
 
             // 自分の駒を取ろうとしている場合は移動を無効にする
             if (targetPiece && targetPiece.player === currentPlayer) {
-              toast({
-                title: "無効な移動です",
+              toast.info("無効な移動です", {
                 description: "自分の駒は取れません。",
-                variant: "destructive",
+                position: "bottom-center",
               });
               setSelectedCell(null);
               return;
@@ -229,10 +226,9 @@ export default function useGameLogic(
               });
             }
           } else {
-            toast({
-              title: "無効な移動です",
+            toast.info("無効な移動です", {
               description: "選択した駒はそこに移動できません。",
-              variant: "destructive",
+              position: "bottom-center",
             });
           }
         }
@@ -242,10 +238,9 @@ export default function useGameLogic(
         if (piece && piece.player === currentPlayer) {
           setSelectedCell([row, col]);
         } else if (piece) {
-          toast({
-            title: "無効な選択です",
+          toast.error("無効な選択です", {
             description: "自分の駒を選択してください。",
-            variant: "destructive",
+            position: "bottom-center",
           });
         }
       }
@@ -266,10 +261,9 @@ export default function useGameLogic(
   const handleCapturedPieceClick = useCallback(
     (piece: Piece | null, side: Player) => {
       if (currentPlayer !== side || playerSide !== side) {
-        toast({
-          title: "無効な操作です",
+        toast.error("無効な操作です", {
           description: "自分の手番で自分の持ち駒を選択してください。",
-          variant: "destructive",
+          position: "bottom-center",
         });
         return;
       }

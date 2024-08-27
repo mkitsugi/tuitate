@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { io, Socket } from "socket.io-client";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { Player } from "@/types/shogi";
 
 const WEBSOCKET_URL =
@@ -30,10 +30,9 @@ export default function useSocket() {
 
     newSocket.on("connect_error", (error) => {
       console.error("WebSocket connection error:", error);
-      toast({
-        title: "接続エラー",
+      toast.error("接続エラー", {
         description: "サーバーに接続できません。",
-        variant: "destructive",
+        position: "bottom-center",
       });
     });
 
@@ -48,9 +47,9 @@ export default function useSocket() {
     socket.on("gameCreated", (id: string) => {
       setGameId(id.trim());
       setGameCreated(true);
-      toast({
-        title: "ゲームが作成されました",
+      toast("ゲームが作成されました", {
         description: `ゲームID: ${id.trim()}`,
+        position: "bottom-center",
       });
     });
 
@@ -60,9 +59,9 @@ export default function useSocket() {
         setGameId(gameId);
         setPlayerSide(side);
         setAvailableSides(availableSides.filter((s) => s !== side));
-        toast({
-          title: "ゲームに参加しました",
+        toast("ゲームに参加しました", {
           description: `ゲームID: ${gameId}, 手番: ${side}`,
+          position: "bottom-center",
         });
       }
     );
@@ -77,19 +76,19 @@ export default function useSocket() {
         currentPlayer: Player;
       }) => {
         setGameStarted(true);
-        toast({
-          title: "ゲームが開始されました",
+        toast("ゲームが開始されました", {
           description: `現在の手番: ${currentPlayer}`,
+          position: "bottom-center",
         });
         setAvailableSides([]);
       }
     );
 
     socket.on("gameError", (message: string) => {
-      toast({
-        title: "エラー",
+      toast("エラー", {
         description: message,
-        variant: "destructive",
+        style: { background: "#dc2626", color: "#fff" },
+        position: "bottom-center",
       });
     });
 
@@ -105,10 +104,9 @@ export default function useSocket() {
     if (socket) {
       socket.emit("createGame");
     } else {
-      toast({
-        title: "エラー",
+      toast.error("エラー", {
         description: "サーバーに接続されていません。",
-        variant: "destructive",
+        position: "bottom-center",
       });
     }
   }, [socket]);
@@ -118,10 +116,10 @@ export default function useSocket() {
       if (socket && gameId) {
         socket.emit("joinGame", { gameId: gameId, side });
       } else {
-        toast({
-          title: "エラー",
+        toast("エラー", {
           description: "ゲームに参加できません。",
-          variant: "destructive",
+          style: { background: "#dc2626", color: "#fff" },
+          position: "bottom-center",
         });
       }
     },

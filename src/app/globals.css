@@ -64,7 +64,7 @@
     background-position: 0px;
   }
   100% {
-    background-position: 2440px;
+    background-position: 840px;
   }
 }
 
@@ -92,7 +92,7 @@
   height: 100%;
   background: url('/clouds.png');
   background-size: cover;
-  opacity: 0.9;
+  opacity: 0.8;
   animation: cloud-reverse 240s linear infinite;
 }
 

@@ -15,9 +15,9 @@ export default function CapturedPieces({
   selectedPieceIndex,
 }: CapturedPiecesProps) {
   return (
-    <div className="bg-gray-100 p-4 rounded-lg flex-1">
-      <h3 className="text-center font-semibold mb-2 text-gray-700">{title}</h3>
-      <div className="flex flex-wrap gap-2 justify-start">
+    <div className="bg-white/40 border border-white/50 px-3 py-2 rounded-lg flex flex-col w-full gap-2 items-start justify-center">
+      <div className="text-xs text-center font-semibold text-black">{title}</div>
+      <div className="flex flex-wrap gap-2 justify-center">
         {pieces.map((piece, index) => {
           const isSelected = selectedPieceIndex === index;
           return (
