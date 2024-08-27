@@ -15,6 +15,36 @@ const io = new Server(server, {
 });
 
 const games = new Map();
+const gameTimeouts = new Map();
+
+// ゲームの有効期限（ミリ秒）
+const GAME_EXPIRATION_TIME = 10 * 60 * 1000; // 10分
+
+function deleteGame(gameId) {
+  games.delete(gameId);
+  gameTimeouts.delete(gameId);
+  console.log(`Game ${gameId} has been deleted due to inactivity.`);
+}
+
+function resetGameTimeout(gameId) {
+  if (gameTimeouts.has(gameId)) {
+    clearTimeout(gameTimeouts.get(gameId));
+  }
+  const timeoutId = setTimeout(() => deleteGame(gameId), GAME_EXPIRATION_TIME);
+  gameTimeouts.set(gameId, timeoutId);
+}
+
+// ルーム一覧を取得するエンドポイントを追加
+app.get("/api/rooms", (req, res) => {
+  const activeRooms = Array.from(games.entries())
+    .filter(([_, game]) => game.players.length < 2)
+    .map(([id, game]) => ({
+      id,
+      players: game.players.length,
+      availableSides: game.availableSides,
+    }));
+  res.json(activeRooms);
+});
 
 io.on("connection", (socket) => {
   console.log("A user connected");
@@ -31,6 +61,9 @@ io.on("connection", (socket) => {
     console.log("Game created:", gameId);
     console.log("Current games:", Array.from(games.keys()));
     socket.emit("gameCreated", gameId);
+
+    // ゲーム作成時にタイムアウトを設定
+    resetGameTimeout(gameId);
   });
 
   socket.on("joinGame", ({ gameId, side }) => {
@@ -42,39 +75,48 @@ io.on("connection", (socket) => {
       console.log("Game found:", gameId);
       console.log("Current players:", game.players);
       console.log("Available sides:", game.availableSides);
+
       if (game.players.length < 2 && game.availableSides.includes(side)) {
         game.players.push({ id: socket.id, side });
         game.availableSides = game.availableSides.filter((s) => s !== side);
+
         socket.join(gameId);
         console.log("Player joined game:", gameId, side);
         socket.emit("gameJoined", { gameId, side });
+
+        // 全てのクライアントに通知を送信
+        io.to(gameId).emit("playerJoined", {
+          side,
+          availableSides: game.availableSides,
+          playerId: socket.id,
+        });
+
         io.to(gameId).emit("sideSelected", {
           side,
           availableSides: game.availableSides,
         });
+
+        // プレイヤーが参加したらタイムアウトをリセット
+        resetGameTimeout(gameId);
+
         if (game.players.length === 2) {
           game.currentPlayer = "先手";
-          console.log(
-            "Game started:",
-            gameId,
-            "Current player:",
-            game.currentPlayer
-          );
           io.to(gameId).emit("gameStarted", {
             gameId,
             board: game.board,
             currentPlayer: game.currentPlayer,
           });
+
+          // ゲームが開始されたらタイムアウトを解除
+          clearTimeout(gameTimeouts.get(gameId));
+          gameTimeouts.delete(gameId);
         }
       } else if (game.players.length >= 2) {
-        console.log("Game is full:", gameId);
         socket.emit("gameError", "Game is full");
       } else {
-        console.log("Side not available:", side);
         socket.emit("gameError", "Selected side is not available");
       }
     } else {
-      console.log("Game not found:", gameId);
       socket.emit("gameError", "Game not found");
     }
   });
@@ -190,6 +232,40 @@ io.on("connection", (socket) => {
       currentPlayer: game.currentPlayer,
       capturedPieces: game.capturedPieces,
     });
+  });
+
+  socket.on("getRooms", () => {
+    console.log("getRooms event received");
+    const activeRooms = Array.from(games.entries())
+      .filter(([_, game]) => game.players.length < 2)
+      .map(([id, game]) => ({
+        id,
+        players: game.players.length,
+        availableSides: game.availableSides,
+      }));
+    console.log("Active rooms:", activeRooms);
+    socket.emit("roomList", activeRooms);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("User disconnected");
+    // プレイヤーが切断された場合、そのプレイヤーが参加していたゲームを探す
+    for (const [gameId, game] of games.entries()) {
+      const playerIndex = game.players.findIndex((p) => p.id === socket.id);
+      if (playerIndex !== -1) {
+        game.players.splice(playerIndex, 1);
+        game.availableSides.push(game.players[playerIndex].side);
+        io.to(gameId).emit("playerLeft", {
+          side: game.players[playerIndex].side,
+          availableSides: game.availableSides,
+        });
+
+        // プレイヤーが離脱したらタイムアウトをリセット
+        resetGameTimeout(gameId);
+
+        break;
+      }
+    }
   });
 });
 
