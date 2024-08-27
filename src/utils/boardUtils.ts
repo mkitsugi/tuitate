@@ -274,7 +274,7 @@ export const getVisibleCellsForPiece = (
       addKingMoves(row, col, addVisibleCell);
       break;
     case "龍":
-      addStraightMoves(row, col, addVisibleCell);
+      addStraightMoves(row, col, board, addVisibleCell);
       addKingMoves(row, col, addVisibleCell);
       break;
   }
@@ -312,11 +312,28 @@ const addDiagonalMoves = (
 const addStraightMoves = (
   row: number,
   col: number,
+  board: (Piece | null)[][],
   addVisibleCell: (r: number, c: number) => void
 ) => {
-  for (let i = 0; i < 9; i++) {
-    if (i !== row) addVisibleCell(i, col);
-    if (i !== col) addVisibleCell(row, i);
+  // 上方向
+  for (let i = row - 1; i >= 0; i--) {
+    addVisibleCell(i, col);
+    if (board[i][col] !== null) break;
+  }
+  // 下方向
+  for (let i = row + 1; i < 9; i++) {
+    addVisibleCell(i, col);
+    if (board[i][col] !== null) break;
+  }
+  // 左方向
+  for (let i = col - 1; i >= 0; i--) {
+    addVisibleCell(row, i);
+    if (board[row][i] !== null) break;
+  }
+  // 右方向
+  for (let i = col + 1; i < 9; i++) {
+    addVisibleCell(row, i);
+    if (board[row][i] !== null) break;
   }
 };
 
