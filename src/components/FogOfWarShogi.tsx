@@ -96,12 +96,12 @@ export default function ImprovedFogOfWarShogi() {
                 </h1>
 
                 <div className="w-full space-y-4">
-                  <div className="flex flex-col gap-2 w-full px-4">
+                  <div className="flex flex-col gap-2 w-full px-2">
                     {!gameCreated && (
                       <>
                         {!inputGameId && (
                           <>
-                            <div className="flex flex-row items-center w-full space-x-2">
+                            <div className="flex flex-row items-start w-full space-x-2">
                               <Button
                                 onClick={() => {
                                   createGame();
@@ -111,16 +111,6 @@ export default function ImprovedFogOfWarShogi() {
                                 // className="w-full sm:w-auto mt-4"
                               >
                                 新しいルームを作成
-                              </Button>
-
-                              <Button
-                                onClick={() => {
-                                  findExistingRooms();
-                                  playMoveSound();
-                                }}
-                                className="w-full sm:w-auto bg-gray-600/80 backdrop-blur-sm border border-white/50 text-white hover:bg-gray-700 transition-colors"
-                              >
-                                既存のルームを探す
                               </Button>
                             </div>
                           </>
@@ -182,10 +172,10 @@ export default function ImprovedFogOfWarShogi() {
                 </div>
               </div>
 
-              <div className="flex justify-start items-center pt-2 px-4">
+              <div className="w-full flex flex-col md:flex-row justify-start md:justify-start pt-2 px-2">
                 <RulesDialog />
                 {gameId && (
-                  <div className="flex w-full mt-4 items-center text-sm text-white text-center justify-center space-x-2">
+                  <div className="flex w-full mt-4 items-center text-sm text-white text-center justify-start md:justify-center gap-2">
                     <Button
                       variant="ghost"
                       size="icon"
@@ -193,7 +183,7 @@ export default function ImprovedFogOfWarShogi() {
                       title="ルームIDをコピー"
                       className="w-fit px-4 rounded-full bg-black/80 backdrop-blur-sm hover:none"
                     >
-                      <div className="flex items-center justify-center space-x-2">
+                      <div className="flex space-x-2 w-full">
                         <p>ルームID : {gameId}</p>
                         <Copy className="h-4 w-4" />
                       </div>
@@ -202,31 +192,37 @@ export default function ImprovedFogOfWarShogi() {
                 )}
               </div>
 
-              {isLoadingRooms && (
-                <p className="px-4 pt-4 text-white text-sm">
-                  ルームを検索中...
-                </p>
-              )}
-              {existingRooms.length > 0 && (
-                <div className="mt-4 px-4">
-                  <h3 className="text-sm text-white mb-2">利用可能なルーム:</h3>
-                  <div className="grid grid-cols-2 gap-2 overflow-y-auto max-h-[200px]">
-                    {existingRooms.map((room) => (
-                      <Button
-                        key={room.id}
-                        onClick={() => setInputGameId(room.id)}
-                        className="w-full text-left bg-white/90 backdrop-blur-md text-black hover:bg-white/70 transition-colors text-sm"
-                      >
-                        {room.id} ({room.players}/2)
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {existingRooms.length === 0 && !isLoadingRooms && (
-                <p className="mt-4 px-4 text-white text-sm">
-                  利用可能なルームがありません。
-                </p>
+              {!gameId && (
+                <>
+                  {isLoadingRooms && (
+                    <p className="px-4 pt-4 text-white text-sm">
+                      ルームを検索中...
+                    </p>
+                  )}
+                  {existingRooms.length > 0 && (
+                    <div className="mt-4 px-4">
+                      <h3 className="text-sm text-white mb-2">
+                        利用可能なルーム:
+                      </h3>
+                      <div className="grid grid-cols-2 gap-2 overflow-y-auto max-h-[200px]">
+                        {existingRooms.map((room) => (
+                          <Button
+                            key={room.id}
+                            onClick={() => setInputGameId(room.id)}
+                            className="w-full text-left bg-white/90 backdrop-blur-md text-black hover:bg-white/70 transition-colors text-sm"
+                          >
+                            {room.id} ({room.players}/2)
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {existingRooms.length === 0 && !isLoadingRooms && (
+                    <p className="mt-4 px-4 text-white text-sm">
+                      利用可能なルームがありません。
+                    </p>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>
