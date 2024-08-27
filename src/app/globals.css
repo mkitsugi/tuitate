@@ -59,6 +59,43 @@
   }
 }
 
+@keyframes cloud {
+  0% {
+    background-position: 0px;
+  }
+  100% {
+    background-position: 2440px;
+  }
+}
+
+@keyframes cloud-reverse {
+  0% {
+    background-position: 2440px;
+  }
+  100% {
+    background-position: 0px;
+  }
+}
+
+.cloud {
+  background: url('/clouds.png');
+  background-size: cover;
+  animation: cloud 180s linear infinite;
+}
+
+.cloud::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url('/clouds.png');
+  background-size: cover;
+  opacity: 0.9;
+  animation: cloud-reverse 240s linear infinite;
+}
+
 @layer base {
   * {
     @apply border-border;

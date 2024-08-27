@@ -5,7 +5,8 @@ import ImprovedFogOfWarShogi from "@/components/FogOfWarShogi";
 
 export default function Page() {
   return (
-    <div className="min-h-screen  bg-gray-100 py-12 px-1 sm:px-1 lg:px-8 flex items-center justify-center overflow-hidden">
+    <div className="min-h-screen  bg-gray-900 py-12 px-1 sm:px-1 lg:px-8 flex items-center justify-center overflow-hidden">
+      <div className="cloud absolute inset-0 pointer-events-none"></div>
       <Card className="mx-auto bg-white border-none shadow-sm w-full max-w-[450px] py-8 overflow-auto">
         <CardContent className="p-2">
           <h1 className="text-3xl font-bold mt-4 mb-2 text-center text-gray-800">
