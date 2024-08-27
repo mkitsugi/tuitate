@@ -33,6 +33,7 @@ export default function ImprovedFogOfWarShogi() {
     lastMove,
     capturedPieces,
     selectedCapturedPiece,
+    playMoveSound,
     handleCellClick,
     handleCapturedPieceClick,
   } = useGameLogic(socket, gameId, playerSide);
@@ -81,7 +82,10 @@ export default function ImprovedFogOfWarShogi() {
                   <>
                     {!inputGameId && (
                       <Button
-                        onClick={createGame}
+                        onClick={() => {
+                          createGame();
+                          playMoveSound();
+                        }}
                         className="w-full sm:w-auto mt-4"
                       >
                         新しいルームを作成
@@ -104,7 +108,10 @@ export default function ImprovedFogOfWarShogi() {
                   <>
                     {availableSides.includes("先手") && !selectedSide && (
                       <Button
-                        onClick={() => handleJoinGame("先手" as Player)}
+                        onClick={() => {
+                          handleJoinGame("先手" as Player);
+                          playMoveSound();
+                        }}
                         className="mt-4 w-full bg-sky-600 hover:bg-sky-700"
                       >
                         先手として参加
@@ -112,7 +119,10 @@ export default function ImprovedFogOfWarShogi() {
                     )}
                     {availableSides.includes("後手") && !selectedSide && (
                       <Button
-                        onClick={() => handleJoinGame("後手" as Player)}
+                        onClick={() => {
+                          handleJoinGame("後手" as Player);
+                          playMoveSound();
+                        }}
                         className="mt-2 w-full bg-rose-600 hover:bg-rose-700"
                       >
                         後手として参加

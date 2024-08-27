@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Socket } from "socket.io-client";
 import { toast } from "@/components/ui/use-toast";
 import { Player, Piece, PieceType, PromotedPieceType } from "@/types/shogi";
@@ -35,6 +35,23 @@ export default function useGameLogic(
   }>({ 先手: [], 後手: [] });
   const [selectedCapturedPiece, setSelectedCapturedPiece] =
     useState<Piece | null>(null);
+
+  const moveAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    moveAudioRef.current = new Audio("/move.mp3");
+  }, []);
+
+  const playMoveSound = useCallback(() => {
+    if (moveAudioRef.current) {
+      moveAudioRef.current.currentTime = 0; // 再生位置をリセット
+      moveAudioRef.current.play().catch((error) => {
+        console.error("Error playing sound:", error);
+        // フォールバック: 音が再生できない場合はコンソールにメッセージを表示
+        console.log("Move sound played (fallback)");
+      });
+    }
+  }, []);
 
   const updateVisibleBoard = useCallback(() => {
     if (!playerSide) return;
@@ -76,6 +93,7 @@ export default function useGameLogic(
 
       if (selectedCapturedPiece) {
         if (board[row][col] === null) {
+          playMoveSound();
           const newBoard = board.map((r) => [...r]);
           newBoard[row][col] = { ...selectedCapturedPiece, promoted: false };
           setBoard(newBoard);
@@ -129,6 +147,7 @@ export default function useGameLogic(
               board
             )
           ) {
+            playMoveSound();
             const targetPiece = board[row][col];
 
             // 自分の駒を取ろうとしている場合は移動を無効にする
@@ -240,6 +259,7 @@ export default function useGameLogic(
       socket,
       gameId,
       updateVisibleBoard,
+      playMoveSound,
     ]
   );
 
@@ -269,13 +289,14 @@ export default function useGameLogic(
         setCurrentPlayer(newCurrentPlayer);
         setSelectedCell(null);
         updateVisibleBoard();
+        playMoveSound();
       }
     );
 
     return () => {
       socket.off("boardUpdated");
     };
-  }, [socket, updateVisibleBoard]);
+  }, [socket, updateVisibleBoard, playMoveSound]);
 
   return {
     board,
@@ -285,6 +306,7 @@ export default function useGameLogic(
     lastMove,
     capturedPieces,
     selectedCapturedPiece,
+    playMoveSound,
     handleCellClick,
     handleCapturedPieceClick,
   };
