@@ -29,7 +29,7 @@ export default function RulesDialog() {
         </DialogHeader>
         <div className="mt-2 space-y-4">
           <p>
-            霧将棋は通常の将棋にお互いの情報が不完全な状態でプレイするオリジナルな将棋ゲームです。
+            霧将棋はお互いの情報が不完全な状態で将棋をプレイする完全オリジナルな将棋ゲームです。
           </p>
           <ol className="list-decimal pl-5 space-y-2">
             <li>基本的な動きは将棋と同様で、王を倒しましょう。</li>
