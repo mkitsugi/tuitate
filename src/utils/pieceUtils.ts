@@ -1,4 +1,4 @@
-import { Piece, PieceType, PromotedPieceType } from "@/types/shogi";
+import { Piece, PieceType, PromotedPieceType } from "@shared/shogi";
 
 export const getPromotedType = (
   type: PieceType | PromotedPieceType

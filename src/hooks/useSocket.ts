@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { io, Socket } from "socket.io-client";
 import { toast } from "sonner";
-import { Player, GameState, RoomState } from "@shared/shogi";
+import { Player, GameState, RoomState, Room } from "@shared/shogi";
 import { useSocketEvents } from "./useSocketEvents";
 import { useRoomManagement } from "./useRoomManagement";
 
@@ -64,6 +64,9 @@ export default function useSocket() {
 
     socket.on("roomList", handleRoomList);
     socket.on("gameCreated", handleGameCreated);
+    socket.on("newRoomCreated", (newRoom: Room) => {
+      addNewRoom(newRoom);
+    });
     socket.on("gameJoined", handleGameJoined);
     socket.on("availableSidesUpdated", handleAvailableSidesUpdated);
     socket.on("playerJoined", handlePlayerJoined);

@@ -1,5 +1,5 @@
 import React from "react";
-import { Piece } from "@/types/shogi";
+import { Piece } from "@shared/shogi";
 
 interface CapturedPiecesProps {
   title: string;

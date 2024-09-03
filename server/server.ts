@@ -90,7 +90,11 @@ io.on("connection", (socket) => {
     games.set(gameId, initializeGame());
     socket.join(gameId);
     socket.emit("gameCreated", gameId);
-    io.emit("newRoomCreated", { id: gameId, players: 1 });
+    io.emit("newRoomCreated", {
+      id: gameId,
+      players: 1,
+      availableSides: ["先手", "後手"],
+    });
 
     // ゲーム作成時にタイムアウトを設定
     resetGameTimeout(gameId);
@@ -360,7 +364,7 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     console.log("User disconnected");
     // プレイヤーが切断された場合、そのプレイヤーが参加していたゲームを探す
-    for (const [gameId, game] of games.entries()) {
+    games.forEach((game, gameId) => {
       const playerIndex = game.players.findIndex((p) => p.id === socket.id);
       if (playerIndex !== -1) {
         const disconnectedPlayer = game.players[playerIndex];
@@ -374,9 +378,9 @@ io.on("connection", (socket) => {
         // プレイヤーが離脱したらタイムアウトをリセット
         resetGameTimeout(gameId);
 
-        break;
+        return false; // Stop iterating after finding the game
       }
-    }
+    });
   });
 });
 
