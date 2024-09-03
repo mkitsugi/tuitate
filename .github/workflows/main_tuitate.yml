@@ -25,12 +25,12 @@ jobs:
         run: |
           cd server
           npm install
-          npm start
+          npm run build
 
       - name: Zip artifact for deployment
         run: |
           cd server
-          zip -r ../release.zip .
+          zip -r ../release.zip . -x "src/*" "tsconfig.json"
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
