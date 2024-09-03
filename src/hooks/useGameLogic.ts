@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { Socket } from "socket.io-client";
 import { toast } from "sonner";
-import { Player, Piece, PieceType, PromotedPieceType } from "@/types/shogi";
+import { Player, Piece, PieceType, PromotedPieceType } from "@shared/shogi";
 import { usePromotionDialog } from "@/components/PromotionDialog";
 import {
   initialBoard,
@@ -10,7 +10,8 @@ import {
   checkPromotion,
   getPromotedType,
   getOriginalType,
-} from "@/utils/boardUtils";
+  isInCheck,
+} from "@shared/boardUtils";
 
 export default function useGameLogic(
   socket: Socket | null,
@@ -46,6 +47,11 @@ export default function useGameLogic(
   const { openPromotionDialog, PromotionDialog } = usePromotionDialog();
 
   const moveAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  const [isPlayerInCheck, setIsPlayerInCheck] = useState<boolean>(false);
+  const [isOpponentInCheck, setIsOpponentInCheck] = useState<boolean>(false);
+  const prevIsPlayerInCheck = useRef(false);
+  const prevIsOpponentInCheck = useRef(false);
 
   useEffect(() => {
     moveAudioRef.current = new Audio("/move.mp3");
@@ -119,7 +125,24 @@ export default function useGameLogic(
         const [fromRow, fromCol] = from;
         newBoard[fromRow][fromCol] = null;
       }
-      //   newBoard[fromRow][fromCol] = null;
+
+      // 移動後に王手状態をチェック
+      const isStillInCheck = isInCheck(newBoard, playerSide as Player);
+
+      if (isStillInCheck) {
+        if (piece.type === "玉") {
+          toast.error("無効な移動です", {
+            description: "その位置に動かすと詰んでしまいます。",
+            position: "bottom-center",
+          });
+        } else {
+          toast.error("無効な移動です", {
+            description: "その位置に動かすと詰んでしまいます。",
+            position: "bottom-center",
+          });
+        }
+        return; // 移動を実行せずに関数を終了
+      }
 
       setBoard(newBoard);
       setCurrentPlayer(currentPlayer === "先手" ? "後手" : "先手");
@@ -326,19 +349,51 @@ export default function useGameLogic(
 
     socket.on(
       "boardUpdated",
-      ({ board: newBoard, currentPlayer: newCurrentPlayer }) => {
+      ({
+        board: newBoard,
+        currentPlayer: newCurrentPlayer,
+        capturedPieces: newCapturedPieces,
+        isPlayerInCheck,
+        isOpponentInCheck,
+      }) => {
         setBoard(newBoard);
         setCurrentPlayer(newCurrentPlayer);
+        setCapturedPieces(newCapturedPieces);
         setSelectedCell(null);
+        setIsPlayerInCheck(isPlayerInCheck);
+        setIsOpponentInCheck(isOpponentInCheck);
         updateVisibleBoard();
         playMoveSound();
       }
     );
 
+    // プレイヤーの視点に基づいて王手の状態を判断
+    const isCurrentPlayerInCheck =
+      playerSide === currentPlayer ? isOpponentInCheck : isPlayerInCheck;
+    const isCurrentPlayerChecking =
+      playerSide === currentPlayer ? isPlayerInCheck : isOpponentInCheck;
+
+    // 王手の状態が変更されたときのみtoastを表示
+    if (isCurrentPlayerInCheck && !prevIsPlayerInCheck.current) {
+      toast.error("王手！", {
+        description: "あなたの王が狙われています。守りましょう！",
+        position: "bottom-center",
+      });
+    } else if (isCurrentPlayerChecking && !prevIsOpponentInCheck.current) {
+      toast.success("王手！", {
+        description: "相手の王を狙っています。",
+        position: "bottom-center",
+      });
+    }
+
+    // 前回の状態を更新
+    prevIsPlayerInCheck.current = isPlayerInCheck;
+    prevIsOpponentInCheck.current = isOpponentInCheck;
+
     return () => {
       socket.off("boardUpdated");
     };
-  }, [socket, updateVisibleBoard, playMoveSound]);
+  }, [socket, updateVisibleBoard, playMoveSound, playerSide]);
 
   const handlePromotionChoice = useCallback(
     (shouldPromote: boolean) => {
@@ -366,6 +421,8 @@ export default function useGameLogic(
     lastMove,
     capturedPieces,
     selectedCapturedPiece,
+    isPlayerInCheck,
+    isOpponentInCheck,
     PromotionDialog,
     handlePromotionChoice,
     playMoveSound,

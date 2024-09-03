@@ -1,5 +1,5 @@
 import React from "react";
-import { Player, Piece, VisibleCell } from "@/types/shogi";
+import { Player, Piece, VisibleCell } from "@shared/shogi";
 import { cn } from "@/lib/utils";
 
 interface BoardProps {

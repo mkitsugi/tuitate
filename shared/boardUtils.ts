@@ -1,10 +1,11 @@
 import {
+  Board,
   Piece,
   Player,
   VisibleCell,
   PieceType,
   PromotedPieceType,
-} from "@/types/shogi";
+} from "./shogi";
 
 export const initialBoard = (): (Piece | null)[][] => {
   const board: (Piece | null)[][] = Array(9)
@@ -351,7 +352,9 @@ const addKingMoves = (
   }
 };
 
-export const getPromotedType = (type: PieceType): PromotedPieceType => {
+export const getPromotedType = (
+  type: PieceType | PromotedPieceType
+): PromotedPieceType => {
   switch (type) {
     case "歩":
       return "と";
@@ -390,3 +393,55 @@ export const getOriginalType = (
       return type as PieceType;
   }
 };
+
+export function isInCheck(board: Board, player: Player): boolean {
+  const kingPosition = findKing(board, player);
+  if (!kingPosition) return false;
+
+  const opponent: Player = player === "先手" ? "後手" : "先手";
+  for (let row = 0; row < 9; row++) {
+    for (let col = 0; col < 9; col++) {
+      const piece = board[row][col];
+      if (piece && piece.player === opponent) {
+        if (isValidMove([row, col], kingPosition, piece, board)) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
+export function findKing(
+  board: Board,
+  player: Player
+): [number, number] | null {
+  for (let row = 0; row < 9; row++) {
+    for (let col = 0; col < 9; col++) {
+      const piece = board[row][col];
+      if (piece && piece.type === "玉" && piece.player === player) {
+        return [row, col];
+      }
+    }
+  }
+  return null;
+}
+
+export function canPromote(
+  from: [number, number],
+  to: [number, number],
+  piece: Piece
+): boolean {
+  const [fromRow] = from;
+  const [toRow] = to;
+
+  if (piece.promoted) {
+    return false;
+  }
+
+  if (piece.player === "先手") {
+    return toRow <= 2 || (fromRow <= 2 && toRow > 2);
+  } else {
+    return toRow >= 6 || (fromRow >= 6 && toRow < 6);
+  }
+}

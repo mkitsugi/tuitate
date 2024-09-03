@@ -9,6 +9,7 @@ export type PieceType =
   | "玉"
   | null;
 export type PromotedPieceType = "と" | "成香" | "成桂" | "成銀" | "馬" | "龍";
+
 export type Player = "先手" | "後手";
 
 export interface Piece {
@@ -35,4 +36,28 @@ export interface GameState {
   visibleBoard: VisibleBoard;
   currentPlayer: Player;
   capturedPieces: CapturedPieces;
+}
+
+export interface Room {
+  id: string;
+  players: number;
+  availableSides: Player[];
+}
+
+export interface GameState {
+  gameId: string | null;
+  playerSide: Player | null;
+  gameCreated: boolean;
+  gameStarted: boolean;
+  availableSides: Player[];
+  selectedSide: Player | null;
+  board: Board;
+  visibleBoard: VisibleBoard;
+  currentPlayer: Player;
+  capturedPieces: CapturedPieces;
+}
+
+export interface RoomState {
+  existingRooms: Room[];
+  isLoadingRooms: boolean;
 }

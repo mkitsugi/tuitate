@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { io, Socket } from "socket.io-client";
 import { toast } from "sonner";
-import { Player } from "@/types/shogi";
+import { Player, GameState, RoomState } from "@shared/shogi";
+import { useSocketEvents } from "./useSocketEvents";
+import { useRoomManagement } from "./useRoomManagement";
 
 const WEBSOCKET_URL =
   process.env.NEXT_PUBLIC_WEBSOCKET_URL || "http://localhost:3001";
@@ -10,19 +12,26 @@ export default function useSocket() {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [mySocketId, setMySocketId] = useState<string | null>(null);
 
-  const [gameId, setGameId] = useState<string | null>(null);
-  const [playerSide, setPlayerSide] = useState<Player | null>(null);
-  const [gameCreated, setGameCreated] = useState(false);
-  const [gameStarted, setGameStarted] = useState(false);
-  const [availableSides, setAvailableSides] = useState<Player[]>([
-    "先手",
-    "後手",
-  ]);
+  const {
+    gameState,
+    setGameState,
+    roomState,
+    setRoomState,
+    addNewRoom,
+    updateAvailableSides,
+  } = useRoomManagement();
 
-  const [existingRooms, setExistingRooms] = useState<
-    Array<{ id: string; players: number; availableSides: Player[] }>
-  >([]);
-  const [isLoadingRooms, setIsLoadingRooms] = useState(false);
+  const {
+    handleRoomList,
+    handleGameCreated,
+    handleGameJoined,
+    handleAvailableSidesUpdated,
+    handleRoomCreated,
+    handlePlayerJoined,
+    handlePlayerLeft,
+    handleGameStarted,
+    handleGameError,
+  } = useSocketEvents(setGameState, setRoomState);
 
   useEffect(() => {
     const newSocket = io(WEBSOCKET_URL, {
@@ -53,88 +62,70 @@ export default function useSocket() {
   useEffect(() => {
     if (!socket) return;
 
-    socket.on("roomList", (rooms) => {
-      console.log("Received room list:", rooms);
-      setExistingRooms(rooms);
-      setIsLoadingRooms(false);
-    });
-
-    socket.on("gameCreated", (id: string) => {
-      setGameId(id.trim());
-      setGameCreated(true);
-      toast("ゲームが作成されました", {
-        description: `ゲームID: ${id.trim()}`,
-        position: "bottom-center",
-      });
-    });
-
-    socket.on(
-      "gameJoined",
-      ({ gameId, side }: { gameId: string; side: Player }) => {
-        setGameId(gameId);
-        setPlayerSide(side);
-        setAvailableSides(availableSides.filter((s) => s !== side));
-        toast("ゲームに参加しました", {
-          description: `ゲームID: ${gameId}, 手番: ${side}`,
-          position: "bottom-center",
-        });
-      }
-    );
-
-    socket.on("playerJoined", ({ side, availableSides, playerId }) => {
-      setAvailableSides(availableSides);
-      if (playerId !== mySocketId) {
-        toast.info(`他のプレイヤーが${side}として参加しました`, {
-          position: "bottom-center",
-        });
-      }
-    });
-
-    socket.on(
-      "gameStarted",
-      ({
-        gameId,
-        currentPlayer,
-      }: {
-        gameId: string;
-        currentPlayer: Player;
-      }) => {
-        setGameStarted(true);
-        toast("ゲームが開始されました", {
-          description: `現在の手番: ${currentPlayer}`,
-          position: "bottom-center",
-        });
-        setAvailableSides([]);
-      }
-    );
-
-    socket.on("gameError", (message: string) => {
-      toast("エラー", {
-        description: message,
-        style: { background: "#dc2626", color: "#fff" },
-        position: "bottom-center",
-      });
-    });
+    socket.on("roomList", handleRoomList);
+    socket.on("gameCreated", handleGameCreated);
+    socket.on("gameJoined", handleGameJoined);
+    socket.on("availableSidesUpdated", handleAvailableSidesUpdated);
+    socket.on("playerJoined", handlePlayerJoined);
+    socket.on("playerLeft", handlePlayerLeft);
+    socket.on("roomCreated", handleRoomCreated);
+    socket.on("gameStarted", handleGameStarted);
+    socket.on("gameError", handleGameError);
 
     return () => {
+      socket.off("roomList");
       socket.off("gameCreated");
       socket.off("gameJoined");
+      socket.off("availableSidesUpdated");
+      socket.off("playerJoined");
+      socket.off("playerLeft");
       socket.off("gameStarted");
       socket.off("gameError");
-      socket.off("playerJoined");
-      socket.off("roomList");
+      socket.off("roomCreated");
     };
-  }, [socket, availableSides]);
+  }, [
+    socket,
+    handleRoomList,
+    handleGameCreated,
+    handleGameJoined,
+    handleAvailableSidesUpdated,
+    handlePlayerJoined,
+    handlePlayerLeft,
+    handleGameStarted,
+    handleGameError,
+  ]);
+
+  const getAvailableSides = useCallback(
+    async (roomId: string): Promise<Player[]> => {
+      return new Promise((resolve) => {
+        socket?.emit("getAvailableSides", roomId, (sides: Player[]) => {
+          updateAvailableSides(sides);
+          resolve(sides);
+        });
+      });
+    },
+    [socket, updateAvailableSides]
+  );
+
+  const resign = useCallback(() => {
+    if (socket && gameState.gameId) {
+      socket.emit("resign", { gameId: gameState.gameId });
+    }
+  }, [socket, gameState.gameId]);
 
   const findExistingRooms = useCallback(() => {
-    setIsLoadingRooms(true);
+    setRoomState((prev: RoomState) => ({ ...prev, isLoadingRooms: true }));
     console.log("Requesting rooms from server");
     socket?.emit("getRooms");
-  }, [socket]);
+  }, [socket, setRoomState]);
 
   const createGame = useCallback(() => {
     if (socket) {
-      socket.emit("createGame");
+      socket.emit("createGame", (response: { gameId: string }) => {
+        if (response.gameId) {
+          socket.emit("roomCreated", { id: response.gameId, players: 1 });
+        }
+      });
     } else {
       toast.error("エラー", {
         description: "サーバーに接続されていません。",
@@ -144,33 +135,90 @@ export default function useSocket() {
   }, [socket]);
 
   const joinGame = useCallback(
-    (side: Player, gameId: string) => {
-      if (socket && gameId) {
-        socket.emit("joinGame", { gameId: gameId, side });
-        setAvailableSides((prev) => prev.filter((s) => s !== side));
-        setPlayerSide(side);
-      } else {
-        toast("エラー", {
-          description: "ゲームに参加できません。",
-          style: { background: "#dc2626", color: "#fff" },
-          position: "bottom-center",
-        });
-      }
+    (side: Player, roomId: string) => {
+      socket?.emit(
+        "joinGame",
+        { gameId: roomId, side },
+        (response: { success: boolean; message?: string }) => {
+          if (response.success) {
+            setGameState((prev: GameState) => ({
+              ...prev,
+              gameId: roomId,
+              playerSide: side,
+            }));
+          } else {
+            toast.error(response.message || "ゲームに参加できませんでした。");
+          }
+        }
+      );
+    },
+    [socket, setGameState]
+  );
+
+  const joinRoom = useCallback(
+    (roomId: string) => {
+      console.log(`Joining room ${roomId}`);
+      socket?.emit("joinRoom", { roomId });
     },
     [socket]
   );
 
+  const selectSide = useCallback(
+    (side: Player, roomId: string) => {
+      console.log(`Selecting side ${side} in room ${roomId}`);
+      socket?.emit(
+        "selectSide",
+        { gameId: roomId, side },
+        (response: { success: boolean; message?: string }) => {
+          if (response.success) {
+            setGameState((prev: GameState) => ({
+              ...prev,
+              gameId: roomId,
+              playerSide: side,
+            }));
+            console.log(`Joined game ${roomId} as ${side}`);
+          } else {
+            toast.error(response.message || "ゲームに参加できませんでした。");
+          }
+        }
+      );
+    },
+    [socket, setGameState]
+  );
+
+  const leaveRoom = useCallback(() => {
+    if (gameState.gameId && gameState.playerSide) {
+      console.log(
+        `Leaving room ${gameState.gameId} as ${gameState.playerSide}`
+      );
+      socket?.emit("leaveRoom", {
+        roomId: gameState.gameId,
+        side: gameState.playerSide,
+      });
+      setGameState((prev: GameState) => ({
+        ...prev,
+        gameId: null,
+        playerSide: null,
+        selectedSide: null,
+        availableSides: ["先手", "後手"],
+      }));
+    }
+  }, [socket, gameState, setGameState]);
+
   return {
     socket,
-    gameId,
-    playerSide,
-    gameCreated,
-    gameStarted,
-    availableSides,
+    mySocketId,
+    ...gameState,
+    ...roomState,
+    joinRoom,
+    selectSide,
+    leaveRoom,
+    getAvailableSides,
+    updateAvailableSides,
     createGame,
     joinGame,
-    existingRooms,
-    isLoadingRooms,
     findExistingRooms,
+    addNewRoom,
+    resign,
   };
 }

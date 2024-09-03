@@ -10,12 +10,15 @@ import CapturedPieces from "./CapturedPieces";
 import WaitingOverlay from "./WaitingOverlay";
 import useSocket from "@/hooks/useSocket";
 import useGameLogic from "@/hooks/useGameLogic";
-import { Player, Piece } from "@/types/shogi";
+import { useResignDialog } from "./ResignDialog";
+import { Player, Piece } from "@shared/shogi";
 import { Loader2, Copy } from "lucide-react";
 import RulesDialog from "./Rules";
 
 export default function ImprovedFogOfWarShogi() {
   const [inputGameId, setInputGameId] = useState<string>("");
+  const { openResignDialog, ResignDialog } = useResignDialog();
+
   const [selectedSide, setSelectedSide] = useState<Player | null>(null);
   const {
     socket,
@@ -29,6 +32,7 @@ export default function ImprovedFogOfWarShogi() {
     existingRooms,
     isLoadingRooms,
     findExistingRooms,
+    resign,
   } = useSocket();
 
   const {
@@ -83,6 +87,13 @@ export default function ImprovedFogOfWarShogi() {
       position: "bottom-center",
     });
   }, [gameId]);
+
+  const handleResign = () => {
+    resign();
+    toast.info("投了しました。", {
+      position: "bottom-center",
+    });
+  };
 
   return (
     <div className="flex justify-center items-center w-full h-full z-10">
@@ -269,8 +280,15 @@ export default function ImprovedFogOfWarShogi() {
                   />
                 )}
               </div>
+              <Button
+                onClick={openResignDialog}
+                className="mt-4 bg-red-600 hover:bg-red-700 text-white"
+              >
+                投了
+              </Button>
             </div>
             <PromotionDialog onPromote={handlePromotionChoice} />
+            <ResignDialog onResign={handleResign} />
           </>
         )}
       </div>
