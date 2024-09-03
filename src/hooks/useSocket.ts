@@ -15,6 +15,7 @@ export default function useSocket() {
   const [rematchRequested, setRematchRequested] = useState<boolean>(false);
   const [rematchAccepted, setRematchAccepted] = useState<boolean>(false);
   const [opponentLeft, setOpponentLeft] = useState<boolean>(false);
+  const [opponentRequestedRematch, setOpponentRequestedRematch] = useState<boolean>(false);
 
 
   const {
@@ -81,6 +82,7 @@ export default function useSocket() {
     socket.on("gameStarted", handleGameStarted);
     socket.on("gameError", handleGameError);
     socket.on("gameEnded", handleGameEnded);
+
     socket.on("rematchRequested", () => {
       toast.info("相手が再戦をリクエストしました。", {
         position: "bottom-center",
@@ -91,12 +93,21 @@ export default function useSocket() {
       });
     });
 
+    socket.on("opponentRequestedRematch", () => {
+      setOpponentRequestedRematch(true);
+      toast.info("相手が再戦をリクエストしました。", {
+        position: "bottom-center",
+      });
+    });
+
     socket.on("rematchAccepted", () => {
       setRematchAccepted(true);
     });
 
     socket.on("opponentLeft", () => {
       setOpponentLeft(true);
+      setRematchRequested(false);
+      setOpponentRequestedRematch(false);
     });
 
 
@@ -114,6 +125,7 @@ export default function useSocket() {
       socket.off("rematchRequested");
       socket.off("rematchAccepted");
       socket.off("opponentLeft");
+      socket.off("opponentRequestedRematch");
     };
   }, [
     socket,
@@ -252,6 +264,7 @@ export default function useSocket() {
   const acceptRematch = useCallback(() => {
     if (socket && gameState.gameId) {
       socket.emit("acceptRematch", { gameId: gameState.gameId });
+      setOpponentRequestedRematch(false);
     }
   }, [socket, gameState.gameId]);
 
@@ -290,6 +303,7 @@ export default function useSocket() {
     rematchRequested,
     rematchAccepted,
     opponentLeft,
+    opponentRequestedRematch,
     requestRematch,
     acceptRematch,
     startNewGame,

@@ -35,7 +35,7 @@ interface Game {
   capturedPieces: CapturedPieces;
   availableSides: Side[];
   currentPlayer?: Side;
-  先手?: string; // プレイヤーのIDを格納
+  先手?: string;
   後手?: string;
   rematchRequests: Set<string>;
 }
@@ -374,7 +374,7 @@ io.on("connection", (socket) => {
           winner,
           reason: `${resigningPlayer.side}が投了しました`
         });
-        games.delete(gameId);
+        // games.delete(gameId);
       }
     }
   });
@@ -404,15 +404,9 @@ io.on("connection", (socket) => {
   socket.on("requestRematch", ({ gameId }) => {
     const game = games.get(gameId);
     if (game) {
-      game.rematchRequests.add(socket.id);
       const opponent = game.players.find(p => p.id !== socket.id);
       if (opponent) {
-        io.to(opponent.id).emit("rematchRequested");
-      }
-
-      if (game.rematchRequests.size === 2) {
-        // 両プレイヤーが再戦を希望した場合、新しいゲームを開始
-        startNewGame(gameId);
+        io.to(opponent.id).emit("opponentRequestedRematch");
       }
     }
   });
@@ -420,13 +414,32 @@ io.on("connection", (socket) => {
   socket.on("acceptRematch", ({ gameId }) => {
     const game = games.get(gameId);
     if (game) {
-      game.rematchRequests.add(socket.id);
-      if (game.rematchRequests.size === 2) {
-        // 両プレイヤーが再戦を希望した場合、新しいゲームを開始
-        startNewGame(gameId);
-      }
+      // プレイヤーの順番をランダムに決定
+      const shuffledPlayers = game.players.sort(() => Math.random() - 0.5);
+
+      // 新しいゲーム状態を初期化
+      const newGame = initializeGame();
+      newGame.players = shuffledPlayers;
+      newGame.先手 = shuffledPlayers[0].id;
+      newGame.後手 = shuffledPlayers[1].id;
+      newGame.currentPlayer = "先手";
+
+      // 新しいゲーム状態を保存
+      games.set(gameId, newGame);
+
+      // 両プレイヤーに新しいゲームが開始されたことを通知
+      io.to(gameId).emit("gameStarted", {
+        gameId,
+        board: newGame.board,
+        currentPlayer: newGame.currentPlayer,
+        playerSides: {
+          [shuffledPlayers[0].id]: "先手",
+          [shuffledPlayers[1].id]: "後手",
+        },
+      });
     }
   });
+
 
   socket.on("rejectRematch", ({ gameId }) => {
     const game = games.get(gameId);

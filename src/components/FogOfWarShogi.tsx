@@ -41,6 +41,7 @@ export default function ImprovedFogOfWarShogi() {
     returnToLobby,
     rematchRequested,
     rematchAccepted,
+    opponentRequestedRematch,
     opponentLeft,
     requestRematch,
     acceptRematch,
@@ -86,12 +87,21 @@ export default function ImprovedFogOfWarShogi() {
     }
   }, [rematchAccepted, startNewGame]);
 
+  const handleReturnToLobby = () => {
+    returnToLobby();
+    setInputGameId("");
+    setSelectedSide(null);
+    clearExistingRooms();
+    findExistingRooms();
+    resetGameState();
+  };
+
   useEffect(() => {
     if (opponentLeft) {
       toast.info("相手がルームを抜けました。ロビーに戻ります。");
-      returnToLobby();
+      handleReturnToLobby();
     }
-  }, [opponentLeft, returnToLobby]);
+  }, [opponentLeft, handleReturnToLobby]);
 
   const handleCapturedPieceClickWrapper = (
     piece: Piece,
@@ -137,14 +147,7 @@ export default function ImprovedFogOfWarShogi() {
     );
   };
 
-  const handleReturnToLobby = () => {
-    returnToLobby();
-    setInputGameId("");
-    setSelectedSide(null);
-    clearExistingRooms();
-    findExistingRooms();
-    resetGameState();
-  };
+
 
   useEffect(() => {
     if (gameStarted) {
@@ -373,12 +376,22 @@ export default function ImprovedFogOfWarShogi() {
               <Button onClick={handleReturnToLobby} disabled={rematchRequested} className="bg-gray-600 hover:bg-gray-700 text-white">
                 ルームを抜ける
               </Button>
-              <Button onClick={requestRematch} disabled={rematchRequested} className="bg-green-600 hover:bg-green-700 text-white">
-                {rematchRequested ? "再戦をリクエスト中..." : "再戦する"}
-              </Button>
+              {!rematchRequested && !opponentRequestedRematch && (
+                <Button onClick={requestRematch} className="bg-green-600 hover:bg-green-700 text-white">
+                  再戦をリクエスト
+                </Button>
+              )}
+              {opponentRequestedRematch && (
+                <Button onClick={acceptRematch} className="bg-green-600 hover:bg-green-700 text-white">
+                  再戦を受け入れる
+                </Button>
+              )}
             </div>
             {rematchRequested && (
               <p className="text-white">相手の応答を待っています...</p>
+            )}
+            {opponentRequestedRematch && (
+              <p className="text-white">相手が再戦をリクエストしています</p>
             )}
           </div>
         )}
