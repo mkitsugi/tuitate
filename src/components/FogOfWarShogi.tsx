@@ -62,6 +62,7 @@ export default function ImprovedFogOfWarShogi() {
     handleCellClick,
     handleCapturedPieceClick,
     resetGameState,
+    resetForNewGame,
   } = useGameLogic(socket, gameId, playerSide);
 
   // 選択された持ち駒のインデックスを追跡するための状態
@@ -83,9 +84,10 @@ export default function ImprovedFogOfWarShogi() {
 
   useEffect(() => {
     if (rematchAccepted) {
+      resetForNewGame();
       startNewGame();
     }
-  }, [rematchAccepted, startNewGame]);
+  }, [rematchAccepted, resetForNewGame, startNewGame]);
 
   const handleReturnToLobby = () => {
     returnToLobby();
@@ -146,15 +148,6 @@ export default function ImprovedFogOfWarShogi() {
       )
     );
   };
-
-
-
-  useEffect(() => {
-    if (gameStarted) {
-      resetGameState(); // ゲームが開始されたときにゲームの状態をリセット
-    }
-  }, [gameStarted, resetGameState]);
-
 
   return (
     <div className="flex justify-center items-center w-full h-full z-10">

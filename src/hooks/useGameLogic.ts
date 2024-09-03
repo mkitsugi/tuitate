@@ -415,13 +415,29 @@ export default function useGameLogic(
   );
 
   const resetGameState = useCallback(() => {
-    setBoard(initialBoard);
+    const newBoard = initialBoard();
+    setBoard(newBoard);
+    setVisibleBoard(
+      Array(9)
+        .fill(null)
+        .map(() => Array(9).fill({ piece: null, isVisible: false }))
+    );
     setCurrentPlayer("先手");
     setSelectedCell(null);
     setLastMove(null);
-    setCapturedPieces({ "先手": [], "後手": [] });
+    setCapturedPieces({ 先手: [], 後手: [] });
     setSelectedCapturedPiece(null);
   }, []);
+
+  const resetForNewGame = useCallback(() => {
+    resetGameState();
+  }, [resetGameState]);
+
+  useEffect(() => {
+    if (gameId) {
+      resetGameState();
+    }
+  }, [gameId, resetGameState]);
 
   return {
     board,
@@ -439,5 +455,6 @@ export default function useGameLogic(
     handleCellClick,
     handleCapturedPieceClick,
     resetGameState,
+    resetForNewGame,
   };
 }
