@@ -4,7 +4,7 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "start": "node -r ./tsconfig-paths-bootstrap.js dist/server/server.js",
+    "start": "node dist/server/server.js",
     "build": "tsc && cp -R ../shared ./dist/",
     "dev": "ts-node-dev --respawn -r tsconfig-paths/register server.ts"
   },
