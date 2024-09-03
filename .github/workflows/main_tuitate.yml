@@ -26,6 +26,8 @@ jobs:
           cd server
           npm install
           npm run build
+          ls -R dist  # This will show us the contents of the dist directory
+          npm start & sleep 5 && kill $!  # Start the server, wait 5 seconds, then kill it
 
       - name: Zip artifact for deployment
         run: |

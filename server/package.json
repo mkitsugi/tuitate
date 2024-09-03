@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node dist/server/server.js",
-    "build": "tsc && cp -R ../shared ./dist/",
+    "build": "tsc --verbose && cp -R ../shared ./dist/",
     "dev": "ts-node-dev --respawn -r tsconfig-paths/register server.ts"
   },
   "keywords": [],
@@ -22,6 +22,7 @@
     "typescript": "^5.5.4"
   },
   "devDependencies": {
+    "typescript": "^5.5.4",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "tsconfig-paths": "^4.2.0"

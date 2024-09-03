@@ -13,7 +13,7 @@ import {
   getPromotedType,
   getOriginalType,
 } from "../shared/boardUtils";
-import { Piece, Board, CapturedPieces } from "@shared/shogi";
+import { Piece, Board, CapturedPieces } from "../shared/shogi";
 
 const app = express();
 app.use(cors());
