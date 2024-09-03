@@ -1,4 +1,5 @@
 import "module-alias/register";
+import path from "path";
 import express from "express";
 import http from "http";
 import { Server, Socket } from "socket.io";
@@ -11,7 +12,7 @@ import {
   checkPromotion,
   getPromotedType,
   getOriginalType,
-} from "@shared/boardUtils";
+} from "../shared/boardUtils";
 import { Piece, Board, CapturedPieces } from "@shared/shogi";
 
 const app = express();

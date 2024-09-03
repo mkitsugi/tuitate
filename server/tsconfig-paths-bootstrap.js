@@ -6,8 +6,9 @@ const baseUrl = path.join(__dirname, "dist");
 const cleanup = tsConfigPaths.register({
   baseUrl,
   paths: {
-    "@shared/*": ["shared/*"],
+    "@shared/*": [path.join(__dirname, "..", "shared", "*")],
   },
 });
 
-// Optionally, you can call cleanup() when your app is shutting down.
+// When path registration is no longer needed
+// cleanup();
