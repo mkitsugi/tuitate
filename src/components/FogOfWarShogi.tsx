@@ -14,9 +14,12 @@ import { useResignDialog } from "./ResignDialog";
 import { Player, Piece } from "@shared/shogi";
 import { Loader2, Copy } from "lucide-react";
 import RulesDialog from "./Rules";
+import { VisibleCell } from "@shared/shogi";
 
 export default function ImprovedFogOfWarShogi() {
   const [inputGameId, setInputGameId] = useState<string>("");
+  const [gameEnded, setGameEnded] = useState(false);
+
   const { openResignDialog, ResignDialog } = useResignDialog();
 
   const [selectedSide, setSelectedSide] = useState<Player | null>(null);
@@ -90,9 +93,19 @@ export default function ImprovedFogOfWarShogi() {
 
   const handleResign = () => {
     resign();
+    setGameEnded(true);
     toast.info("投了しました。", {
       position: "bottom-center",
     });
+  };
+
+  // board を VisibleCell[][] に変換する関数
+  const convertBoardToVisible = (board: (Piece | null)[][]): VisibleCell[][] => {
+    return board.map(row => 
+      row.map(cell => 
+        ({ piece: cell, isVisible: true } as VisibleCell)
+      )
+    );
   };
 
   return (
@@ -239,7 +252,7 @@ export default function ImprovedFogOfWarShogi() {
           </Card>
         )}
 
-        {gameStarted && (
+        {gameStarted && !gameEnded && (
           <>
             <div className="flex flex-col justify-center items-center space-y-4 w-full">
               <div className="relative max-w-[450px]">
@@ -291,6 +304,31 @@ export default function ImprovedFogOfWarShogi() {
             <ResignDialog onResign={handleResign} />
           </>
         )}
+
+        {gameEnded && (
+            <div className="flex flex-col items-center space-y-4">
+              <h2 className="text-2xl font-bold text-white">ゲーム終了</h2>
+              <div className="relative max-w-[450px]">
+              <Board
+                visibleBoard={convertBoardToVisible(board)} // 全ての駒を表示
+                selectedCell={null}
+                lastMove={null}
+                playerSide={playerSide}
+                selectedCapturedPiece={null}
+                onCellClick={() => {}} // クリックを無効化
+              />
+              </div>
+              <div className="flex space-x-4">
+                <Button onClick={() => {}} className="bg-gray-600 hover:bg-gray-700 text-white">
+                  ルームを抜ける
+                </Button>
+                <Button onClick={()=>{}} className="bg-green-600 hover:bg-green-700 text-white">
+                  再戦する
+                </Button>
+              </div>
+            </div>
+          )}
+
       </div>
     </div>
   );
