@@ -30,7 +30,7 @@ jobs:
 
       - name: Zip artifact for deployment
         run: |
-          cd server
+          cd server/dist
           zip -r ../release.zip .
 
       - name: Upload artifact for deployment job
