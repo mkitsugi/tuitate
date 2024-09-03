@@ -25,8 +25,7 @@ jobs:
         run: |
           cd server
           npm install
-          npm run build 
-          npm prune --production
+          npm start
 
       - name: Zip artifact for deployment
         run: |
