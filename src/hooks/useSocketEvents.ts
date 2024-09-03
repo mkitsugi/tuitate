@@ -83,10 +83,20 @@ export function useSocketEvents(
   );
 
   const handleGameStarted = useCallback(
-    ({ gameId, currentPlayer }: { gameId: string; currentPlayer: Player }) => {
+    ({ gameId, board, currentPlayer, playerSides }: {
+      gameId: string;
+      board: any; // boardの型を適切に定義してください
+      currentPlayer: Player;
+      playerSides: { [key: string]: Player }
+    }) => {
       setGameState((prev) => ({
         ...prev,
+        gameId,
+        board,
+        currentPlayer,
         gameStarted: true,
+        gameEnded: false,
+        winner: null,
         availableSides: [],
       }));
       toast("ゲームが開始されました", {
@@ -105,6 +115,22 @@ export function useSocketEvents(
     });
   }, []);
 
+  const handleGameEnded = useCallback(
+    ({ winner, reason }: { winner: Player | null; reason: string }) => {
+      console.log("Game ended:", { winner, reason });
+      setGameState((prev) => ({
+        ...prev,
+        gameEnded: true,
+        winner: winner,
+      }));
+      toast.info(`ゲーム終了: ${reason}`, {
+        description: winner ? `勝者: ${winner}` : "引き分け",
+        position: "bottom-center",
+      });
+    },
+    [setGameState]
+  );
+
   return {
     handleRoomList,
     handleGameCreated,
@@ -115,5 +141,6 @@ export function useSocketEvents(
     handlePlayerLeft,
     handleGameStarted,
     handleGameError,
+    handleGameEnded,
   };
 }

@@ -3,6 +3,7 @@ import { Socket } from "socket.io-client";
 import { toast } from "sonner";
 import { Player, Piece, PieceType, PromotedPieceType } from "@shared/shogi";
 import { usePromotionDialog } from "@/components/PromotionDialog";
+import { initializeVisibleBoard } from "@shared/boardUtils";
 import {
   initialBoard,
   getVisibleCellsForPiece,
@@ -401,10 +402,10 @@ export default function useGameLogic(
         const { from, to, piece } = pendingMove;
         const promotedPiece = shouldPromote
           ? {
-              ...piece,
-              type: getPromotedType(piece.type as PieceType),
-              promoted: true,
-            }
+            ...piece,
+            type: getPromotedType(piece.type as PieceType),
+            promoted: true,
+          }
           : piece;
         executeMove(promotedPiece, from, to);
         setPendingMove(null);
@@ -412,6 +413,15 @@ export default function useGameLogic(
     },
     [pendingMove, executeMove]
   );
+
+  const resetGameState = useCallback(() => {
+    setBoard(initialBoard);
+    setCurrentPlayer("先手");
+    setSelectedCell(null);
+    setLastMove(null);
+    setCapturedPieces({ "先手": [], "後手": [] });
+    setSelectedCapturedPiece(null);
+  }, []);
 
   return {
     board,
@@ -428,5 +438,6 @@ export default function useGameLogic(
     playMoveSound,
     handleCellClick,
     handleCapturedPieceClick,
+    resetGameState,
   };
 }
