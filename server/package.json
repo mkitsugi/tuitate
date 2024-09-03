@@ -4,9 +4,9 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "start": "node -r ./tsconfig-paths-bootstrap.js dist/server/src/server.js",
+    "start": "node -r ./tsconfig-paths-bootstrap.js dist/server/server.js",
     "build": "tsc",
-    "dev": "ts-node-dev --respawn server.ts"
+    "dev": "ts-node-dev --respawn -r tsconfig-paths/register server.ts"
   },
   "keywords": [],
   "author": "",

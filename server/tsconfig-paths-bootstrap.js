@@ -2,9 +2,12 @@ const tsConfigPaths = require("tsconfig-paths");
 const tsConfig = require("./tsconfig.json");
 const path = require("path");
 
-const baseUrl = path.join(__dirname, tsConfig.compilerOptions.outDir);
-
-tsConfigPaths.register({
+const baseUrl = path.join(__dirname, "dist");
+const cleanup = tsConfigPaths.register({
   baseUrl,
-  paths: tsConfig.compilerOptions.paths,
+  paths: {
+    "@shared/*": ["shared/*"],
+  },
 });
+
+// Optionally, you can call cleanup() when your app is shutting down.
