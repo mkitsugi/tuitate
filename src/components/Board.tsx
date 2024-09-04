@@ -29,7 +29,7 @@ export default function Board({
 
   return (
     <div
-      className="w-full grid grid-cols-9 bg-slate-50/10 backdrop-blur-sm rounded-md shadow-lg select-none"
+      className="w-full grid grid-cols-9 bg-slate-50/10 backdrop-blur-sm rounded-md shadow-lg select-none overflow-hidden"
       role="grid"
       aria-label="将棋盤"
     >
@@ -46,7 +46,7 @@ export default function Board({
             <button
               key={`${rowIndex}-${colIndex}`}
               className={cn(
-                "w-11 h-11 rounded-[2px] flex items-center justify-center border transition-colors duration-200",
+                "w-11 h-11 flex items-center justify-center border transition-colors duration-200",
                 {
                   "bg-yellow-200":
                     lastMove &&
@@ -91,6 +91,7 @@ export default function Board({
                     alt={`${cell.piece.player}の${cell.piece.type}`}
                     layout="fill"
                     objectFit="contain"
+                    draggable="false"
                   />
                 </motion.div>
               )}

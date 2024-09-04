@@ -27,7 +27,7 @@ export default function CapturedPieces({
           return (
             <button
               key={index}
-              className={`w-8 h-8 flex items-center justify-center rounded-md text-gray-800 transition-colors duration-200 select-none ${
+              className={`w-10 h-10 flex items-center justify-center rounded-md text-gray-800 transition-colors duration-200 select-none ${
                 isSelected
                   ? "bg-yellow-300 ring-2 ring-yellow-500"
                   : "bg-none border-none"
@@ -35,7 +35,7 @@ export default function CapturedPieces({
               onClick={() => onPieceClick(piece, index)}
             >
               <motion.div
-                className="w-6 h-6 relative"
+                className="w-10 h-10 relative"
                 layoutId={piece.id}
                 key={piece.id}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
