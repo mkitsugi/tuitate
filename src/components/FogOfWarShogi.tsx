@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-// import { toast } from "@/components/ui/use-toast";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,6 +15,7 @@ import { Player, Piece } from "@shared/shogi";
 import { Loader2, Copy } from "lucide-react";
 import RulesDialog from "./Rules";
 import { VisibleCell } from "@shared/shogi";
+import { formatTime } from "@/lib/utils";
 
 export default function ImprovedFogOfWarShogi() {
   const [inputGameId, setInputGameId] = useState<string>("");
@@ -148,6 +149,24 @@ export default function ImprovedFogOfWarShogi() {
       row.map((cell) => ({ piece: cell, isVisible: true } as VisibleCell))
     );
   };
+
+  const [sente時間, setSente時間] = useState(0); // 10分 = 600秒
+  const [gote時間, setGote時間] = useState(0);
+
+  // タイマー更新のための useEffect
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (gameStarted && !gameEnded) {
+      interval = setInterval(() => {
+        if (currentPlayer === "先手") {
+          setSente時間((prev) => Math.max(0, prev + 1));
+        } else {
+          setGote時間((prev) => Math.max(0, prev + 1));
+        }
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [gameStarted, gameEnded, currentPlayer]);
 
   return (
     <div className="flex justify-center items-center w-full h-full z-10">
@@ -297,6 +316,19 @@ export default function ImprovedFogOfWarShogi() {
         {gameStarted && !gameEnded && (
           <>
             <div className="flex flex-col justify-center items-center space-y-4 w-full">
+              <div className="w-full max-w-[480px] flex flex-col items-end justify-center px-2 sm:px-8">
+                <div className="text-white text-sm pr-1 pb-1">
+                  {formatTime(playerSide === "先手" ? gote時間 : sente時間)}
+                </div>
+                <div
+                  className={cn(
+                    "px-2 py-0.5 rounded-full w-fit text-sm bg-sky-600/80 backdrop-blur-sm border-2 border-sky-400/20 text-white",
+                    playerSide === "先手" ? "bg-rose-600/80" : "bg-sky-600/80"
+                  )}
+                >
+                  {playerSide === "先手" ? "後手" : "先手"}
+                </div>
+              </div>
               <div className="relative max-w-[480px]">
                 <Board
                   visibleBoard={visibleBoard}
@@ -308,11 +340,33 @@ export default function ImprovedFogOfWarShogi() {
                 />
                 {currentPlayer !== playerSide && <WaitingOverlay />}
               </div>
+              <div className="w-full max-w-[480px] flex flex-col justify-start px-2 sm:px-8 space-y-2">
+                <div className="w-full max-w-[480px] flex justify-between items-center">
+                  <div
+                    className={cn(
+                      "px-2 py-0.5 rounded-full text-sm bg-sky-600/80 backdrop-blur-sm border-2 border-sky-400/20 text-white",
+                      playerSide === "先手" ? "bg-sky-600/80" : "bg-rose-600/80"
+                    )}
+                  >
+                    {playerSide}
+                  </div>
+                  {currentPlayer === playerSide && (
+                    <div className="text-white font-semibold">
+                      あなたの番です
+                    </div>
+                  )}
+                  <div className="w-[50px]"></div>
+                </div>
 
-              <div className="flex justify-between gap-4 max-w-[450px] w-full px-2 md:px-10">
+                <div className="text-white text-sm pl-1">
+                  {formatTime(playerSide === "先手" ? sente時間 : gote時間)}
+                </div>
+              </div>
+
+              <div className="flex justify-between gap-4 max-w-[420px] w-full px-2">
                 {playerSide === "先手" && gameStarted && (
                   <CapturedPieces
-                    title="あなた（先手）の持ち駒"
+                    title="あなたの持ち駒"
                     pieces={capturedPieces["先手"]}
                     onPieceClick={(piece, index) =>
                       handleCapturedPieceClickWrapper(piece, index, "先手")
@@ -324,7 +378,7 @@ export default function ImprovedFogOfWarShogi() {
                 )}
                 {playerSide === "後手" && gameStarted && (
                   <CapturedPieces
-                    title="あなた（後手）の持ち駒"
+                    title="あなたの持ち駒"
                     pieces={capturedPieces["後手"]}
                     onPieceClick={(piece, index) =>
                       handleCapturedPieceClickWrapper(piece, index, "後手")

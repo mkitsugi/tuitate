@@ -250,11 +250,11 @@ export default function useGameLogic(
 
             // 自分の駒を取ろうとしている場合は移動を無効にする
             if (targetPiece && targetPiece.player === currentPlayer) {
-              toast.info("無効な移動です", {
-                description: "自分の駒は取れません。",
-                position: "bottom-center",
-              });
-              setSelectedCell(null);
+              // toast.info("無効な移動です", {
+              //   description: "自分の駒は取れません。",
+              //   position: "bottom-center",
+              // });
+              // setSelectedCell(null);
               return;
             }
 
@@ -300,10 +300,10 @@ export default function useGameLogic(
               );
             }
           } else {
-            toast.info("無効な移動です", {
-              description: "選択した駒はそこに移動できません。",
-              position: "bottom-center",
-            });
+            // toast.info("無効な移動です", {
+            //   description: "選択した駒はそこに移動できません。",
+            //   position: "bottom-center",
+            // });
           }
           setSelectedCell(null);
         }
@@ -402,10 +402,10 @@ export default function useGameLogic(
         const { from, to, piece } = pendingMove;
         const promotedPiece = shouldPromote
           ? {
-            ...piece,
-            type: getPromotedType(piece.type as PieceType),
-            promoted: true,
-          }
+              ...piece,
+              type: getPromotedType(piece.type as PieceType),
+              promoted: true,
+            }
           : piece;
         executeMove(promotedPiece, from, to);
         setPendingMove(null);
