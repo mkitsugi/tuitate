@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useMemo } from "react";
+import Image from "next/image";
 import { Player, Piece, VisibleCell } from "@shared/shogi";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 
 interface BoardProps {
   visibleBoard: VisibleCell[][];
@@ -44,11 +46,8 @@ export default function Board({
             <button
               key={`${rowIndex}-${colIndex}`}
               className={cn(
-                "w-10 h-10 rounded-[4px] flex items-center justify-center border transition-colors duration-200 select-none",
-
-                isSelected
-                  ? "border-yellow-500 border-4 "
-                  : "border-yellow-800",
+                "w-10 h-10 rounded-[2px] flex items-center justify-center border transition-colors duration-200",
+                isSelected ? "border-slate-500 border-4 " : "border-yellow-800",
                 {
                   "bg-green-300": isSelected,
                   "bg-yellow-200":
@@ -62,7 +61,7 @@ export default function Board({
                       lastMove[1] !== actualCol),
                 },
                 cell.isVisible
-                  ? "bg-yellow-100 border-yellow-500"
+                  ? "bg-slate-100 border-yellow-500"
                   : "bg-white/10 border-white/10"
               )}
               onClick={() => onCellClick(actualRow, actualCol)}
@@ -77,20 +76,26 @@ export default function Board({
               disabled={!cell.isVisible && !selectedCapturedPiece}
             >
               {cell.isVisible && cell.piece && (
-                <span
+                <motion.div
                   className={cn(
-                    "font-bold select-none user-select-none",
-                    cell.piece.player !== playerSide
-                      ? "transform rotate-180 text-blue-600"
-                      : "text-rose-700",
-                    isSelected && "ring-2 ring-yellow-500 bg-yellow-300 px-0.5",
-                    cell.piece.type && cell.piece.type.length > 1
-                      ? "text-md tracking-tight"
-                      : "text-2xl"
+                    "w-8 h-8 relative",
+                    cell.piece.player !== playerSide && "transform rotate-180",
+                    isSelected && "ring-2 ring-yellow-500 bg-yellow-300"
                   )}
+                  layoutId={cell.piece.id}
+                  // key={cell.piece.id}
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 >
-                  {cell.piece.type}
-                </span>
+                  <Image
+                    src={`/pieces/${cell.piece.type}.png`}
+                    alt={`${cell.piece.player}の${cell.piece.type}`}
+                    layout="fill"
+                    objectFit="contain"
+                  />
+                  {/* <div className="bg-black text-white z-50">
+                    {cell.piece.id}
+                  </div> */}
+                </motion.div>
               )}
             </button>
           );

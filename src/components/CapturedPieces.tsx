@@ -1,5 +1,7 @@
 import React from "react";
 import { Piece } from "@shared/shogi";
+import Image from "next/image";
+import { motion } from "framer-motion";
 
 interface CapturedPiecesProps {
   title: string;
@@ -25,13 +27,26 @@ export default function CapturedPieces({
           return (
             <button
               key={index}
-              className={`w-8 h-8 flex items-center justify-center rounded-md shadow text-gray-800 transition-colors duration-200 select-none ${isSelected
-                ? "bg-yellow-300 ring-2 ring-yellow-500"
-                : "bg-white hover:bg-gray-200"
-                }`}
+              className={`w-8 h-8 flex items-center justify-center rounded-md text-gray-800 transition-colors duration-200 select-none ${
+                isSelected
+                  ? "bg-yellow-300 ring-2 ring-yellow-500"
+                  : "bg-none border-none"
+              }`}
               onClick={() => onPieceClick(piece, index)}
             >
-              {piece.type}
+              <motion.div
+                className="w-6 h-6 relative"
+                layoutId={piece.id}
+                key={piece.id}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              >
+                <Image
+                  src={`/pieces/${piece.type}.png`}
+                  alt={`${piece.player}の${piece.type}`}
+                  layout="fill"
+                  objectFit="contain"
+                />
+              </motion.div>
             </button>
           );
         })}

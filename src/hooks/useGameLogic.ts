@@ -131,9 +131,9 @@ export default function useGameLogic(
       const isStillInCheck = isInCheck(newBoard, playerSide as Player);
 
       if (isStillInCheck) {
-        if (piece.type === "玉") {
+        if (piece.type === "王") {
           toast.error("無効な移動です", {
-            description: "その位置に動かすと詰んでしまいます。",
+            description: "その位置に動かすと詰んてしまいます。",
             position: "bottom-center",
           });
         } else {

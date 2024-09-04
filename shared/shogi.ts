@@ -6,13 +6,14 @@ export type PieceType =
   | "金"
   | "角"
   | "飛"
-  | "玉"
+  | "王"
   | null;
 export type PromotedPieceType = "と" | "成香" | "成桂" | "成銀" | "馬" | "龍";
 
 export type Player = "先手" | "後手";
 
 export interface Piece {
+  id: string;
   type: PieceType | PromotedPieceType;
   player: Player;
   promoted: boolean;
