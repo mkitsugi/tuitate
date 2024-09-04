@@ -144,7 +144,11 @@ export const isValidMove = (
         !(rowDiff === -direction && Math.abs(colDiff) === 1)
       );
     case "王":
-      return Math.abs(rowDiff) <= 1 && Math.abs(colDiff) <= 1;
+      return (
+        Math.abs(rowDiff) <= 1 &&
+        Math.abs(colDiff) <= 1 &&
+        (rowDiff !== 0 || colDiff !== 0)
+      );
     case "角":
       if (isDiagonalMove) {
         return checkPath(rowDiff > 0 ? 1 : -1, colDiff > 0 ? 1 : -1);
