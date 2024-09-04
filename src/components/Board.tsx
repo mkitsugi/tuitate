@@ -47,9 +47,7 @@ export default function Board({
               key={`${rowIndex}-${colIndex}`}
               className={cn(
                 "w-10 h-10 rounded-[2px] flex items-center justify-center border transition-colors duration-200",
-                isSelected ? "border-slate-500 border-4 " : "border-yellow-800",
                 {
-                  "bg-green-300": isSelected,
                   "bg-yellow-200":
                     lastMove &&
                     lastMove[0] === actualRow &&
@@ -61,7 +59,7 @@ export default function Board({
                       lastMove[1] !== actualCol),
                 },
                 cell.isVisible
-                  ? "bg-slate-100 border-yellow-500"
+                  ? "bg-white border-slate-300"
                   : "bg-white/10 border-white/10"
               )}
               onClick={() => onCellClick(actualRow, actualCol)}
@@ -80,10 +78,9 @@ export default function Board({
                   className={cn(
                     "w-8 h-8 relative",
                     cell.piece.player !== playerSide && "transform rotate-180",
-                    isSelected && "ring-2 ring-yellow-500 bg-yellow-300"
+                    isSelected && "ring-4 ring-yellow-400 bg-yellow-300"
                   )}
                   layoutId={cell.piece.id}
-                  // key={cell.piece.id}
                   transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 >
                   <Image
@@ -92,9 +89,6 @@ export default function Board({
                     layout="fill"
                     objectFit="contain"
                   />
-                  {/* <div className="bg-black text-white z-50">
-                    {cell.piece.id}
-                  </div> */}
                 </motion.div>
               )}
             </button>
