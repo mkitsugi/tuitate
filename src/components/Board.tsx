@@ -46,7 +46,7 @@ export default function Board({
             <button
               key={`${rowIndex}-${colIndex}`}
               className={cn(
-                "w-10 h-10 rounded-[2px] flex items-center justify-center border transition-colors duration-200",
+                "w-11 h-11 rounded-[2px] flex items-center justify-center border transition-colors duration-200",
                 {
                   "bg-yellow-200":
                     lastMove &&
@@ -76,8 +76,8 @@ export default function Board({
               {cell.isVisible && cell.piece && (
                 <motion.div
                   className={cn(
-                    "w-8 h-8 relative",
-                    cell.piece.player !== playerSide && "transform rotate-180",
+                    "w-10 h-10 relative",
+
                     isSelected && "ring-4 ring-yellow-400 bg-yellow-300"
                   )}
                   layoutId={cell.piece.id}
@@ -85,6 +85,9 @@ export default function Board({
                 >
                   <Image
                     src={`/pieces/${cell.piece.type}.png`}
+                    className={cn({
+                      "transform rotate-180": cell.piece.player !== playerSide,
+                    })}
                     alt={`${cell.piece.player}の${cell.piece.type}`}
                     layout="fill"
                     objectFit="contain"

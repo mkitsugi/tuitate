@@ -141,11 +141,11 @@ export default function ImprovedFogOfWarShogi() {
   };
 
   // board を VisibleCell[][] に変換する関数
-  const convertBoardToVisible = (board: (Piece | null)[][]): VisibleCell[][] => {
-    return board.map(row =>
-      row.map(cell =>
-        ({ piece: cell, isVisible: true } as VisibleCell)
-      )
+  const convertBoardToVisible = (
+    board: (Piece | null)[][]
+  ): VisibleCell[][] => {
+    return board.map((row) =>
+      row.map((cell) => ({ piece: cell, isVisible: true } as VisibleCell))
     );
   };
 
@@ -174,7 +174,7 @@ export default function ImprovedFogOfWarShogi() {
                                   playMoveSound();
                                 }}
                                 className="w-full sm:w-auto bg-black/80 backdrop-blur-sm border border-white/50 text-white hover:bg-black transition-colors"
-                              // className="w-full sm:w-auto mt-4"
+                                // className="w-full sm:w-auto mt-4"
                               >
                                 新しいルームを作成
                               </Button>
@@ -205,7 +205,7 @@ export default function ImprovedFogOfWarShogi() {
                               playMoveSound();
                             }}
                             className="mt-4 w-full bg-sky-600/80 backdrop-blur-sm border-2 border-sky-400/20 text-white hover:bg-sky-700/80 transition-colors"
-                          // className="mt-4 w-full bg-sky-600 hover:bg-sky-700"
+                            // className="mt-4 w-full bg-sky-600 hover:bg-sky-700"
                           >
                             先手として参加
                           </Button>
@@ -217,7 +217,7 @@ export default function ImprovedFogOfWarShogi() {
                               playMoveSound();
                             }}
                             className="mt-2 w-full bg-rose-600/80 backdrop-blur-sm border-2 border-rose-400/20 text-white hover:bg-rose-700/80 transition-colors"
-                          // className="mt-2 w-full bg-rose-600 hover:bg-rose-700"
+                            // className="mt-2 w-full bg-rose-600 hover:bg-rose-700"
                           >
                             後手として参加
                           </Button>
@@ -297,7 +297,7 @@ export default function ImprovedFogOfWarShogi() {
         {gameStarted && !gameEnded && (
           <>
             <div className="flex flex-col justify-center items-center space-y-4 w-full">
-              <div className="relative max-w-[450px]">
+              <div className="relative max-w-[480px]">
                 <Board
                   visibleBoard={visibleBoard}
                   selectedCell={selectedCell}
@@ -352,7 +352,9 @@ export default function ImprovedFogOfWarShogi() {
             <h2 className="text-2xl font-bold text-white">ゲーム終了</h2>
             {winner && (
               <p className="text-xl text-white">
-                {winner === playerSide ? "あなたの勝利です！" : "相手の勝利です。"}
+                {winner === playerSide
+                  ? "あなたの勝利です！"
+                  : "相手の勝利です。"}
               </p>
             )}
             <div className="relative max-w-[450px]">
@@ -362,20 +364,30 @@ export default function ImprovedFogOfWarShogi() {
                 lastMove={null}
                 playerSide={playerSide}
                 selectedCapturedPiece={null}
-                onCellClick={() => { }} // クリックを無効化
+                onCellClick={() => {}} // クリックを無効化
               />
             </div>
             <div className="flex space-x-4">
-              <Button onClick={handleReturnToLobby} disabled={rematchRequested} className="bg-gray-600 hover:bg-gray-700 text-white">
+              <Button
+                onClick={handleReturnToLobby}
+                disabled={rematchRequested}
+                className="bg-gray-600 hover:bg-gray-700 text-white"
+              >
                 ルームを抜ける
               </Button>
               {!rematchRequested && !opponentRequestedRematch && (
-                <Button onClick={requestRematch} className="bg-green-600 hover:bg-green-700 text-white">
+                <Button
+                  onClick={requestRematch}
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                >
                   再戦をリクエスト
                 </Button>
               )}
               {opponentRequestedRematch && (
-                <Button onClick={acceptRematch} className="bg-green-600 hover:bg-green-700 text-white">
+                <Button
+                  onClick={acceptRematch}
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                >
                   再戦を受け入れる
                 </Button>
               )}
@@ -388,7 +400,6 @@ export default function ImprovedFogOfWarShogi() {
             )}
           </div>
         )}
-
       </div>
     </div>
   );
