@@ -3,7 +3,7 @@ import { io, Socket } from "socket.io-client";
 import { toast } from "sonner";
 import { Player, GameState, RoomState, Room } from "@shared/shogi";
 import { useSocketEvents } from "./useSocketEvents";
-import { useRoomManagement } from "./useRoomManagement";
+import { useRoomManagement, initialBoard, createInitialVisibleBoard } from "./useRoomManagement";
 
 const WEBSOCKET_URL =
   process.env.NEXT_PUBLIC_WEBSOCKET_URL || "http://localhost:3001";
@@ -11,6 +11,12 @@ const WEBSOCKET_URL =
 export default function useSocket() {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [mySocketId, setMySocketId] = useState<string | null>(null);
+
+  const [rematchRequested, setRematchRequested] = useState<boolean>(false);
+  const [rematchAccepted, setRematchAccepted] = useState<boolean>(false);
+  const [opponentLeft, setOpponentLeft] = useState<boolean>(false);
+  const [opponentRequestedRematch, setOpponentRequestedRematch] = useState<boolean>(false);
+
 
   const {
     gameState,
@@ -31,6 +37,7 @@ export default function useSocket() {
     handlePlayerLeft,
     handleGameStarted,
     handleGameError,
+    handleGameEnded,
   } = useSocketEvents(setGameState, setRoomState);
 
   useEffect(() => {
@@ -74,6 +81,35 @@ export default function useSocket() {
     socket.on("roomCreated", handleRoomCreated);
     socket.on("gameStarted", handleGameStarted);
     socket.on("gameError", handleGameError);
+    socket.on("gameEnded", handleGameEnded);
+
+    socket.on("rematchRequested", () => {
+      toast.info("相手が再戦をリクエストしました。", {
+        position: "bottom-center",
+        action: {
+          label: "承諾",
+          onClick: () => acceptRematch(),
+        },
+      });
+    });
+
+    socket.on("opponentRequestedRematch", () => {
+      setOpponentRequestedRematch(true);
+      toast.info("相手が再戦をリクエストしました。", {
+        position: "bottom-center",
+      });
+    });
+
+    socket.on("rematchAccepted", () => {
+      setRematchAccepted(true);
+    });
+
+    socket.on("opponentLeft", () => {
+      setOpponentLeft(true);
+      setRematchRequested(false);
+      setOpponentRequestedRematch(false);
+    });
+
 
     return () => {
       socket.off("roomList");
@@ -85,6 +121,11 @@ export default function useSocket() {
       socket.off("gameStarted");
       socket.off("gameError");
       socket.off("roomCreated");
+      socket.off("gameEnded");
+      socket.off("rematchRequested");
+      socket.off("rematchAccepted");
+      socket.off("opponentLeft");
+      socket.off("opponentRequestedRematch");
     };
   }, [
     socket,
@@ -96,6 +137,7 @@ export default function useSocket() {
     handlePlayerLeft,
     handleGameStarted,
     handleGameError,
+    handleGameEnded,
   ]);
 
   const getAvailableSides = useCallback(
@@ -115,6 +157,10 @@ export default function useSocket() {
       socket.emit("resign", { gameId: gameState.gameId });
     }
   }, [socket, gameState.gameId]);
+
+  const clearExistingRooms = useCallback(() => {
+    setRoomState((prev: RoomState) => ({ ...prev, existingRooms: [] }));
+  }, [setRoomState]);
 
   const findExistingRooms = useCallback(() => {
     setRoomState((prev: RoomState) => ({ ...prev, isLoadingRooms: true }));
@@ -208,11 +254,60 @@ export default function useSocket() {
     }
   }, [socket, gameState, setGameState]);
 
+  const requestRematch = useCallback(() => {
+    if (socket && gameState.gameId) {
+      socket.emit("requestRematch", { gameId: gameState.gameId });
+      setRematchRequested(true);
+    }
+  }, [socket, gameState.gameId]);
+
+  const acceptRematch = useCallback(() => {
+    if (socket && gameState.gameId) {
+      socket.emit("acceptRematch", { gameId: gameState.gameId });
+      setOpponentRequestedRematch(false);
+    }
+  }, [socket, gameState.gameId]);
+
+  const startNewGame = useCallback(() => {
+    if (socket && gameState.gameId) {
+      socket.emit("startNewGame", { gameId: gameState.gameId });
+      setRematchRequested(false);
+      setRematchAccepted(false);
+      setOpponentLeft(false);
+    }
+  }, [socket, gameState.gameId]);
+
+  const returnToLobby = useCallback(() => {
+    leaveRoom();
+    setGameState((prev) => ({
+      ...prev,
+      gameEnded: false,
+      winner: null,
+      gameCreated: false,
+      gameStarted: false,
+      board: initialBoard,
+      visibleBoard: createInitialVisibleBoard(),
+      currentPlayer: "先手",
+      capturedPieces: { 先手: [], 後手: [] },
+    }));
+    setRematchRequested(false);
+    setRematchAccepted(false);
+    setOpponentLeft(false);
+  }, [leaveRoom, setGameState]);
+
   return {
     socket,
     mySocketId,
     ...gameState,
     ...roomState,
+    rematchRequested,
+    rematchAccepted,
+    opponentLeft,
+    opponentRequestedRematch,
+    requestRematch,
+    acceptRematch,
+    startNewGame,
+    returnToLobby,
     joinRoom,
     selectSide,
     leaveRoom,
@@ -221,6 +316,7 @@ export default function useSocket() {
     createGame,
     joinGame,
     findExistingRooms,
+    clearExistingRooms,
     addNewRoom,
     resign,
   };

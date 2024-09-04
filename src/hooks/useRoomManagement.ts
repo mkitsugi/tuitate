@@ -8,10 +8,10 @@ import {
   RoomState,
 } from "@shared/shogi";
 
-const initialBoard: Board = Array(9)
+export const initialBoard: Board = Array(9)
   .fill(null)
   .map(() => Array(9).fill(null));
-const createInitialVisibleBoard = (): VisibleBoard => {
+export const createInitialVisibleBoard = (): VisibleBoard => {
   return Array(9)
     .fill(null)
     .map(() =>
@@ -32,6 +32,8 @@ export function useRoomManagement() {
     gameStarted: false,
     availableSides: ["先手", "後手"],
     selectedSide: null,
+    gameEnded: false,
+    winner: null,
     board: initialBoard,
     visibleBoard: createInitialVisibleBoard(),
     currentPlayer: "先手",

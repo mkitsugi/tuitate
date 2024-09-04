@@ -29,7 +29,7 @@ export default function Board({
 
   return (
     <div
-      className="w-full grid grid-cols-9 bg-slate-50/10 backdrop-blur-sm rounded-md shadow-lg"
+      className="w-full grid grid-cols-9 bg-slate-50/10 backdrop-blur-sm rounded-md shadow-lg select-none"
       role="grid"
       aria-label="将棋盤"
     >
@@ -47,7 +47,6 @@ export default function Board({
               key={`${rowIndex}-${colIndex}`}
               className={cn(
                 "w-10 h-10 rounded-[2px] flex items-center justify-center border transition-colors duration-200",
-
                 isSelected ? "border-slate-500 border-4 " : "border-yellow-800",
                 {
                   "bg-green-300": isSelected,

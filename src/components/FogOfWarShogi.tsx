@@ -14,25 +14,38 @@ import { useResignDialog } from "./ResignDialog";
 import { Player, Piece } from "@shared/shogi";
 import { Loader2, Copy } from "lucide-react";
 import RulesDialog from "./Rules";
+import { VisibleCell } from "@shared/shogi";
 
 export default function ImprovedFogOfWarShogi() {
   const [inputGameId, setInputGameId] = useState<string>("");
   const { openResignDialog, ResignDialog } = useResignDialog();
-
   const [selectedSide, setSelectedSide] = useState<Player | null>(null);
+
   const {
     socket,
     gameId,
     playerSide,
     gameCreated,
     gameStarted,
+    gameEnded,
+    winner,
     availableSides,
     createGame,
     joinGame,
     existingRooms,
     isLoadingRooms,
     findExistingRooms,
+    clearExistingRooms,
     resign,
+    leaveRoom,
+    returnToLobby,
+    rematchRequested,
+    rematchAccepted,
+    opponentRequestedRematch,
+    opponentLeft,
+    requestRematch,
+    acceptRematch,
+    startNewGame,
   } = useSocket();
 
   const {
@@ -48,6 +61,8 @@ export default function ImprovedFogOfWarShogi() {
     playMoveSound,
     handleCellClick,
     handleCapturedPieceClick,
+    resetGameState,
+    resetForNewGame,
   } = useGameLogic(socket, gameId, playerSide);
 
   // 選択された持ち駒のインデックスを追跡するための状態
@@ -58,7 +73,37 @@ export default function ImprovedFogOfWarShogi() {
   // 初回マウント時にルーム一覧を取得
   useEffect(() => {
     findExistingRooms();
-  }, [findExistingRooms]);
+    const interval = setInterval(() => {
+      if (!gameStarted) {
+        findExistingRooms();
+      }
+    }, 10000); // 10秒ごとに更新
+
+    return () => clearInterval(interval);
+  }, [findExistingRooms, gameStarted]);
+
+  useEffect(() => {
+    if (rematchAccepted) {
+      resetForNewGame();
+      startNewGame();
+    }
+  }, [rematchAccepted, resetForNewGame, startNewGame]);
+
+  const handleReturnToLobby = () => {
+    returnToLobby();
+    setInputGameId("");
+    setSelectedSide(null);
+    clearExistingRooms();
+    findExistingRooms();
+    resetGameState();
+  };
+
+  useEffect(() => {
+    if (opponentLeft) {
+      toast.info("相手がルームを抜けました。ロビーに戻ります。");
+      handleReturnToLobby();
+    }
+  }, [opponentLeft, handleReturnToLobby]);
 
   const handleCapturedPieceClickWrapper = (
     piece: Piece,
@@ -95,6 +140,15 @@ export default function ImprovedFogOfWarShogi() {
     });
   };
 
+  // board を VisibleCell[][] に変換する関数
+  const convertBoardToVisible = (board: (Piece | null)[][]): VisibleCell[][] => {
+    return board.map(row =>
+      row.map(cell =>
+        ({ piece: cell, isVisible: true } as VisibleCell)
+      )
+    );
+  };
+
   return (
     <div className="flex justify-center items-center w-full h-full z-10">
       <div className="space-y-6 w-full">
@@ -116,10 +170,11 @@ export default function ImprovedFogOfWarShogi() {
                               <Button
                                 onClick={() => {
                                   createGame();
+                                  setSelectedSide(null);
                                   playMoveSound();
                                 }}
                                 className="w-full sm:w-auto bg-black/80 backdrop-blur-sm border border-white/50 text-white hover:bg-black transition-colors"
-                                // className="w-full sm:w-auto mt-4"
+                              // className="w-full sm:w-auto mt-4"
                               >
                                 新しいルームを作成
                               </Button>
@@ -150,7 +205,7 @@ export default function ImprovedFogOfWarShogi() {
                               playMoveSound();
                             }}
                             className="mt-4 w-full bg-sky-600/80 backdrop-blur-sm border-2 border-sky-400/20 text-white hover:bg-sky-700/80 transition-colors"
-                            // className="mt-4 w-full bg-sky-600 hover:bg-sky-700"
+                          // className="mt-4 w-full bg-sky-600 hover:bg-sky-700"
                           >
                             先手として参加
                           </Button>
@@ -162,7 +217,7 @@ export default function ImprovedFogOfWarShogi() {
                               playMoveSound();
                             }}
                             className="mt-2 w-full bg-rose-600/80 backdrop-blur-sm border-2 border-rose-400/20 text-white hover:bg-rose-700/80 transition-colors"
-                            // className="mt-2 w-full bg-rose-600 hover:bg-rose-700"
+                          // className="mt-2 w-full bg-rose-600 hover:bg-rose-700"
                           >
                             後手として参加
                           </Button>
@@ -239,7 +294,7 @@ export default function ImprovedFogOfWarShogi() {
           </Card>
         )}
 
-        {gameStarted && (
+        {gameStarted && !gameEnded && (
           <>
             <div className="flex flex-col justify-center items-center space-y-4 w-full">
               <div className="relative max-w-[450px]">
@@ -291,6 +346,49 @@ export default function ImprovedFogOfWarShogi() {
             <ResignDialog onResign={handleResign} />
           </>
         )}
+
+        {gameEnded && (
+          <div className="flex flex-col items-center space-y-4">
+            <h2 className="text-2xl font-bold text-white">ゲーム終了</h2>
+            {winner && (
+              <p className="text-xl text-white">
+                {winner === playerSide ? "あなたの勝利です！" : "相手の勝利です。"}
+              </p>
+            )}
+            <div className="relative max-w-[450px]">
+              <Board
+                visibleBoard={convertBoardToVisible(board)} // 全ての駒を表示
+                selectedCell={null}
+                lastMove={null}
+                playerSide={playerSide}
+                selectedCapturedPiece={null}
+                onCellClick={() => { }} // クリックを無効化
+              />
+            </div>
+            <div className="flex space-x-4">
+              <Button onClick={handleReturnToLobby} disabled={rematchRequested} className="bg-gray-600 hover:bg-gray-700 text-white">
+                ルームを抜ける
+              </Button>
+              {!rematchRequested && !opponentRequestedRematch && (
+                <Button onClick={requestRematch} className="bg-green-600 hover:bg-green-700 text-white">
+                  再戦をリクエスト
+                </Button>
+              )}
+              {opponentRequestedRematch && (
+                <Button onClick={acceptRematch} className="bg-green-600 hover:bg-green-700 text-white">
+                  再戦を受け入れる
+                </Button>
+              )}
+            </div>
+            {rematchRequested && (
+              <p className="text-white">相手の応答を待っています...</p>
+            )}
+            {opponentRequestedRematch && (
+              <p className="text-white">相手が再戦をリクエストしています</p>
+            )}
+          </div>
+        )}
+
       </div>
     </div>
   );

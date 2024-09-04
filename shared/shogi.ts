@@ -50,6 +50,8 @@ export interface GameState {
   playerSide: Player | null;
   gameCreated: boolean;
   gameStarted: boolean;
+  gameEnded: boolean;
+  winner: Player | null;
   availableSides: Player[];
   selectedSide: Player | null;
   board: Board;
