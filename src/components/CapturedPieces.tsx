@@ -17,7 +17,7 @@ export default function CapturedPieces({
   selectedPieceIndex,
 }: CapturedPiecesProps) {
   return (
-    <div className="bg-white/60 border border-white/50 px-3 py-2 rounded-lg flex flex-col w-full gap-2 items-start justify-center">
+    <div className="bg-white/60 border border-white/50 px-3 py-2 min-h-[85px] rounded-lg flex flex-col w-full gap-2 items-start justify-start">
       <div className="text-xs text-black text-center">{title}</div>
       <div className="flex flex-wrap gap-2 justify-center">
         {pieces.map((piece, index) => {

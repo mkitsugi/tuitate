@@ -170,7 +170,7 @@ export default function ImprovedFogOfWarShogi() {
 
   return (
     <div className="flex justify-center items-center w-full h-full z-10">
-      <div className="space-y-6 w-full">
+      <div className="space-y-3 w-full">
         {!gameStarted && (
           <Card className="mx-auto bg-white/10 backdrop-blur-md border border-white/20 shadow-lg w-full max-w-[450px] py-8 overflow-hidden">
             <CardContent className="p-2">
@@ -315,7 +315,7 @@ export default function ImprovedFogOfWarShogi() {
 
         {gameStarted && !gameEnded && (
           <>
-            <div className="flex flex-col justify-center items-center space-y-4 w-full">
+            <div className="flex flex-col justify-center items-center space-y-2 w-full">
               <div className="w-full max-w-[480px] flex flex-col items-end justify-center px-2 sm:px-8">
                 <div className="text-white text-sm pr-1 pb-1">
                   {formatTime(playerSide === "先手" ? gote時間 : sente時間)}
@@ -340,43 +340,21 @@ export default function ImprovedFogOfWarShogi() {
                 />
                 {currentPlayer !== playerSide && <WaitingOverlay />}
               </div>
-              <div className="w-full max-w-[480px] flex flex-col justify-start px-2 sm:px-8 space-y-2">
-                <div className="w-full max-w-[480px] flex justify-between items-center">
-                  <div
-                    className={cn(
-                      "px-2 py-0.5 rounded-full text-sm bg-sky-600/80 backdrop-blur-sm border-2 border-sky-400/20 text-white",
-                      playerSide === "先手" ? "bg-sky-600/80" : "bg-rose-600/80"
-                    )}
-                  >
-                    {playerSide}
-                  </div>
-                  {currentPlayer === playerSide && (
-                    <div className="text-white font-semibold">
-                      あなたの番です
-                    </div>
-                  )}
-                  <div className="w-[50px]"></div>
-                </div>
-
-                <div className="text-white text-sm pl-1">
-                  {formatTime(playerSide === "先手" ? sente時間 : gote時間)}
-                </div>
-              </div>
 
               <div className="flex justify-between gap-4 max-w-[420px] w-full px-2">
-                {playerSide === "先手" && gameStarted && (
+                {playerSide && gameStarted && (
                   <CapturedPieces
                     title="あなたの持ち駒"
-                    pieces={capturedPieces["先手"]}
+                    pieces={capturedPieces[playerSide]}
                     onPieceClick={(piece, index) =>
-                      handleCapturedPieceClickWrapper(piece, index, "先手")
+                      handleCapturedPieceClickWrapper(piece, index, playerSide)
                     }
                     selectedPieceIndex={
                       playerSide === "先手" ? selectedPieceIndex : null
                     }
                   />
                 )}
-                {playerSide === "後手" && gameStarted && (
+                {/* {playerSide === "後手" && gameStarted && (
                   <CapturedPieces
                     title="あなたの持ち駒"
                     pieces={capturedPieces["後手"]}
@@ -387,15 +365,35 @@ export default function ImprovedFogOfWarShogi() {
                       playerSide === "後手" ? selectedPieceIndex : null
                     }
                   />
-                )}
+                )} */}
               </div>
-              <Button
-                onClick={openResignDialog}
-                className="mt-4 bg-red-600 hover:bg-red-700 text-white"
-              >
-                投了
-              </Button>
             </div>
+            <div className="w-full max-w-[480px] flex flex-col justify-start px-2 sm:px-8 space-y-2">
+              <div className="w-full max-w-[480px] flex justify-between items-center">
+                <div
+                  className={cn(
+                    "px-2 py-0.5 rounded-full text-sm bg-sky-600/80 backdrop-blur-sm border-2 border-sky-400/20 text-white",
+                    playerSide === "先手" ? "bg-sky-600/80" : "bg-rose-600/80"
+                  )}
+                >
+                  {playerSide}
+                </div>
+                {currentPlayer === playerSide && (
+                  <div className="text-white font-semibold">あなたの番です</div>
+                )}
+                <button
+                  onClick={openResignDialog}
+                  className="px-3 py-1 text-sm rounded bg-black/50 backdrop-blur-sm border border-white/50 text-white hover:bg-white hover:text-black  transition-colors"
+                >
+                  投了
+                </button>
+              </div>
+
+              <div className="text-white text-sm pl-1">
+                {formatTime(playerSide === "先手" ? sente時間 : gote時間)}
+              </div>
+            </div>
+
             <PromotionDialog onPromote={handlePromotionChoice} />
             <ResignDialog onResign={handleResign} />
           </>
