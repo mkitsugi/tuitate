@@ -4,43 +4,50 @@ exports.getOriginalType = exports.getPromotedType = exports.getVisibleCellsForPi
 exports.isInCheck = isInCheck;
 exports.findKing = findKing;
 exports.canPromote = canPromote;
+let pieceIdCounter = 0;
+const createPiece = (type, player, promoted) => ({
+    id: `piece-${pieceIdCounter++}`,
+    type,
+    player,
+    promoted,
+});
 const initialBoard = () => {
     const board = Array(9)
         .fill(null)
         .map(() => Array(9).fill(null));
     // 先手の駒を配置
     board[8] = [
-        { type: "香", player: "先手", promoted: false },
-        { type: "桂", player: "先手", promoted: false },
-        { type: "銀", player: "先手", promoted: false },
-        { type: "金", player: "先手", promoted: false },
-        { type: "玉", player: "先手", promoted: false },
-        { type: "金", player: "先手", promoted: false },
-        { type: "銀", player: "先手", promoted: false },
-        { type: "桂", player: "先手", promoted: false },
-        { type: "香", player: "先手", promoted: false },
+        createPiece("香", "先手", false),
+        createPiece("桂", "先手", false),
+        createPiece("銀", "先手", false),
+        createPiece("金", "先手", false),
+        createPiece("王", "先手", false),
+        createPiece("金", "先手", false),
+        createPiece("銀", "先手", false),
+        createPiece("桂", "先手", false),
+        createPiece("香", "先手", false),
     ];
-    board[7][1] = { type: "角", player: "先手", promoted: false };
-    board[7][7] = { type: "飛", player: "先手", promoted: false };
+    board[7][1] = createPiece("角", "先手", false);
+    board[7][7] = createPiece("飛", "先手", false);
     for (let i = 0; i < 9; i++) {
-        board[6][i] = { type: "歩", player: "先手", promoted: false };
+        board[6][i] = createPiece("歩", "先手", false);
     }
     // 後手の駒を配置
     board[0] = [
-        { type: "香", player: "後手", promoted: false },
-        { type: "桂", player: "後手", promoted: false },
-        { type: "銀", player: "後手", promoted: false },
-        { type: "金", player: "後手", promoted: false },
-        { type: "玉", player: "後手", promoted: false },
-        { type: "金", player: "後手", promoted: false },
-        { type: "銀", player: "後手", promoted: false },
-        { type: "桂", player: "後手", promoted: false },
-        { type: "香", player: "後手", promoted: false },
+        createPiece("香", "後手", false),
+        createPiece("桂", "後手", false),
+        createPiece("銀", "後手", false),
+        createPiece("金", "後手", false),
+        createPiece("王", "後手", false),
+        createPiece("金", "後手", false),
+        createPiece("銀", "後手", false),
+        createPiece("桂", "後手", false),
+        createPiece("香", "後手", false),
     ];
-    board[1][7] = { type: "角", player: "後手", promoted: false };
-    board[1][1] = { type: "飛", player: "後手", promoted: false };
+    board[1][7] = createPiece("角", "後手", false);
+    board[1][1] = createPiece("飛", "後手", false);
     for (let i = 0; i < 9; i++) {
-        board[2][i] = { type: "歩", player: "後手", promoted: false };
+        board[2][i] = createPiece("歩", "後手", false);
     }
     return board;
 };
@@ -106,7 +113,7 @@ const isValidMove = (from, to, piece, board) => {
             return (Math.abs(rowDiff) <= 1 &&
                 Math.abs(colDiff) <= 1 &&
                 !(rowDiff === -direction && Math.abs(colDiff) === 1));
-        case "玉":
+        case "王":
             return Math.abs(rowDiff) <= 1 && Math.abs(colDiff) <= 1;
         case "角":
             if (isDiagonalMove) {
@@ -140,7 +147,7 @@ const checkPromotion = (from, to, piece) => {
         return false; // すでに成っている駒は成れない
     }
     // 成れない駒の種類をチェック
-    if (["金", "玉", "と", "成香", "成桂", "成銀", "馬", "龍"].includes(piece.type)) {
+    if (["金", "王", "と", "成香", "成桂", "成銀", "馬", "龍"].includes(piece.type)) {
         return false;
     }
     if (piece.player === "先手") {
@@ -215,7 +222,7 @@ const getVisibleCellsForPiece = (row, col, piece, board) => {
                 addKingMoves(row, col, addVisibleCell);
             }
             break;
-        case "玉":
+        case "王":
             addKingMoves(row, col, addVisibleCell);
             break;
         case "馬":
@@ -340,7 +347,7 @@ function findKing(board, player) {
     for (let row = 0; row < 9; row++) {
         for (let col = 0; col < 9; col++) {
             const piece = board[row][col];
-            if (piece && piece.type === "玉" && piece.player === player) {
+            if (piece && piece.type === "王" && piece.player === player) {
                 return [row, col];
             }
         }

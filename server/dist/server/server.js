@@ -30,6 +30,7 @@ function initializeGame() {
         currentPlayer: undefined,
         先手: undefined,
         後手: undefined,
+        rematchRequests: new Set(),
     };
 }
 // ゲームの有効期限（ミリ秒）
@@ -216,6 +217,7 @@ io.on("connection", (socket) => {
             // 駒を取る処理
             if (game.board[toRow][toCol]) {
                 const capturedPiece = {
+                    id: game.board[toRow][toCol].id,
                     type: (0, boardUtils_1.getOriginalType)(game.board[toRow][toCol].type),
                     player: player,
                     promoted: false,
@@ -270,6 +272,20 @@ io.on("connection", (socket) => {
         console.log("Active rooms:", activeRooms);
         socket.emit("roomList", activeRooms);
     });
+    socket.on("resign", ({ gameId }) => {
+        const game = games.get(gameId);
+        if (game) {
+            const resigningPlayer = game.players.find(p => p.id === socket.id);
+            if (resigningPlayer) {
+                const winner = resigningPlayer.side === "先手" ? "後手" : "先手";
+                io.to(gameId).emit("gameEnded", {
+                    winner,
+                    reason: `${resigningPlayer.side}が投了しました`
+                });
+                // games.delete(gameId);
+            }
+        }
+    });
     socket.on("disconnect", () => {
         console.log("User disconnected");
         // プレイヤーが切断された場合、そのプレイヤーが参加していたゲームを探す
@@ -289,7 +305,73 @@ io.on("connection", (socket) => {
             }
         });
     });
+    socket.on("requestRematch", ({ gameId }) => {
+        const game = games.get(gameId);
+        if (game) {
+            const opponent = game.players.find(p => p.id !== socket.id);
+            if (opponent) {
+                io.to(opponent.id).emit("opponentRequestedRematch");
+            }
+        }
+    });
+    socket.on("acceptRematch", ({ gameId }) => {
+        const game = games.get(gameId);
+        if (game) {
+            // プレイヤーの順番をランダムに決定
+            const shuffledPlayers = game.players.sort(() => Math.random() - 0.5);
+            // 新しいゲーム状態を初期化
+            const newGame = initializeGame();
+            newGame.players = shuffledPlayers;
+            newGame.先手 = shuffledPlayers[0].id;
+            newGame.後手 = shuffledPlayers[1].id;
+            newGame.currentPlayer = "先手";
+            // 新しいゲーム状態を保存
+            games.set(gameId, newGame);
+            // 両プレイヤーに新しいゲームが開始されたことを通知
+            io.to(gameId).emit("gameStarted", {
+                gameId,
+                board: newGame.board,
+                currentPlayer: newGame.currentPlayer,
+                playerSides: {
+                    [shuffledPlayers[0].id]: "先手",
+                    [shuffledPlayers[1].id]: "後手",
+                },
+            });
+        }
+    });
+    socket.on("rejectRematch", ({ gameId }) => {
+        const game = games.get(gameId);
+        if (game) {
+            game.rematchRequests.clear();
+            io.to(gameId).emit("rematchRejected");
+        }
+    });
 });
+function startNewGame(gameId) {
+    const game = games.get(gameId);
+    if (game) {
+        // プレイヤーの順番をランダムに決定
+        const shuffledPlayers = game.players.sort(() => Math.random() - 0.5);
+        // 新しいゲーム状態を初期化
+        const newGame = initializeGame();
+        newGame.players = shuffledPlayers;
+        newGame.先手 = shuffledPlayers[0].id;
+        newGame.後手 = shuffledPlayers[1].id;
+        newGame.currentPlayer = "先手";
+        // 新しいゲーム状態を保存
+        games.set(gameId, newGame);
+        // 両プレイヤーに新しいゲームが開始されたことを通知
+        io.to(gameId).emit("gameStarted", {
+            gameId,
+            board: newGame.board,
+            currentPlayer: newGame.currentPlayer,
+            playerSides: {
+                [shuffledPlayers[0].id]: "先手",
+                [shuffledPlayers[1].id]: "後手",
+            },
+        });
+    }
+}
 function hasPawnInColumn(board, col, player) {
     for (let row = 0; row < 9; row++) {
         if (board[row][col] &&

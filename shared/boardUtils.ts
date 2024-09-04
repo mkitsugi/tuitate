@@ -190,7 +190,7 @@ export const checkPromotion = (
 
   // 成れない駒の種類をチェック
   if (
-    ["金", "玉", "と", "成香", "成桂", "成銀", "馬", "龍"].includes(
+    ["金", "王", "と", "成香", "成桂", "成銀", "馬", "龍"].includes(
       piece.type as string
     )
   ) {

@@ -141,7 +141,7 @@ export const getVisibleCellsForPiece = (
         addKingMoves();
       }
       break;
-    case "玉":
+    case "王":
       addKingMoves();
       break;
     case "馬":
