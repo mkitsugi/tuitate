@@ -7,6 +7,19 @@ import {
   PromotedPieceType,
 } from "./shogi";
 
+let pieceIdCounter = 0;
+
+const createPiece = (
+  type: PieceType | PromotedPieceType,
+  player: Player,
+  promoted: boolean
+): Piece => ({
+  id: `piece-${pieceIdCounter++}`,
+  type,
+  player,
+  promoted,
+});
+
 export const initialBoard = (): (Piece | null)[][] => {
   const board: (Piece | null)[][] = Array(9)
     .fill(null)
@@ -14,38 +27,38 @@ export const initialBoard = (): (Piece | null)[][] => {
 
   // 先手の駒を配置
   board[8] = [
-    { type: "香", player: "先手", promoted: false },
-    { type: "桂", player: "先手", promoted: false },
-    { type: "銀", player: "先手", promoted: false },
-    { type: "金", player: "先手", promoted: false },
-    { type: "玉", player: "先手", promoted: false },
-    { type: "金", player: "先手", promoted: false },
-    { type: "銀", player: "先手", promoted: false },
-    { type: "桂", player: "先手", promoted: false },
-    { type: "香", player: "先手", promoted: false },
+    createPiece("香", "先手", false),
+    createPiece("桂", "先手", false),
+    createPiece("銀", "先手", false),
+    createPiece("金", "先手", false),
+    createPiece("王", "先手", false),
+    createPiece("金", "先手", false),
+    createPiece("銀", "先手", false),
+    createPiece("桂", "先手", false),
+    createPiece("香", "先手", false),
   ];
-  board[7][1] = { type: "角", player: "先手", promoted: false };
-  board[7][7] = { type: "飛", player: "先手", promoted: false };
+  board[7][1] = createPiece("角", "先手", false);
+  board[7][7] = createPiece("飛", "先手", false);
   for (let i = 0; i < 9; i++) {
-    board[6][i] = { type: "歩", player: "先手", promoted: false };
+    board[6][i] = createPiece("歩", "先手", false);
   }
 
   // 後手の駒を配置
   board[0] = [
-    { type: "香", player: "後手", promoted: false },
-    { type: "桂", player: "後手", promoted: false },
-    { type: "銀", player: "後手", promoted: false },
-    { type: "金", player: "後手", promoted: false },
-    { type: "玉", player: "後手", promoted: false },
-    { type: "金", player: "後手", promoted: false },
-    { type: "銀", player: "後手", promoted: false },
-    { type: "桂", player: "後手", promoted: false },
-    { type: "香", player: "後手", promoted: false },
+    createPiece("香", "後手", false),
+    createPiece("桂", "後手", false),
+    createPiece("銀", "後手", false),
+    createPiece("金", "後手", false),
+    createPiece("王", "後手", false),
+    createPiece("金", "後手", false),
+    createPiece("銀", "後手", false),
+    createPiece("桂", "後手", false),
+    createPiece("香", "後手", false),
   ];
-  board[1][7] = { type: "角", player: "後手", promoted: false };
-  board[1][1] = { type: "飛", player: "後手", promoted: false };
+  board[1][7] = createPiece("角", "後手", false);
+  board[1][1] = createPiece("飛", "後手", false);
   for (let i = 0; i < 9; i++) {
-    board[2][i] = { type: "歩", player: "後手", promoted: false };
+    board[2][i] = createPiece("歩", "後手", false);
   }
 
   return board;
@@ -130,7 +143,7 @@ export const isValidMove = (
         Math.abs(colDiff) <= 1 &&
         !(rowDiff === -direction && Math.abs(colDiff) === 1)
       );
-    case "玉":
+    case "王":
       return Math.abs(rowDiff) <= 1 && Math.abs(colDiff) <= 1;
     case "角":
       if (isDiagonalMove) {
@@ -267,7 +280,7 @@ export const getVisibleCellsForPiece = (
         addKingMoves(row, col, addVisibleCell);
       }
       break;
-    case "玉":
+    case "王":
       addKingMoves(row, col, addVisibleCell);
       break;
     case "馬":
@@ -419,7 +432,7 @@ export function findKing(
   for (let row = 0; row < 9; row++) {
     for (let col = 0; col < 9; col++) {
       const piece = board[row][col];
-      if (piece && piece.type === "玉" && piece.player === player) {
+      if (piece && piece.type === "王" && piece.player === player) {
         return [row, col];
       }
     }

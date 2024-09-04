@@ -293,6 +293,7 @@ io.on("connection", (socket) => {
         // 駒を取る処理
         if (game.board[toRow][toCol]) {
           const capturedPiece = {
+            id: game.board[toRow][toCol]!.id,
             type: getOriginalType(game.board[toRow][toCol]!.type),
             player: player,
             promoted: false,
