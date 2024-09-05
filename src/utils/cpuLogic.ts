@@ -46,6 +46,54 @@ const pawnPositionValues = [
   [0, 0, 0, 0, 0, 0, 0, 0, 0],
 ];
 
+const lancePositionValues = [
+  [0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [3, 3, 3, 3, 3, 3, 3, 3, 3],
+  [2, 2, 2, 2, 2, 2, 2, 2, 2],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+  [-2, -2, -2, -2, -2, -2, -2, -2, -2],
+  [-3, -3, -3, -3, -3, -3, -3, -3, -3],
+];
+
+const knightPositionValues = [
+  [0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [3, 3, 3, 3, 3, 3, 3, 3, 3],
+  [2, 2, 2, 2, 2, 2, 2, 2, 2],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+  [-2, -2, -2, -2, -2, -2, -2, -2, -2],
+  [-3, -3, -3, -3, -3, -3, -3, -3, -3],
+];
+
+const silverPositionValues = [
+  [0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 2, 2, 2, 2, 2, 2, 2, 1],
+  [1, 1, 3, 3, 3, 3, 3, 1, 1],
+  [0, 1, 2, 2, 2, 2, 2, 1, 0],
+  [0, 0, 1, 1, 1, 1, 1, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+  [-2, -2, -2, -2, -2, -2, -2, -2, -2],
+];
+
+const goldPositionValues = [
+  [0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 2, 2, 2, 2, 2, 2, 2, 1],
+  [1, 2, 3, 3, 3, 3, 3, 2, 1],
+  [0, 1, 2, 2, 2, 2, 2, 1, 0],
+  [0, 0, 1, 1, 1, 1, 1, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+  [-2, -2, -2, -2, -2, -2, -2, -2, -2],
+];
+
 // 可視範囲内の駒のみを考慮した評価関数
 function evaluateBoard(board: Board, player: Player, visibleCells: boolean[][]): number {
   let score = 0;
@@ -57,7 +105,31 @@ function evaluateBoard(board: Board, player: Player, visibleCells: boolean[][]):
         const piece = board[row][col];
         if (piece && piece.type && piece.type in pieceValues) {
           const pieceValue = pieceValues[piece.type];
-          const positionValue = piece.type === '歩' ? pawnPositionValues[row][col] : 0;
+
+          let positionValue = 0;
+
+          switch (piece.type) {
+            case '歩':
+              positionValue = pawnPositionValues[row][col];
+              break;
+            case '香':
+              positionValue = lancePositionValues[row][col];
+              break;
+            case '桂':
+              positionValue = knightPositionValues[row][col];
+              break;
+            case '銀':
+              positionValue = silverPositionValues[row][col];
+              break;
+            case '金':
+            case 'と':
+            case '成香':
+            case '成桂':
+            case '成銀':
+              positionValue = goldPositionValues[row][col];
+              break;
+            // 他の駒タイプに対する位置評価を追加できます
+          }
 
           if (piece.player === player) {
             score += pieceValue + positionValue;
