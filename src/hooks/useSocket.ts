@@ -3,7 +3,11 @@ import { io, Socket } from "socket.io-client";
 import { toast } from "sonner";
 import { Player, GameState, RoomState, Room } from "@shared/shogi";
 import { useSocketEvents } from "./useSocketEvents";
-import { useRoomManagement, initialBoard, createInitialVisibleBoard } from "./useRoomManagement";
+import {
+  useRoomManagement,
+  initialBoard,
+  createInitialVisibleBoard,
+} from "./useRoomManagement";
 
 const WEBSOCKET_URL =
   process.env.NEXT_PUBLIC_WEBSOCKET_URL || "http://localhost:3001";
@@ -15,8 +19,10 @@ export default function useSocket() {
   const [rematchRequested, setRematchRequested] = useState<boolean>(false);
   const [rematchAccepted, setRematchAccepted] = useState<boolean>(false);
   const [opponentLeft, setOpponentLeft] = useState<boolean>(false);
-  const [opponentRequestedRematch, setOpponentRequestedRematch] = useState<boolean>(false);
+  const [opponentRequestedRematch, setOpponentRequestedRematch] =
+    useState<boolean>(false);
 
+  const [isCPUMode, setIsCPUMode] = useState<boolean>(false);
 
   const {
     gameState,
@@ -109,7 +115,6 @@ export default function useSocket() {
       setRematchRequested(false);
       setOpponentRequestedRematch(false);
     });
-
 
     return () => {
       socket.off("roomList");
@@ -295,6 +300,19 @@ export default function useSocket() {
     setOpponentLeft(false);
   }, [leaveRoom, setGameState]);
 
+  const startCPUGame = useCallback(() => {
+    setIsCPUMode(true);
+    setGameState((prev) => ({
+      ...prev,
+      gameId: "cpu-game",
+      playerSide: "先手",
+      gameCreated: true,
+      gameStarted: true,
+      board: initialBoard,
+      currentPlayer: "先手",
+    }));
+  }, [setGameState]);
+
   return {
     socket,
     mySocketId,
@@ -319,5 +337,7 @@ export default function useSocket() {
     clearExistingRooms,
     addNewRoom,
     resign,
+    isCPUMode,
+    startCPUGame,
   };
 }

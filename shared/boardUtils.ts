@@ -462,3 +462,17 @@ export function canPromote(
     return toRow >= 6 || (fromRow >= 6 && toRow < 6);
   }
 }
+
+export function movePiece(
+  board: Board,
+  fromRow: number,
+  fromCol: number,
+  toRow: number,
+  toCol: number
+): Board {
+  const newBoard = board.map((row) => [...row]);
+  const piece = newBoard[fromRow][fromCol];
+  newBoard[toRow][toCol] = piece;
+  newBoard[fromRow][fromCol] = null;
+  return newBoard;
+}

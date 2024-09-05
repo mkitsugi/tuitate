@@ -13,11 +13,13 @@ import {
   getOriginalType,
   isInCheck,
 } from "@shared/boardUtils";
+import { getCPUMove } from "@/utils/cpuLogic";
 
 export default function useGameLogic(
   socket: Socket | null,
   gameId: string | null,
-  playerSide: Player | null
+  playerSide: Player | null,
+  isCPUMode: boolean
 ) {
   const [board, setBoard] = useState<(Piece | null)[][]>(initialBoard());
   const [visibleBoard, setVisibleBoard] = useState<
@@ -145,14 +147,15 @@ export default function useGameLogic(
         return; // 移動を実行せずに関数を終了
       }
 
+      // CPU戦の場合、ローカルで状態を更新
       setBoard(newBoard);
       setCurrentPlayer(currentPlayer === "先手" ? "後手" : "先手");
       setLastMove([toRow, toCol]);
       setSelectedCell(null);
       updateVisibleBoard();
 
-      // サーバーに移動を通知
-      if (socket && gameId) {
+      // サーバーに移動を通知（CPU戦でない場合のみ）
+      if (!isCPUMode && socket && gameId) {
         socket.emit("move", {
           gameId,
           from,
@@ -164,11 +167,14 @@ export default function useGameLogic(
       }
 
       playMoveSound();
+
+      return newBoard;
     },
     [
       board,
       playerSide,
       currentPlayer,
+      isCPUMode,
       socket,
       gameId,
       updateVisibleBoard,
@@ -179,12 +185,16 @@ export default function useGameLogic(
   const handleCellClick = useCallback(
     (row: number, col: number) => {
       if (currentPlayer !== playerSide) {
-        toast.info("相手の手番です", {
-          description: "自分の手番をお待ちください。",
-          position: "bottom-center",
-        });
+        if (!isCPUMode) {
+          toast.info("相手の手番です", {
+            description: "自分の手番をお待ちください。",
+            position: "bottom-center",
+          });
+        }
         return;
       }
+
+      let updatedBoard: (Piece | null)[][] = board.map((row) => [...row]);
 
       if (selectedCapturedPiece) {
         if (board[row][col] === null) {
@@ -293,17 +303,12 @@ export default function useGameLogic(
                 return;
               }
             } else {
-              executeMove(
+              updatedBoard = executeMove(
                 selectedPiece,
                 [selectedRow, selectedCol],
                 [row, col]
               );
             }
-          } else {
-            // toast.info("無効な移動です", {
-            //   description: "選択した駒はそこに移動できません。",
-            //   position: "bottom-center",
-            // });
           }
           setSelectedCell(null);
         }
@@ -318,11 +323,27 @@ export default function useGameLogic(
           });
         }
       }
+
+      // プレイヤーの手番が終わった後、CPUの手番を処理
+      if (isCPUMode && currentPlayer === playerSide) {
+        setTimeout(() => {
+          const cpuPlayer = playerSide === "先手" ? "後手" : "先手";
+          const [fromRow, fromCol, toRow, toCol] = getCPUMove(
+            updatedBoard,
+            cpuPlayer
+          );
+          const cpuPiece = updatedBoard[fromRow][fromCol];
+          if (cpuPiece) {
+            executeMove(cpuPiece, [fromRow, fromCol], [toRow, toCol]);
+          }
+        }, 500); // CPUの手を少し遅らせて実行
+      }
     },
     [
       board,
       currentPlayer,
       playerSide,
+      isCPUMode,
       selectedCell,
       selectedCapturedPiece,
       executeMove,
