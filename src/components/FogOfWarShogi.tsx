@@ -38,10 +38,12 @@ export default function ImprovedFogOfWarShogi() {
     }
     const audio = new Audio(src);
     audio.loop = true;
-    audio.volume = isMuted ? 0 : volume;
-    audio
-      .play()
-      .catch((error) => console.error("Audio playback failed:", error));
+    audio.volume = volume;
+    if (!isMuted) {
+      audio
+        .play()
+        .catch((error) => console.error("Audio playback failed:", error));
+    }
     audioRef.current = audio;
   };
 
@@ -218,13 +220,29 @@ export default function ImprovedFogOfWarShogi() {
 
   useEffect(() => {
     if (audioRef.current) {
-      audioRef.current.volume = isMuted ? 0 : volume;
+      if (isMuted) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.volume = volume;
+        audioRef.current
+          .play()
+          .catch((error) => console.error("Audio playback failed:", error));
+      }
     }
-  }, [volume, isMuted]);
+  }, [isMuted, volume]);
 
   const toggleMute = useCallback(() => {
     setIsMuted((prev) => !prev);
-  }, []);
+    if (audioRef.current) {
+      if (!isMuted) {
+        audioRef.current.volume = 0;
+        audioRef.current.pause();
+      } else {
+        audioRef.current.volume = volume;
+        audioRef.current.play();
+      }
+    }
+  }, [isMuted, volume]);
 
   return (
     <div className="flex justify-center items-center w-full h-full z-10">
