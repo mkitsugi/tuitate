@@ -7,10 +7,11 @@ export default function Page() {
   return (
     <div className="h-dvh py-12 px-1 sm:px-1 lg:px-8 flex items-center justify-center overflow-hidden">
       <Image
-        src="/bg/night.png"
+        src="/bg/night.webp"
         alt="Background"
-        layout="fill"
+        fill
         objectFit="cover"
+        priority
         quality={100}
         className="-z-50"
       />

@@ -183,7 +183,9 @@ export default function ImprovedFogOfWarShogi() {
           <Card
             className={cn(
               "mx-auto bg-white/10 backdrop-blur-md border border-white/20 shadow-lg w-full",
-              enterGame ? "max-w-[450px] py-8 overflow-hidden" : "w-fit p-8"
+              enterGame
+                ? "max-w-[450px] py-8 overflow-hidden"
+                : "w-fit p-8 px-12"
             )}
           >
             <CardContent className="p-2">
