@@ -198,6 +198,7 @@ export default function ImprovedFogOfWarShogi() {
                     width={240}
                     height={100}
                     priority
+                    quality={100}
                   />
                 </div>
                 {!enterGame ? (
