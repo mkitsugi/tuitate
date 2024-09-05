@@ -76,6 +76,8 @@ export default function ImprovedFogOfWarShogi() {
     requestRematch,
     acceptRematch,
     startNewGame,
+    isCPUMode,
+    startCPUGame,
   } = useSocket();
 
   const {
@@ -93,7 +95,7 @@ export default function ImprovedFogOfWarShogi() {
     handleCapturedPieceClick,
     resetGameState,
     resetForNewGame,
-  } = useGameLogic(socket, gameId, playerSide);
+  } = useGameLogic(socket, gameId, playerSide, isCPUMode);
 
   // 選択された持ち駒のインデックスを追跡するための状態
   const [selectedPieceIndex, setSelectedPieceIndex] = useState<number | null>(
@@ -303,6 +305,17 @@ export default function ImprovedFogOfWarShogi() {
                               <RulesDialog />
                             </div>
                           )}
+
+                          <FigmaButton
+                            variant="primary"
+                            className="w-full max-w-[180px]"
+                            onClick={() => {
+                              startCPUGame();
+                              playMoveSound();
+                            }}
+                          >
+                            コンピュータと対戦
+                          </FigmaButton>
 
                           <div className="w-full sm:w-auto mt-2 px-2">
                             <Label htmlFor="gameId" className="text-white">

@@ -462,3 +462,45 @@ export function canPromote(
     return toRow >= 6 || (fromRow >= 6 && toRow < 6);
   }
 }
+
+export function movePiece(
+  board: Board,
+  fromRow: number,
+  fromCol: number,
+  toRow: number,
+  toCol: number,
+  visibleCells: boolean[][]
+): Board {
+  const newBoard = board.map((row) => [...row]);
+  const piece = newBoard[fromRow][fromCol];
+
+  if (!piece) {
+    console.log("移動する駒が存在しません");
+    return board;
+  }
+
+  if (!visibleCells[toRow][toCol]) {
+    console.log("移動先が見えません");
+    return board;
+  }
+
+  const targetPiece = newBoard[toRow][toCol];
+
+  // 自分の駒を取ろうとしている場合は移動を無効にする
+  if (targetPiece && targetPiece.player === piece.player) {
+    console.log("自分の駒は取れません");
+    return board;
+  }
+
+  // 相手の駒を取る場合の処理（必要に応じて）
+  if (targetPiece && targetPiece.player !== piece.player) {
+    // ここで捕獲した駒の処理を行う（例：持ち駒に追加するなど）
+    console.log("相手の駒を取りました");
+  }
+
+  // 駒を移動
+  newBoard[toRow][toCol] = piece;
+  newBoard[fromRow][fromCol] = null;
+
+  return newBoard;
+}

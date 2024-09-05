@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from "uuid";
 import { useState, useCallback, useEffect, useRef } from "react";
 import { Socket } from "socket.io-client";
 import { toast } from "sonner";
@@ -13,12 +14,15 @@ import {
   getOriginalType,
   isInCheck,
 } from "@shared/boardUtils";
+import { getCPUMove } from "@/utils/cpuLogic";
 
 export default function useGameLogic(
   socket: Socket | null,
   gameId: string | null,
-  playerSide: Player | null
+  playerSide: Player | null,
+  isCPUMode: boolean
 ) {
+  const isDev = process.env.NODE_ENV === 'development'
   const [board, setBoard] = useState<(Piece | null)[][]>(initialBoard());
   const [visibleBoard, setVisibleBoard] = useState<
     { piece: Piece | null; isVisible: boolean }[][]
@@ -54,6 +58,9 @@ export default function useGameLogic(
   const prevIsPlayerInCheck = useRef(false);
   const prevIsOpponentInCheck = useRef(false);
 
+  const [isCPUTurn, setIsCPUTurn] = useState(false);
+
+
   useEffect(() => {
     moveAudioRef.current = new Audio("/move.mp3");
   }, []);
@@ -79,7 +86,10 @@ export default function useGameLogic(
     for (let row = 0; row < 9; row++) {
       for (let col = 0; col < 9; col++) {
         const piece = board[row][col];
-        if (piece && piece.player === playerSide) {
+        if (isDev && isCPUMode) {
+          // Show all pieces in development mode and CPU mode
+          newVisibleBoard[row][col] = { piece, isVisible: true };
+        } else if (piece && piece.player === playerSide) {
           const visibleCells = getVisibleCellsForPiece(row, col, piece, board);
           visibleCells.forEach(([r, c]) => {
             newVisibleBoard[r][c] = { piece: board[r][c], isVisible: true };
@@ -105,19 +115,25 @@ export default function useGameLogic(
       const targetPiece = newBoard[toRow][toCol];
 
       // 相手の駒を取る場合
-      if (targetPiece) {
+      if (targetPiece && targetPiece.player !== piece.player) {
         const capturedPieceType = getOriginalType(targetPiece.type);
-        setCapturedPieces((prev) => ({
-          ...prev,
-          [playerSide as Player]: [
-            ...prev[playerSide as Player],
+        setCapturedPieces((prev) => {
+          const newCapturedPieces = { ...prev };
+          newCapturedPieces[piece.player] = [
+            ...newCapturedPieces[piece.player],
             {
+              id: uuidv4(),
               type: capturedPieceType,
-              player: playerSide as Player,
+              player: piece.player,
               promoted: false,
             },
-          ],
-        }));
+          ];
+          // 相手の持ち駒から取られた駒を削除
+          newCapturedPieces[targetPiece.player] = newCapturedPieces[targetPiece.player].filter(
+            (p) => p.id !== targetPiece.id
+          );
+          return newCapturedPieces;
+        });
       }
 
       // 駒を移動
@@ -142,17 +158,18 @@ export default function useGameLogic(
             position: "bottom-center",
           });
         }
-        return; // 移動を実行せずに関数を終了
+        return board; // 移動を実行せずに関数を終了
       }
 
+      // CPU戦の場合、ローカルで状態を更新
       setBoard(newBoard);
       setCurrentPlayer(currentPlayer === "先手" ? "後手" : "先手");
       setLastMove([toRow, toCol]);
       setSelectedCell(null);
       updateVisibleBoard();
 
-      // サーバーに移動を通知
-      if (socket && gameId) {
+      // サーバーに移動を通知（CPU戦でない場合のみ）
+      if (!isCPUMode && socket && gameId) {
         socket.emit("move", {
           gameId,
           from,
@@ -163,12 +180,20 @@ export default function useGameLogic(
         });
       }
 
+      // CPUモードの場合、プレイヤーの手番が終わったらCPUの手番をセット
+      if (isCPUMode && currentPlayer === playerSide) {
+        setIsCPUTurn(true);
+      }
+
       playMoveSound();
+
+      return newBoard;
     },
     [
       board,
       playerSide,
       currentPlayer,
+      isCPUMode,
       socket,
       gameId,
       updateVisibleBoard,
@@ -178,13 +203,18 @@ export default function useGameLogic(
 
   const handleCellClick = useCallback(
     (row: number, col: number) => {
+
       if (currentPlayer !== playerSide) {
-        toast.info("相手の手番です", {
-          description: "自分の手番をお待ちください。",
-          position: "bottom-center",
-        });
+        if (!isCPUMode) {
+          toast.info("相手の手番です", {
+            description: "自分の手番をお待ちください。",
+            position: "bottom-center",
+          });
+        }
         return;
       }
+
+      let moveExecuted = false;
 
       if (selectedCapturedPiece) {
         if (board[row][col] === null) {
@@ -211,6 +241,7 @@ export default function useGameLogic(
             row,
             col,
           ]);
+          moveExecuted = true;
           setCapturedPieces((prev) => ({
             ...prev,
             [playerSide as Player]: prev[playerSide as Player].filter(
@@ -232,7 +263,6 @@ export default function useGameLogic(
         const selectedPiece = board[selectedRow][selectedCol];
 
         if (selectedRow === row && selectedCol === col) {
-          // 同じ位置が選択された場合、選択を解除
           setSelectedCell(null);
           return;
         }
@@ -254,7 +284,7 @@ export default function useGameLogic(
               //   description: "自分の駒は取れません。",
               //   position: "bottom-center",
               // });
-              // setSelectedCell(null);
+              setSelectedCell(null);
               return;
             }
 
@@ -282,6 +312,7 @@ export default function useGameLogic(
                   [selectedRow, selectedCol],
                   [row, col]
                 );
+                moveExecuted = true;
               } else {
                 // プレイヤーに選択させる
                 setPendingMove({
@@ -298,12 +329,8 @@ export default function useGameLogic(
                 [selectedRow, selectedCol],
                 [row, col]
               );
+              moveExecuted = true;
             }
-          } else {
-            // toast.info("無効な移動です", {
-            //   description: "選択した駒はそこに移動できません。",
-            //   position: "bottom-center",
-            // });
           }
           setSelectedCell(null);
         }
@@ -323,6 +350,7 @@ export default function useGameLogic(
       board,
       currentPlayer,
       playerSide,
+      isCPUMode,
       selectedCell,
       selectedCapturedPiece,
       executeMove,
@@ -402,10 +430,10 @@ export default function useGameLogic(
         const { from, to, piece } = pendingMove;
         const promotedPiece = shouldPromote
           ? {
-              ...piece,
-              type: getPromotedType(piece.type as PieceType),
-              promoted: true,
-            }
+            ...piece,
+            type: getPromotedType(piece.type as PieceType),
+            promoted: true,
+          }
           : piece;
         executeMove(promotedPiece, from, to);
         setPendingMove(null);
@@ -413,6 +441,28 @@ export default function useGameLogic(
     },
     [pendingMove, executeMove]
   );
+
+  useEffect(() => {
+    if (isCPUMode && isCPUTurn) {
+      const timer = setTimeout(() => {
+        const cpuPlayer = playerSide === "先手" ? "後手" : "先手";
+        setBoard((currentBoard) => {
+          const [fromRow, fromCol, toRow, toCol] = getCPUMove(
+            currentBoard,
+            cpuPlayer
+          );
+          const cpuPiece = currentBoard[fromRow][fromCol];
+          if (cpuPiece) {
+            return executeMove(cpuPiece, [fromRow, fromCol], [toRow, toCol]);
+          }
+          return currentBoard;
+        });
+        setIsCPUTurn(false);
+      }, 1000); // CPUの手を1秒遅らせて実行
+
+      return () => clearTimeout(timer);
+    }
+  }, [isCPUMode, isCPUTurn, playerSide, executeMove]);
 
   const resetGameState = useCallback(() => {
     const newBoard = initialBoard();
