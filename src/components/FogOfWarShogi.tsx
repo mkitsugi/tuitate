@@ -197,6 +197,7 @@ export default function ImprovedFogOfWarShogi() {
                     alt="霧将棋"
                     width={240}
                     height={100}
+                    sizes="300vw"
                     priority
                     quality={100}
                   />
