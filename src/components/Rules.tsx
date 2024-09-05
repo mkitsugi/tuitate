@@ -1,5 +1,5 @@
 import React from "react";
-import { Button } from "@/components/ui/button";
+import FigmaButton from "./ui/figma/button";
 import {
   Dialog,
   DialogContent,
@@ -13,10 +13,10 @@ export default function RulesDialog() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button className="w-fit bg-black text-white mt-4">
-          <Info className="w-4 h-4 mr-2" />
-          霧将棋のルールについて
-        </Button>
+        <FigmaButton variant="dark" className="w-fit max-w-[180px]">
+          {/* <Info className="w-4 h-4 mr-2" /> */}
+          ルールについて
+        </FigmaButton>
       </DialogTrigger>
       <DialogContent className="max-w-md bg-white/95 backdrop-blur-md">
         <DialogHeader>

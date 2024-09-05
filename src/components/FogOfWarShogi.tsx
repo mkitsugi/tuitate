@@ -250,10 +250,10 @@ export default function ImprovedFogOfWarShogi() {
         {!gameStarted && (
           <Card
             className={cn(
-              "mx-auto bg-white/10 backdrop-blur-md border border-white/20 shadow-lg w-full",
+              "mx-auto w-full",
               enterGame
-                ? "max-w-[450px] py-8 overflow-hidden"
-                : "w-fit p-8 px-12"
+                ? "max-w-[450px] py-8 overflow-hidden backdrop-blur-md border border-white/20 shadow-lg bg-white/10"
+                : "w-fit p-8 px-12 bg-white/0 border-0 shadow-none"
             )}
           >
             <CardContent className="p-2">
@@ -271,7 +271,7 @@ export default function ImprovedFogOfWarShogi() {
                   />
                 </div>
                 {!enterGame ? (
-                  <div className="w-full flex flex-col items-center justify-center pt-20">
+                  <div className="w-full flex flex-col items-center justify-center">
                     <FigmaButton
                       variant="primary"
                       className="w-full max-w-[180px]"
@@ -286,7 +286,7 @@ export default function ImprovedFogOfWarShogi() {
                       {!gameCreated && (
                         <>
                           {!inputGameId && (
-                            <>
+                            <div className="flex flex-row gap-2">
                               <div className="flex flex-row items-start w-full space-x-2">
                                 <FigmaButton
                                   variant="primary"
@@ -300,10 +300,11 @@ export default function ImprovedFogOfWarShogi() {
                                   新しいルームを作成
                                 </FigmaButton>
                               </div>
-                            </>
+                              <RulesDialog />
+                            </div>
                           )}
 
-                          <div className="w-full sm:w-auto mt-2">
+                          <div className="w-full sm:w-auto mt-2 px-2">
                             <Label htmlFor="gameId" className="text-white">
                               友達のルームに参加
                             </Label>
@@ -366,7 +367,6 @@ export default function ImprovedFogOfWarShogi() {
 
               {enterGame && (
                 <div className="w-full flex flex-col md:flex-row justify-start md:justify-start pt-2 px-2">
-                  <RulesDialog />
                   {gameId && (
                     <div className="flex w-full mt-4 items-center text-sm text-white text-center justify-start md:justify-center gap-2">
                       <Button
