@@ -33,19 +33,65 @@ const pieceValues: {
   龍: 14,
 };
 
-// 盤面の評価関数
+// 駒の位置評価テーブル（例: 歩兵）
+const pawnPositionValues = [
+  [0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [2, 2, 2, 2, 2, 2, 2, 2, 2],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+  [-2, -2, -2, -2, -2, -2, -2, -2, -2],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0],
+];
+
+// 改善された評価関数
 function evaluateBoard(board: Board, player: Player): number {
   let score = 0;
+  let pieceCount = 0;
+
   for (let row = 0; row < 9; row++) {
     for (let col = 0; col < 9; col++) {
       const piece = board[row][col];
       if (piece && piece.type && piece.type in pieceValues) {
         const pieceValue = pieceValues[piece.type];
-        score += piece.player === player ? pieceValue : -pieceValue;
+        const positionValue = piece.type === '歩' ? pawnPositionValues[row][col] : 0;
+
+        if (piece.player === player) {
+          score += pieceValue + positionValue;
+          pieceCount++;
+        } else {
+          score -= pieceValue - positionValue;
+        }
       }
     }
   }
+
+  // 終盤戦略: 駒が少なくなったら王を中央に寄せる評価を追加
+  if (pieceCount < 10) {
+    const kingPos = findKingPosition(board, player);
+    if (kingPos) {
+      const [kingRow, kingCol] = kingPos;
+      const centerDistance = Math.abs(4 - kingRow) + Math.abs(4 - kingCol);
+      score -= centerDistance * 2;
+    }
+  }
+
   return score;
+}
+
+// 王の位置を見つける補助関数
+function findKingPosition(board: Board, player: Player): [number, number] | null {
+  for (let row = 0; row < 9; row++) {
+    for (let col = 0; col < 9; col++) {
+      const piece = board[row][col];
+      if (piece && piece.type === '王' && piece.player === player) {
+        return [row, col];
+      }
+    }
+  }
+  return null;
 }
 
 // ミニマックスアルゴリズム（アルファベータ枝刈り付き）
@@ -146,12 +192,20 @@ function getAllPossibleMoves(
   return moves;
 }
 
-// CPUの手を決定する関数
+// 動的な探索深さを決定する関数
+function getDynamicDepth(board: Board): number {
+  const pieceCount = board.flat().filter(piece => piece !== null).length;
+  if (pieceCount > 25) return 2;
+  if (pieceCount > 15) return 3;
+  return 4;
+}
+
+// CPUの手を決定する関数（更新）
 export function getCPUMove(
   board: Board,
   player: Player
 ): [number, number, number, number] {
-  const depth = 3; // 探索の深さ（調整可能）
+  const depth = getDynamicDepth(board);
   const [_, bestMove] = minimax(
     board,
     depth,
