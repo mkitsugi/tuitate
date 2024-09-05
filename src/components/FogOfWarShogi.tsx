@@ -216,12 +216,15 @@ export default function ImprovedFogOfWarShogi() {
     };
   }, [gameStarted, gameEnded, enterGame, volume, isMuted]);
 
-  const toggleMute = useCallback(() => {
-    setIsMuted((prev) => !prev);
+  useEffect(() => {
     if (audioRef.current) {
-      audioRef.current.volume = isMuted ? volume : 0;
+      audioRef.current.volume = isMuted ? 0 : volume;
     }
   }, [volume, isMuted]);
+
+  const toggleMute = useCallback(() => {
+    setIsMuted((prev) => !prev);
+  }, []);
 
   return (
     <div className="flex justify-center items-center w-full h-full z-10">
