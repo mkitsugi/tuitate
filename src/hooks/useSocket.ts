@@ -61,10 +61,10 @@ export default function useSocket() {
 
     newSocket.on("connect_error", (error) => {
       console.error("WebSocket connection error:", error);
-      toast.error("接続エラー", {
-        description: "サーバーに接続できません。",
-        position: "bottom-center",
-      });
+      // toast.error("接続エラー", {
+      //   description: "サーバーに接続できません。",
+      //   position: "bottom-center",
+      // });
     });
 
     return () => {

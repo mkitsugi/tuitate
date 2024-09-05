@@ -46,23 +46,25 @@ const pawnPositionValues = [
   [0, 0, 0, 0, 0, 0, 0, 0, 0],
 ];
 
-// 改善された評価関数
-function evaluateBoard(board: Board, player: Player): number {
+// 可視範囲内の駒のみを考慮した評価関数
+function evaluateBoard(board: Board, player: Player, visibleCells: boolean[][]): number {
   let score = 0;
   let pieceCount = 0;
 
   for (let row = 0; row < 9; row++) {
     for (let col = 0; col < 9; col++) {
-      const piece = board[row][col];
-      if (piece && piece.type && piece.type in pieceValues) {
-        const pieceValue = pieceValues[piece.type];
-        const positionValue = piece.type === '歩' ? pawnPositionValues[row][col] : 0;
+      if (visibleCells[row][col]) {
+        const piece = board[row][col];
+        if (piece && piece.type && piece.type in pieceValues) {
+          const pieceValue = pieceValues[piece.type];
+          const positionValue = piece.type === '歩' ? pawnPositionValues[row][col] : 0;
 
-        if (piece.player === player) {
-          score += pieceValue + positionValue;
-          pieceCount++;
-        } else {
-          score -= pieceValue - positionValue;
+          if (piece.player === player) {
+            score += pieceValue + positionValue;
+            pieceCount++;
+          } else {
+            score -= pieceValue - positionValue;
+          }
         }
       }
     }
@@ -94,6 +96,25 @@ function findKingPosition(board: Board, player: Player): [number, number] | null
   return null;
 }
 
+// 可視範囲を計算する関数
+function calculateVisibleCells(board: Board, player: Player): boolean[][] {
+  const visibleCells: boolean[][] = Array(9).fill(null).map(() => Array(9).fill(false));
+
+  for (let row = 0; row < 9; row++) {
+    for (let col = 0; col < 9; col++) {
+      const piece = board[row][col];
+      if (piece && piece.player === player) {
+        const visibleForPiece = getVisibleCellsForPiece(row, col, piece, board);
+        visibleForPiece.forEach(([vRow, vCol]) => {
+          visibleCells[vRow][vCol] = true;
+        });
+      }
+    }
+  }
+
+  return visibleCells;
+}
+
 // ミニマックスアルゴリズム（アルファベータ枝刈り付き）
 function minimax(
   board: Board,
@@ -101,15 +122,17 @@ function minimax(
   alpha: number,
   beta: number,
   maximizingPlayer: boolean,
-  player: Player
+  player: Player,
+  visibleCells: boolean[][]
 ): [number, [number, number, number, number] | null] {
   if (depth === 0) {
-    return [evaluateBoard(board, player), null];
+    return [evaluateBoard(board, player, visibleCells), null];
   }
 
   const moves = getAllPossibleMoves(
     board,
-    maximizingPlayer ? player : player === "先手" ? "後手" : "先手"
+    maximizingPlayer ? player : player === "先手" ? "後手" : "先手",
+    visibleCells
   );
   let bestMove: [number, number, number, number] | null = null;
 
@@ -117,14 +140,15 @@ function minimax(
     let maxEval = -Infinity;
     for (const move of moves) {
       const [fromRow, fromCol, toRow, toCol] = move;
-      const newBoard = movePiece(board, fromRow, fromCol, toRow, toCol);
+      const newBoard = movePiece(board, fromRow, fromCol, toRow, toCol, visibleCells);
       const [evaluation] = minimax(
         newBoard,
         depth - 1,
         alpha,
         beta,
         false,
-        player
+        player,
+        visibleCells
       );
       if (evaluation > maxEval) {
         maxEval = evaluation;
@@ -138,14 +162,15 @@ function minimax(
     let minEval = Infinity;
     for (const move of moves) {
       const [fromRow, fromCol, toRow, toCol] = move;
-      const newBoard = movePiece(board, fromRow, fromCol, toRow, toCol);
+      const newBoard = movePiece(board, fromRow, fromCol, toRow, toCol, visibleCells);
       const [evaluation] = minimax(
         newBoard,
         depth - 1,
         alpha,
         beta,
         true,
-        player
+        player,
+        visibleCells
       );
       if (evaluation < minEval) {
         minEval = evaluation;
@@ -161,7 +186,8 @@ function minimax(
 // すべての可能な手を取得
 function getAllPossibleMoves(
   board: Board,
-  player: Player
+  player: Player,
+  visibleCells: boolean[][]
 ): [number, number, number, number][] {
   const moves: [number, number, number, number][] = [];
 
@@ -169,20 +195,10 @@ function getAllPossibleMoves(
     for (let fromCol = 0; fromCol < 9; fromCol++) {
       const piece = board[fromRow][fromCol];
       if (piece && piece.player === player) {
-        const visibleCells = getVisibleCellsForPiece(
-          fromRow,
-          fromCol,
-          piece,
-          board
-        );
-        for (const [toRow, toCol] of visibleCells) {
-          if (isValidMove([fromRow, fromCol], [toRow, toCol], piece, board)) {
+        const possibleMoves = getVisibleCellsForPiece(fromRow, fromCol, piece, board);
+        for (const [toRow, toCol] of possibleMoves) {
+          if (visibleCells[toRow][toCol] && isValidMove([fromRow, fromCol], [toRow, toCol], piece, board)) {
             moves.push([fromRow, fromCol, toRow, toCol]);
-
-            // 成りの手も追加
-            if (canPromote([fromRow, fromCol], [toRow, toCol], piece)) {
-              moves.push([fromRow, fromCol, toRow, toCol]);
-            }
           }
         }
       }
@@ -206,37 +222,40 @@ export function getCPUMove(
   player: Player
 ): [number, number, number, number] {
   const depth = getDynamicDepth(board);
-  const [_, bestMove] = minimax(
-    board,
-    depth,
-    -Infinity,
-    Infinity,
-    true,
-    player
-  );
+  const visibleCells = calculateVisibleCells(board, player);
 
-  if (bestMove) {
-    const [fromRow, fromCol, toRow, toCol] = bestMove;
-    const piece = board[fromRow][fromCol];
+  let bestMove: [number, number, number, number] | null = null;
+  let attempts = 0;
+  const maxAttempts = 10; // 最大試行回数を設定
 
-    if (piece) {
-      // 成りが可能な場合、確率的に成るかどうかを決定
-      if (canPromote([fromRow, fromCol], [toRow, toCol], piece)) {
-        if (Math.random() < 0.8) {
-          // 80%の確率で成る
-          const promotedType = getPromotedType(piece.type as PieceType);
-          if (promotedType) {
-            piece.type = promotedType;
-            piece.promoted = true;
-          }
-        }
+  while (!bestMove && attempts < maxAttempts) {
+    const [_, move] = minimax(
+      board,
+      depth,
+      -Infinity,
+      Infinity,
+      true,
+      player,
+      visibleCells
+    );
+
+    if (move) {
+      const [fromRow, fromCol, toRow, toCol] = move;
+      const piece = board[fromRow][fromCol];
+
+      if (piece && isValidMove([fromRow, fromCol], [toRow, toCol], piece, board) && visibleCells[toRow][toCol]) {
+        bestMove = move;
       }
     }
 
-    return bestMove;
+    attempts++;
   }
 
-  // フォールバック：ランダムな合法手を選択
-  const allMoves = getAllPossibleMoves(board, player);
-  return allMoves[Math.floor(Math.random() * allMoves.length)];
+  if (!bestMove) {
+    // フォールバック：ランダムな合法手を選択
+    const allMoves = getAllPossibleMoves(board, player, visibleCells);
+    return allMoves[Math.floor(Math.random() * allMoves.length)];
+  }
+
+  return bestMove;
 }
