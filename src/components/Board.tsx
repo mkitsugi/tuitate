@@ -46,7 +46,7 @@ export default function Board({
             <button
               key={`${rowIndex}-${colIndex}`}
               className={cn(
-                "w-11 h-11 flex items-center justify-center border transition-colors duration-200",
+                "w-11 h-11 rounded-[4px] flex items-center justify-center border transition-colors duration-200",
                 {
                   "bg-yellow-200":
                     lastMove &&

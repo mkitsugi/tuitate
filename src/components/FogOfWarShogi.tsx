@@ -1,6 +1,7 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
+import { Volume2, VolumeX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -20,10 +21,28 @@ import { formatTime } from "@/lib/utils";
 import FigmaButton from "./ui/figma/button";
 
 export default function ImprovedFogOfWarShogi() {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [volume, setVolume] = useState(0.5);
+  const [isMuted, setIsMuted] = useState(false);
   const [enterGame, setEnterGame] = useState(false);
 
   const handleEnterGame = () => {
     setEnterGame(true);
+    playAudio("/music/main.mp3");
+  };
+
+  const playAudio = (src: string) => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    const audio = new Audio(src);
+    audio.loop = true;
+    audio.volume = isMuted ? 0 : volume;
+    audio
+      .play()
+      .catch((error) => console.error("Audio playback failed:", error));
+    audioRef.current = audio;
   };
 
   const [inputGameId, setInputGameId] = useState<string>("");
@@ -176,6 +195,34 @@ export default function ImprovedFogOfWarShogi() {
     return () => clearInterval(interval);
   }, [gameStarted, gameEnded, currentPlayer]);
 
+  // 音声ファイルを再生するための useEffect
+  useEffect(() => {
+    if (gameStarted && !gameEnded) {
+      playAudio("/music/game.mp3");
+    } else if (!gameStarted && enterGame) {
+      playAudio("/music/main.mp3");
+    } else {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+    }
+
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+    };
+  }, [gameStarted, gameEnded, enterGame, volume, isMuted]);
+
+  const toggleMute = useCallback(() => {
+    setIsMuted((prev) => !prev);
+    if (audioRef.current) {
+      audioRef.current.volume = isMuted ? volume : 0;
+    }
+  }, [volume, isMuted]);
+
   return (
     <div className="flex justify-center items-center w-full h-full z-10">
       <div className="space-y-3 w-full">
@@ -250,30 +297,34 @@ export default function ImprovedFogOfWarShogi() {
                         </>
                       )}
                       {(gameCreated || inputGameId) && (
-                        <>
+                        <div className="flex flex-row gap-2 w-full items-center justify-center">
                           {availableSides.includes("先手") && !selectedSide && (
-                            <Button
+                            <FigmaButton
+                              variant="blue"
                               onClick={() => {
                                 handleJoinGame("先手" as Player);
                                 playMoveSound();
                               }}
-                              className="mt-4 w-full bg-sky-600/80 backdrop-blur-sm border-2 border-sky-400/20 text-white hover:bg-sky-700/80 transition-colors"
+                              className="w-full max-w-[180px]"
+                              // className="mt-4 w-full bg-sky-600/80 backdrop-blur-sm border-2 border-sky-400/20 text-white hover:bg-sky-700/80 transition-colors"
                               // className="mt-4 w-full bg-sky-600 hover:bg-sky-700"
                             >
                               先手として参加
-                            </Button>
+                            </FigmaButton>
                           )}
                           {availableSides.includes("後手") && !selectedSide && (
-                            <Button
+                            <FigmaButton
+                              variant="red"
                               onClick={() => {
                                 handleJoinGame("後手" as Player);
                                 playMoveSound();
                               }}
-                              className="mt-2 w-full bg-rose-600/80 backdrop-blur-sm border-2 border-rose-400/20 text-white hover:bg-rose-700/80 transition-colors"
+                              className="w-full max-w-[180px]"
+                              // className="mt-2 w-full bg-rose-600/80 backdrop-blur-sm border-2 border-rose-400/20 text-white hover:bg-rose-700/80 transition-colors"
                               // className="mt-2 w-full bg-rose-600 hover:bg-rose-700"
                             >
                               後手として参加
-                            </Button>
+                            </FigmaButton>
                           )}
                           {selectedSide && !gameStarted && (
                             <div className="mt-4 text-center w-full text-white">
@@ -285,7 +336,7 @@ export default function ImprovedFogOfWarShogi() {
                               <p>相手のプレイヤーを待っています...</p>
                             </div>
                           )}
-                        </>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -359,7 +410,7 @@ export default function ImprovedFogOfWarShogi() {
                 </div>
                 <div
                   className={cn(
-                    "px-2 py-0.5 rounded-full w-fit text-sm bg-sky-600/80 backdrop-blur-sm border-2 border-sky-400/20 text-white",
+                    "px-2 py-0.5 rounded-full w-fit text-sm bg-sky-600/80 backdrop-blur-sm border-2 border-white text-white",
                     playerSide === "先手" ? "bg-rose-600/80" : "bg-sky-600/80"
                   )}
                 >
@@ -410,7 +461,7 @@ export default function ImprovedFogOfWarShogi() {
                 <div className="flex flex-col items-start justify-start space-y-2">
                   <div
                     className={cn(
-                      "px-2 py-0.5 rounded-full text-sm bg-sky-600/80 backdrop-blur-sm border-2 border-sky-400/20 text-white",
+                      "px-2 py-0.5 rounded-full text-sm bg-sky-600/80 backdrop-blur-sm border-2 border-white text-white",
                       playerSide === "先手" ? "bg-sky-600/80" : "bg-rose-600/80"
                     )}
                   >
@@ -425,7 +476,7 @@ export default function ImprovedFogOfWarShogi() {
                 )}
                 <button
                   onClick={openResignDialog}
-                  className="px-3 py-1 text-sm rounded bg-black/50 backdrop-blur-sm border border-white/50 text-white hover:bg-white hover:text-black  transition-colors"
+                  className="px-3 py-0.5 text-sm rounded-md bg-black/80 backdrop-blur-sm border border-white text-white hover:bg-white hover:text-black  transition-colors"
                 >
                   投了
                 </button>
@@ -496,6 +547,17 @@ export default function ImprovedFogOfWarShogi() {
             )}
           </div>
         )}
+      </div>
+
+      <div className="absolute top-4 left-4 flex items-center space-x-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleMute}
+          className="text-white hover:text-gray-300"
+        >
+          {isMuted ? <VolumeX size={24} /> : <Volume2 size={24} />}
+        </Button>
       </div>
     </div>
   );

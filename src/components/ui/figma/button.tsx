@@ -3,7 +3,7 @@ import React, { useState } from "react";
 
 interface FigmaButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "danger";
+  variant?: "primary" | "secondary" | "danger" | "red" | "blue" | "green";
 }
 
 const FigmaButton: React.FC<FigmaButtonProps> = ({

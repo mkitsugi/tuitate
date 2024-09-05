@@ -13,10 +13,7 @@ export default function RulesDialog() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button
-          variant="outline"
-          className="w-fit bg-white/10 text-white hover:bg-black/80 hover:text-white hover:border-black/80 mt-4"
-        >
+        <Button className="w-fit bg-black text-white mt-4">
           <Info className="w-4 h-4 mr-2" />
           霧将棋のルールについて
         </Button>
@@ -39,9 +36,8 @@ export default function RulesDialog() {
             <li>持ち駒は自分の駒が進める範囲に置くことができます。</li>
           </ol>
           <p>
-            霧将棋が生み出す緊張感と戦略性は通常の将棋とは一味違った体験です。霧の中で相手の動きを予測し、自らの戦略を練る
-            —
-            まるで実際の戦場のような臨場感を味わえるでしょう。
+            霧将棋で味わえる緊張感と戦略性は普通の将棋とはまた一味違った体験です。霧の中で相手の動きを予測し、自らの戦略を練る
+            — まるで実際の戦場のような臨場感を体感してみてください。
           </p>
         </div>
       </DialogContent>
