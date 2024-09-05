@@ -91,7 +91,7 @@ export default function useGameLogic(
     for (let row = 0; row < 9; row++) {
       for (let col = 0; col < 9; col++) {
         const piece = board[row][col];
-        if (isDev && isCPUMode) {
+        if (isDev && false && isCPUMode) {
           // Show all pieces in development mode and CPU mode
           newVisibleBoard[row][col] = { piece, isVisible: true };
         } else if (piece && piece.player === playerSide) {
@@ -506,13 +506,35 @@ export default function useGameLogic(
           return { player: cell.player, type: cell.type };
         })
       );
-      // CPU視点の可視盤面情報
-      const cpuVisibleBoard = visibleBoard.map((row) =>
-        row.map((cell) => {
-          if (!cell.isVisible || !cell.piece) return null;
-          return { player: cell.piece.player, type: cell.piece.type };
-        })
-      );
+      // CPU視点の可視盤面情報を生成
+      const cpuVisibleBoard = Array(9)
+        .fill(null)
+        .map(() => Array(9).fill(null));
+      for (let row = 0; row < 9; row++) {
+        for (let col = 0; col < 9; col++) {
+          const piece = board[row][col];
+          if (piece && piece.player === cpuPlayer) {
+            cpuVisibleBoard[row][col] = {
+              player: piece.player,
+              type: piece.type,
+            };
+            const visibleCells = getVisibleCellsForPiece(
+              row,
+              col,
+              piece,
+              board
+            );
+            visibleCells.forEach(([r, c]) => {
+              if (board[r][c]) {
+                cpuVisibleBoard[r][c] = {
+                  player: board[r][c].player,
+                  type: board[r][c].type,
+                };
+              }
+            });
+          }
+        }
+      }
 
       const requestBody = {
         fullBoard: fullBoard,
