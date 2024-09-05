@@ -78,21 +78,21 @@
 }
 
 .cloud {
-  background: url('/clouds.png');
+  background: url("/clouds.png");
   background-size: cover;
   animation: cloud 180s linear infinite;
 }
 
 .cloud::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: url('/clouds.png');
+  background: url("/clouds.png");
   background-size: cover;
-  opacity: 0.8;
+  opacity: 1;
   animation: cloud-reverse 240s linear infinite;
 }
 
