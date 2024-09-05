@@ -13,6 +13,7 @@ class FogShogiState:
         self.turn = 1  # 1: 先手, -1: 後手
         self.hidden_info = {1: set(), -1: set()}  # 各プレイヤーに見えない駒の位置
         self.captured_pieces = {1: {}, -1: {}} # 持ち駒を管理する辞書
+        self.promotion_zone = {1: [0, 1, 2], -1: [6, 7, 8]}  # 成れる領域
 
         # 初期配置（フル配置）
         self.initial_setup()
@@ -63,9 +64,8 @@ class FogShogiState:
                 break
         return False
 
-    def get_legal_actions(self) -> List[Tuple[int, int, int, int]]:
+    def get_legal_actions(self) -> List[Tuple[int, int, int, int, bool]]:
         actions = []
-
         # 盤上の駒の移動
         for i in range(9):
             for j in range(9):
@@ -74,21 +74,32 @@ class FogShogiState:
                     moves = self.get_piece_moves(piece, i, j)
                     for ni, nj in moves:
                         if 0 <= ni < 9 and 0 <= nj < 9 and self.board[ni, nj] * self.turn <= 0:
-                            actions.append((i, j, ni, nj))
-        
-                # 持ち駒の使用
+                            if piece in [1, 2, 3, 4, 5, 7] and (i in self.promotion_zone[self.turn] or ni in self.promotion_zone[self.turn]):
+                                actions.append((i, j, ni, nj, True))  # 成る
+                            actions.append((i, j, ni, nj, False))  # 成らない
+
+        # 持ち駒の使用
         for piece, count in self.captured_pieces[self.turn].items():
             if count > 0:
                 for i in range(9):
                     for j in range(9):
                         if self.board[i, j] == 0 and self.is_visible(i, j, self.turn):
                             if piece != 1 or (piece == 1 and i > 0 and i < 8):  # 歩は一段目と九段目には打てない
-                                actions.append((-1, piece, i, j))  # -1は持ち駒を表す特別な値
+                                if not self.is_two_pawns(piece, j):  # 二歩チェック
+                                    actions.append((-1, piece, i, j, False))  # -1は持ち駒を表す特別な値
 
         return actions
+    
+    def is_two_pawns(self, piece: int, column: int) -> bool:
+        if piece != 1:  # 歩以外の駒は二歩にならない
+            return False
+        for i in range(9):
+            if self.board[i, column] * self.turn == 1:  # 同じ段に自分の歩がある
+                return True
+        return False
 
-    def apply_action(self, action: Tuple[int, int, int, int]):
-        i, j, ni, nj = action
+    def apply_action(self, action: Tuple[int, int, int, int, bool]):
+        i, j, ni, nj, promote = action
         if i == -1:  # 持ち駒を使用する場合
             piece = j
             self.board[ni, nj] = piece * self.turn
@@ -99,7 +110,12 @@ class FogShogiState:
             captured_piece = abs(self.board[ni, nj])
             if captured_piece != 0:
                 self.captured_pieces[self.turn][captured_piece] = self.captured_pieces[self.turn].get(captured_piece, 0) + 1
-            self.board[ni, nj] = self.board[i, j]
+            
+            moving_piece = abs(self.board[i, j])
+            if promote:
+                self.board[ni, nj] = (moving_piece + 10) * self.turn  # 成った駒は元の駒の値+10とする
+            else:
+                self.board[ni, nj] = self.board[i, j]
             self.board[i, j] = 0
 
         self.turn *= -1  # 手番を交代
@@ -124,12 +140,19 @@ class FogShogiState:
             directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
         elif piece == 8:  # 玉
             directions = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
+        elif piece > 10:  # 成り駒
+            if piece in [11, 12, 13, 14]:  # 成り金（と金、杏、圭、全）
+                directions = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, 0)]
+            elif piece == 15:  # 馬（成り角）
+                directions = [(-1, -1), (-1, 1), (1, -1), (1, 1), (-1, 0), (1, 0), (0, -1), (0, 1)]
+            elif piece == 17:  # 龍（成り飛車）
+                directions = [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)]
 
         for di, dj in directions:
             ni, nj = i + di, j + dj
             while 0 <= ni < 9 and 0 <= nj < 9:
                 moves.append((ni, nj))
-                if self.board[ni, nj] != 0 or piece in [1, 3, 4, 6, 8]:  # 1マスだけ動く駒
+                if self.board[ni, nj] != 0 or piece in [1, 3, 4, 6, 8, 11, 12, 13, 14]:  # 1マスだけ動く駒
                     break
                 ni, nj = ni + di, nj + dj
 
