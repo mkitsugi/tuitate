@@ -77,7 +77,6 @@ export default function Board({
                 <motion.div
                   className={cn(
                     "w-10 h-10 relative",
-
                     isSelected && "ring-4 ring-yellow-400 bg-yellow-300"
                   )}
                   layoutId={cell.piece.id}

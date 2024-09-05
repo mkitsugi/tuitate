@@ -7,14 +7,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Info } from "lucide-react";
 
 export default function RulesDialog() {
   return (
     <Dialog>
       <DialogTrigger asChild>
         <FigmaButton variant="dark" className="w-fit max-w-[180px]">
-          {/* <Info className="w-4 h-4 mr-2" /> */}
           ルールについて
         </FigmaButton>
       </DialogTrigger>
@@ -24,7 +22,7 @@ export default function RulesDialog() {
             霧将棋のルール
           </DialogTitle>
         </DialogHeader>
-        <div className="mt-2 space-y-4">
+        <div className="mt-2 space-y-4 tracking-wide">
           <p>
             霧将棋はお互いの情報が不完全な状態で将棋をプレイする完全オリジナルな将棋ゲームです。
           </p>
