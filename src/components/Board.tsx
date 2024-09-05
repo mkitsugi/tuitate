@@ -7,7 +7,12 @@ import { motion } from "framer-motion";
 interface BoardProps {
   visibleBoard: VisibleCell[][];
   selectedCell: [number, number] | null;
-  lastMove: [number, number] | null;
+  lastMove: {
+    from: [number, number];
+    to: [number, number];
+    piece: Piece;
+    capturedPiece: Piece | null;
+  } | null;
   playerSide: Player | null;
   onCellClick: (row: number, col: number) => void;
   selectedCapturedPiece: Piece | null;
@@ -50,13 +55,13 @@ export default function Board({
                 {
                   "bg-yellow-200":
                     lastMove &&
-                    lastMove[0] === actualRow &&
-                    lastMove[1] === actualCol,
+                    lastMove.from[0] === actualRow &&
+                    lastMove.from[1] === actualCol,
                   "bg-yellow-100":
                     !isSelected &&
                     (!lastMove ||
-                      lastMove[0] !== actualRow ||
-                      lastMove[1] !== actualCol),
+                      lastMove.from[0] !== actualRow ||
+                      lastMove.from[1] !== actualCol),
                 },
                 cell.isVisible
                   ? "bg-white border-slate-300"

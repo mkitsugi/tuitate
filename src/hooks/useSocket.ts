@@ -47,6 +47,44 @@ export default function useSocket() {
   } = useSocketEvents(setGameState, setRoomState);
 
   useEffect(() => {
+    let newSocket: Socket | null = null;
+
+    if (!isCPUMode) {
+      newSocket = io(WEBSOCKET_URL, {
+        withCredentials: true,
+        transports: ["websocket"],
+      });
+
+      newSocket.on("connect", () => {
+        setMySocketId(newSocket?.id as string);
+        console.log("Connected to WebSocket server");
+        findExistingRooms();
+      });
+
+      newSocket.on("connect_error", (error) => {
+        console.error("WebSocket connection error:", error);
+      });
+
+      setSocket(newSocket);
+    } else {
+      // CPU モードの場合、既存の接続を切断
+      if (socket) {
+        socket.disconnect();
+        setSocket(null);
+        setMySocketId(null);
+      }
+    }
+
+    return () => {
+      if (newSocket) {
+        newSocket.disconnect();
+      }
+    };
+  }, [isCPUMode]);
+
+  useEffect(() => {
+    if (isCPUMode) return;
+
     const newSocket = io(WEBSOCKET_URL, {
       withCredentials: true,
       transports: ["websocket"],
@@ -61,10 +99,10 @@ export default function useSocket() {
 
     newSocket.on("connect_error", (error) => {
       console.error("WebSocket connection error:", error);
-      // toast.error("接続エラー", {
-      //   description: "サーバーに接続できません。",
-      //   position: "bottom-center",
-      // });
+      toast.error("接続エラー", {
+        description: "サーバーに接続できません。",
+        position: "bottom-center",
+      });
     });
 
     return () => {

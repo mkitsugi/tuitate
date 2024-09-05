@@ -14,7 +14,6 @@ import {
   getOriginalType,
   isInCheck,
 } from "@shared/boardUtils";
-import { getCPUMove } from "@/utils/cpuLogic";
 
 export default function useGameLogic(
   socket: Socket | null,
@@ -22,7 +21,7 @@ export default function useGameLogic(
   playerSide: Player | null,
   isCPUMode: boolean
 ) {
-  const isDev = process.env.NODE_ENV === 'development'
+  const isDev = process.env.NODE_ENV === "development";
   const [board, setBoard] = useState<(Piece | null)[][]>(initialBoard());
   const [visibleBoard, setVisibleBoard] = useState<
     { piece: Piece | null; isVisible: boolean }[][]
@@ -35,7 +34,14 @@ export default function useGameLogic(
   const [selectedCell, setSelectedCell] = useState<[number, number] | null>(
     null
   );
-  const [lastMove, setLastMove] = useState<[number, number] | null>(null);
+  // lastMoveの型を変更
+  const [lastMove, setLastMove] = useState<{
+    from: [number, number];
+    to: [number, number];
+    piece: Piece;
+    capturedPiece: Piece | null;
+  } | null>(null);
+
   const [capturedPieces, setCapturedPieces] = useState<{
     先手: Piece[];
     後手: Piece[];
@@ -59,7 +65,6 @@ export default function useGameLogic(
   const prevIsOpponentInCheck = useRef(false);
 
   const [isCPUTurn, setIsCPUTurn] = useState(false);
-
 
   useEffect(() => {
     moveAudioRef.current = new Audio("/move.mp3");
@@ -110,9 +115,16 @@ export default function useGameLogic(
     (piece: Piece, from: [number, number] | null, to: [number, number]) => {
       //   const [fromRow, fromCol] = from;
       const [toRow, toCol] = to;
-
       const newBoard = board.map((row) => [...row]);
       const targetPiece = newBoard[toRow][toCol];
+
+      // 移動前の状態を記録
+      setLastMove({
+        from: from || [-1, -1], // 持ち駒を使う場合は[-1, -1]とする
+        to: to,
+        piece: { ...piece },
+        capturedPiece: targetPiece ? { ...targetPiece } : null,
+      });
 
       // 相手の駒を取る場合
       if (targetPiece && targetPiece.player !== piece.player) {
@@ -129,9 +141,9 @@ export default function useGameLogic(
             },
           ];
           // 相手の持ち駒から取られた駒を削除
-          newCapturedPieces[targetPiece.player] = newCapturedPieces[targetPiece.player].filter(
-            (p) => p.id !== targetPiece.id
-          );
+          newCapturedPieces[targetPiece.player] = newCapturedPieces[
+            targetPiece.player
+          ].filter((p) => p.id !== targetPiece.id);
           return newCapturedPieces;
         });
       }
@@ -161,10 +173,36 @@ export default function useGameLogic(
         return board; // 移動を実行せずに関数を終了
       }
 
+      // 移動後に王手状態をチェック
+      const newIsPlayerInCheck = isInCheck(
+        newBoard,
+        playerSide === "先手" ? "後手" : "先手"
+      );
+      const newIsOpponentInCheck = isInCheck(newBoard, playerSide as Player);
+      setIsPlayerInCheck(newIsPlayerInCheck);
+      setIsOpponentInCheck(newIsOpponentInCheck);
+
+      // 王手の状態が変更されたときのみtoastを表示
+      if (newIsPlayerInCheck && !prevIsPlayerInCheck.current) {
+        toast.error("王手！", {
+          description: "あなたの王が狙われています。守りましょう！",
+          position: "bottom-center",
+        });
+      } else if (newIsOpponentInCheck && !prevIsOpponentInCheck.current) {
+        toast.success("王手！", {
+          description: "相手の王を狙っています。",
+          position: "bottom-center",
+        });
+      }
+
+      // 前回の状態を更新
+      prevIsPlayerInCheck.current = newIsPlayerInCheck;
+      prevIsOpponentInCheck.current = newIsOpponentInCheck;
+
       // CPU戦の場合、ローカルで状態を更新
       setBoard(newBoard);
       setCurrentPlayer(currentPlayer === "先手" ? "後手" : "先手");
-      setLastMove([toRow, toCol]);
+      // setLastMove([toRow, toCol]);
       setSelectedCell(null);
       updateVisibleBoard();
 
@@ -203,7 +241,6 @@ export default function useGameLogic(
 
   const handleCellClick = useCallback(
     (row: number, col: number) => {
-
       if (currentPlayer !== playerSide) {
         if (!isCPUMode) {
           toast.info("相手の手番です", {
@@ -374,7 +411,37 @@ export default function useGameLogic(
   );
 
   useEffect(() => {
-    if (!socket) return;
+    // CPU戦（socketがない場合）の処理を追加
+    const updateCheckStatus = () => {
+      const isCurrentPlayerTurn = playerSide === currentPlayer;
+      const isPlayerChecking = isCurrentPlayerTurn
+        ? isOpponentInCheck
+        : isPlayerInCheck;
+      const isPlayerInDanger = isCurrentPlayerTurn
+        ? isPlayerInCheck
+        : isOpponentInCheck;
+
+      if (isPlayerInDanger && !prevIsPlayerInCheck.current) {
+        toast.error("王手！", {
+          description: "あなたの王が狙われています。守りましょう！",
+          position: "bottom-center",
+        });
+      } else if (isPlayerChecking && !prevIsOpponentInCheck.current) {
+        toast.success("王手！", {
+          description: "相手の王を狙っています。",
+          position: "bottom-center",
+        });
+      }
+
+      prevIsPlayerInCheck.current = isPlayerInCheck;
+      prevIsOpponentInCheck.current = isOpponentInCheck;
+    };
+
+    // CPU戦（socketがない場合）の処理
+    if (!socket) {
+      updateCheckStatus();
+      return;
+    }
 
     socket.on(
       "boardUpdated",
@@ -396,33 +463,20 @@ export default function useGameLogic(
       }
     );
 
-    // プレイヤーの視点に基づいて王手の状態を判断
-    const isCurrentPlayerInCheck =
-      playerSide === currentPlayer ? isOpponentInCheck : isPlayerInCheck;
-    const isCurrentPlayerChecking =
-      playerSide === currentPlayer ? isPlayerInCheck : isOpponentInCheck;
-
-    // 王手の状態が変更されたときのみtoastを表示
-    if (isCurrentPlayerInCheck && !prevIsPlayerInCheck.current) {
-      toast.error("王手！", {
-        description: "あなたの王が狙われています。守りましょう！",
-        position: "bottom-center",
-      });
-    } else if (isCurrentPlayerChecking && !prevIsOpponentInCheck.current) {
-      toast.success("王手！", {
-        description: "相手の王を狙っています。",
-        position: "bottom-center",
-      });
-    }
-
-    // 前回の状態を更新
-    prevIsPlayerInCheck.current = isPlayerInCheck;
-    prevIsOpponentInCheck.current = isOpponentInCheck;
+    // ボードが更新された後にチェック状態を更新
+    updateCheckStatus();
 
     return () => {
       socket.off("boardUpdated");
     };
-  }, [socket, updateVisibleBoard, playMoveSound, playerSide]);
+  }, [
+    socket,
+    updateVisibleBoard,
+    playMoveSound,
+    playerSide,
+    isPlayerInCheck,
+    isOpponentInCheck,
+  ]);
 
   const handlePromotionChoice = useCallback(
     (shouldPromote: boolean) => {
@@ -430,10 +484,10 @@ export default function useGameLogic(
         const { from, to, piece } = pendingMove;
         const promotedPiece = shouldPromote
           ? {
-            ...piece,
-            type: getPromotedType(piece.type as PieceType),
-            promoted: true,
-          }
+              ...piece,
+              type: getPromotedType(piece.type as PieceType),
+              promoted: true,
+            }
           : piece;
         executeMove(promotedPiece, from, to);
         setPendingMove(null);
@@ -442,31 +496,106 @@ export default function useGameLogic(
     [pendingMove, executeMove]
   );
 
+  const executeCPUMove = async () => {
+    try {
+      const cpuPlayer = playerSide === "先手" ? "後手" : "先手";
+      // 全ての駒の情報を含む完全な盤面情報
+      const fullBoard = board.map((row) =>
+        row.map((cell) => {
+          if (!cell) return null;
+          return { player: cell.player, type: cell.type };
+        })
+      );
+      // CPU視点の可視盤面情報
+      const cpuVisibleBoard = visibleBoard.map((row) =>
+        row.map((cell) => {
+          if (!cell.isVisible || !cell.piece) return null;
+          return { player: cell.piece.player, type: cell.piece.type };
+        })
+      );
+
+      const requestBody = {
+        fullBoard: fullBoard,
+        visibleBoard: cpuVisibleBoard,
+        player: cpuPlayer,
+      };
+
+      const response = await fetch("/api/getCPUMove", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const [fromRow, fromCol, toRow, toCol] = data.move;
+
+      const cpuPiece = board[fromRow][fromCol];
+      if (cpuPiece) {
+        executeMove(cpuPiece, [fromRow, fromCol], [toRow, toCol]);
+      }
+      setIsCPUTurn(false);
+    } catch (error) {
+      console.error("Error getting CPU move:", error);
+      toast.error("CPUの手の取得に失敗しました", {
+        description: "もう一度お試しください。",
+        position: "bottom-center",
+      });
+      // ユーザーの手を元に戻す
+      undoLastMove();
+      setIsCPUTurn(false);
+    }
+  };
+
+  // 最後の手を元に戻す関数を追加
+  const undoLastMove = useCallback(() => {
+    if (!lastMove) return;
+
+    setBoard((prevBoard) => {
+      const newBoard = prevBoard.map((row) => [...row]);
+      const { from, to, piece, capturedPiece } = lastMove;
+
+      // 移動した駒を元の位置に戻す
+      if (from[0] !== -1 && from[1] !== -1) {
+        newBoard[from[0]][from[1]] = piece;
+      } else {
+        // 持ち駒を使った場合は、その駒を持ち駒に戻す
+        setCapturedPieces((prev) => ({
+          ...prev,
+          [piece.player]: [...prev[piece.player], piece],
+        }));
+      }
+
+      // 移動先を元の状態に戻す
+      newBoard[to[0]][to[1]] = capturedPiece;
+
+      return newBoard;
+    });
+
+    // プレイヤーを切り替え
+    setCurrentPlayer(currentPlayer === "先手" ? "後手" : "先手");
+
+    // その他の状態をリセット
+    setLastMove(null);
+    setSelectedCell(null);
+    updateVisibleBoard();
+  }, [lastMove, currentPlayer, updateVisibleBoard]);
+
   useEffect(() => {
     if (isCPUMode && isCPUTurn) {
-      const timer = setTimeout(() => {
-        const cpuPlayer = playerSide === "先手" ? "後手" : "先手";
-        setBoard((currentBoard) => {
-          const [fromRow, fromCol, toRow, toCol] = getCPUMove(
-            currentBoard,
-            cpuPlayer
-          );
-          const cpuPiece = currentBoard[fromRow][fromCol];
-          if (cpuPiece) {
-            return executeMove(cpuPiece, [fromRow, fromCol], [toRow, toCol]);
-          }
-          return currentBoard;
-        });
-        setIsCPUTurn(false);
-      }, 1000); // CPUの手を1秒遅らせて実行
-
+      const timer = setTimeout(executeCPUMove, 1000);
       return () => clearTimeout(timer);
     }
-  }, [isCPUMode, isCPUTurn, playerSide, executeMove]);
+  }, [isCPUMode, isCPUTurn, playerSide, executeMove, board]);
 
   const showAllPieces = useCallback(() => {
-    const newVisibleBoard = board.map(row =>
-      row.map(piece => ({ piece, isVisible: true }))
+    const newVisibleBoard = board.map((row) =>
+      row.map((piece) => ({ piece, isVisible: true }))
     );
     setVisibleBoard(newVisibleBoard);
   }, [board]);
