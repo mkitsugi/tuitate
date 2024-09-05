@@ -464,6 +464,13 @@ export default function useGameLogic(
     }
   }, [isCPUMode, isCPUTurn, playerSide, executeMove]);
 
+  const showAllPieces = useCallback(() => {
+    const newVisibleBoard = board.map(row =>
+      row.map(piece => ({ piece, isVisible: true }))
+    );
+    setVisibleBoard(newVisibleBoard);
+  }, [board]);
+
   const resetGameState = useCallback(() => {
     const newBoard = initialBoard();
     setBoard(newBoard);
@@ -504,6 +511,7 @@ export default function useGameLogic(
     playMoveSound,
     handleCellClick,
     handleCapturedPieceClick,
+    showAllPieces,
     resetGameState,
     resetForNewGame,
   };

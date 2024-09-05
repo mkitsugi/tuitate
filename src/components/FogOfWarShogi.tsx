@@ -93,6 +93,7 @@ export default function ImprovedFogOfWarShogi() {
     playMoveSound,
     handleCellClick,
     handleCapturedPieceClick,
+    showAllPieces,
     resetGameState,
     resetForNewGame,
   } = useGameLogic(socket, gameId, playerSide, isCPUMode);
@@ -167,6 +168,7 @@ export default function ImprovedFogOfWarShogi() {
 
   const handleResign = () => {
     resign();
+    showAllPieces()
     toast.info("投了しました。", {
       position: "bottom-center",
     });
@@ -180,6 +182,12 @@ export default function ImprovedFogOfWarShogi() {
       row.map((cell) => ({ piece: cell, isVisible: true } as VisibleCell))
     );
   };
+
+  useEffect(() => {
+    if (gameEnded) {
+      showAllPieces();
+    }
+  }, [gameEnded, showAllPieces]);
 
   const [sente時間, setSente時間] = useState(0); // 10分 = 600秒
   const [gote時間, setGote時間] = useState(0);
@@ -341,8 +349,8 @@ export default function ImprovedFogOfWarShogi() {
                                 playMoveSound();
                               }}
                               className="w-full max-w-[180px]"
-                              // className="mt-4 w-full bg-sky-600/80 backdrop-blur-sm border-2 border-sky-400/20 text-white hover:bg-sky-700/80 transition-colors"
-                              // className="mt-4 w-full bg-sky-600 hover:bg-sky-700"
+                            // className="mt-4 w-full bg-sky-600/80 backdrop-blur-sm border-2 border-sky-400/20 text-white hover:bg-sky-700/80 transition-colors"
+                            // className="mt-4 w-full bg-sky-600 hover:bg-sky-700"
                             >
                               先手として参加
                             </FigmaButton>
@@ -355,8 +363,8 @@ export default function ImprovedFogOfWarShogi() {
                                 playMoveSound();
                               }}
                               className="w-full max-w-[180px]"
-                              // className="mt-2 w-full bg-rose-600/80 backdrop-blur-sm border-2 border-rose-400/20 text-white hover:bg-rose-700/80 transition-colors"
-                              // className="mt-2 w-full bg-rose-600 hover:bg-rose-700"
+                            // className="mt-2 w-full bg-rose-600/80 backdrop-blur-sm border-2 border-rose-400/20 text-white hover:bg-rose-700/80 transition-colors"
+                            // className="mt-2 w-full bg-rose-600 hover:bg-rose-700"
                             >
                               後手として参加
                             </FigmaButton>
@@ -545,7 +553,7 @@ export default function ImprovedFogOfWarShogi() {
                 lastMove={null}
                 playerSide={playerSide}
                 selectedCapturedPiece={null}
-                onCellClick={() => {}} // クリックを無効化
+                onCellClick={() => { }} // クリックを無効化
               />
             </div>
             <div className="flex space-x-4">
