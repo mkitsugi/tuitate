@@ -183,12 +183,6 @@ export default function ImprovedFogOfWarShogi() {
     );
   };
 
-  useEffect(() => {
-    if (gameEnded) {
-      showAllPieces();
-    }
-  }, [gameEnded, showAllPieces]);
-
   const [sente時間, setSente時間] = useState(0); // 10分 = 600秒
   const [gote時間, setGote時間] = useState(0);
 
