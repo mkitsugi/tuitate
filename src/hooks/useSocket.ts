@@ -114,6 +114,18 @@ export default function useSocket() {
     if (!socket) return;
 
     socket.on("roomList", handleRoomList);
+    socket.on("matchFound", (response: { success: boolean; gameId: string; side: Player }) => {
+      if (response.success) {
+        setGameState((prev: GameState) => ({
+          ...prev,
+          gameId: response.gameId,
+          playerSide: response.side,
+        }));
+        toast.success("マッチングしました！", {
+          position: "top-right",
+        });
+      }
+    });
     socket.on("gameCreated", handleGameCreated);
     socket.on("newRoomCreated", (newRoom: Room) => {
       addNewRoom(newRoom);
@@ -156,6 +168,7 @@ export default function useSocket() {
 
     return () => {
       socket.off("roomList");
+      socket.off("matchFound");
       socket.off("gameCreated");
       socket.off("gameJoined");
       socket.off("availableSidesUpdated");
@@ -210,6 +223,23 @@ export default function useSocket() {
     console.log("Requesting rooms from server");
     socket?.emit("getRooms");
   }, [socket, setRoomState]);
+
+  const findRandomMatch = useCallback(() => {
+    if (socket) {
+      socket.emit("findRandomMatch", (response: { success: boolean; gameId: string; side: Player; message?: string }) => {
+        if (response.success && response.gameId && response.side) {
+          setGameState((prev: GameState) => ({
+            ...prev,
+            gameId: response.gameId,
+            playerSide: response.side,
+          }));
+          // toast.success("マッチングしました！");
+        }
+      });
+    } else {
+      toast.error("サーバーに接続されていません。");
+    }
+  }, [socket, setGameState]);
 
   const createGame = useCallback(() => {
     if (socket) {
@@ -366,6 +396,7 @@ export default function useSocket() {
     returnToLobby,
     joinRoom,
     selectSide,
+    findRandomMatch,
     leaveRoom,
     getAvailableSides,
     updateAvailableSides,

@@ -77,7 +77,14 @@ export function useSocketEvents(
   const handlePlayerLeft = useCallback(
     ({ side, playerId }: { side: Player; playerId: string }) => {
       console.log(`Player ${playerId} left as ${side}`);
-      toast.info(`${side}のプレイヤーが退出しました。`);
+      setGameState((prev) => ({
+        ...prev,
+        gameEnded: true,
+        winner: prev.playerSide,
+      }));
+      toast.info(`${side}のプレイヤーが退出しました。`, {
+        position: "top-right",
+      });
     },
     []
   );
@@ -99,10 +106,6 @@ export function useSocketEvents(
         winner: null,
         availableSides: [],
       }));
-      toast("ゲームが開始されました", {
-        description: `現在の手番: ${currentPlayer}`,
-        position: "bottom-center",
-      });
     },
     [setGameState]
   );

@@ -32,7 +32,7 @@ export default function RootLayout({
       </head>
       <body className={customFont.className}>
         {children}
-        <Toaster richColors closeButton />
+        <Toaster richColors />
       </body>
     </html>
   );

@@ -161,13 +161,13 @@ export default function useGameLogic(
       if (isStillInCheck) {
         if (piece.type === "王") {
           toast.error("無効な移動です", {
-            description: "その位置に動かすと詰んてしまいます。",
-            position: "bottom-center",
+            description: "その位置に動かすと詰んでしまいます。",
+            position: "top-right",
           });
         } else {
           toast.error("無効な移動です", {
             description: "その位置に動かすと詰んでしまいます。",
-            position: "bottom-center",
+            position: "top-right",
           });
         }
         return board; // 移動を実行せずに関数を終了
@@ -181,19 +181,6 @@ export default function useGameLogic(
       const newIsOpponentInCheck = isInCheck(newBoard, playerSide as Player);
       setIsPlayerInCheck(newIsPlayerInCheck);
       setIsOpponentInCheck(newIsOpponentInCheck);
-
-      // 王手の状態が変更されたときのみtoastを表示
-      if (newIsPlayerInCheck && !prevIsPlayerInCheck.current) {
-        toast.error("王手！", {
-          description: "あなたの王が狙われています。守りましょう！",
-          position: "bottom-center",
-        });
-      } else if (newIsOpponentInCheck && !prevIsOpponentInCheck.current) {
-        toast.success("王手！", {
-          description: "相手の王を狙っています。",
-          position: "bottom-center",
-        });
-      }
 
       // 前回の状態を更新
       prevIsPlayerInCheck.current = newIsPlayerInCheck;
@@ -245,7 +232,7 @@ export default function useGameLogic(
         if (!isCPUMode) {
           toast.info("相手の手番です", {
             description: "自分の手番をお待ちください。",
-            position: "bottom-center",
+            position: "top-right",
           });
         }
         return;
@@ -267,7 +254,7 @@ export default function useGameLogic(
             if (isNifu) {
               toast.error("二歩は禁止されています", {
                 description: "同じ列に2つの歩を置くことはできません。",
-                position: "bottom-center",
+                position: "top-right",
               });
               setSelectedCapturedPiece(null);
               return;
@@ -288,7 +275,7 @@ export default function useGameLogic(
         } else {
           toast.info("無効な移動です", {
             description: "空いているマスにのみ持ち駒を打てます。",
-            position: "bottom-center",
+            position: "top-right",
           });
         }
         setSelectedCapturedPiece(null);
@@ -319,7 +306,7 @@ export default function useGameLogic(
             if (targetPiece && targetPiece.player === currentPlayer) {
               // toast.info("無効な移動です", {
               //   description: "自分の駒は取れません。",
-              //   position: "bottom-center",
+              //   position: "top-right",
               // });
               setSelectedCell(null);
               return;
@@ -378,7 +365,7 @@ export default function useGameLogic(
         } else if (piece) {
           toast.error("無効な選択です", {
             description: "自分の駒を選択してください。",
-            position: "bottom-center",
+            position: "top-right",
           });
         }
       }
@@ -400,7 +387,7 @@ export default function useGameLogic(
       if (currentPlayer !== side || playerSide !== side) {
         toast.error("無効な操作です", {
           description: "自分の手番で自分の持ち駒を選択してください。",
-          position: "bottom-center",
+          position: "top-right",
         });
         return;
       }
@@ -413,7 +400,7 @@ export default function useGameLogic(
   useEffect(() => {
     // CPU戦（socketがない場合）の処理を追加
     const updateCheckStatus = () => {
-      const isCurrentPlayerTurn = playerSide === currentPlayer;
+      const isCurrentPlayerTurn = playerSide !== currentPlayer;
       const isPlayerChecking = isCurrentPlayerTurn
         ? isOpponentInCheck
         : isPlayerInCheck;
@@ -422,14 +409,12 @@ export default function useGameLogic(
         : isOpponentInCheck;
 
       if (isPlayerInDanger && !prevIsPlayerInCheck.current) {
-        toast.error("王手！", {
-          description: "あなたの王が狙われています。守りましょう！",
-          position: "bottom-center",
+        toast.error("王手されました！", {
+          position: "top-right",
         });
       } else if (isPlayerChecking && !prevIsOpponentInCheck.current) {
         toast.success("王手！", {
-          description: "相手の王を狙っています。",
-          position: "bottom-center",
+          position: "top-right",
         });
       }
 
@@ -484,10 +469,10 @@ export default function useGameLogic(
         const { from, to, piece } = pendingMove;
         const promotedPiece = shouldPromote
           ? {
-              ...piece,
-              type: getPromotedType(piece.type as PieceType),
-              promoted: true,
-            }
+            ...piece,
+            type: getPromotedType(piece.type as PieceType),
+            promoted: true,
+          }
           : piece;
         executeMove(promotedPiece, from, to);
         setPendingMove(null);
@@ -566,7 +551,7 @@ export default function useGameLogic(
       console.error("Error getting CPU move:", error);
       toast.error("CPUの手の取得に失敗しました", {
         description: "もう一度お試しください。",
-        position: "bottom-center",
+        position: "top-right",
       });
       // ユーザーの手を元に戻す
       undoLastMove();

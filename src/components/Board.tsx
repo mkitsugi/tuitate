@@ -89,12 +89,15 @@ export default function Board({
                 >
                   <Image
                     src={`/pieces/${cell.piece.type}.png`}
-                    className={cn({
-                      "transform rotate-180": cell.piece.player !== playerSide,
-                    })}
+                    className={cn(
+                      "object-contain",
+                      {
+                        "transform rotate-180": cell.piece.player !== playerSide,
+                      }
+                    )}
                     alt={`${cell.piece.player}の${cell.piece.type}`}
-                    layout="fill"
-                    objectFit="contain"
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     draggable="false"
                   />
                 </motion.div>

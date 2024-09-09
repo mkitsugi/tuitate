@@ -12,3 +12,10 @@ export function formatTime(seconds: number): string {
     .toString()
     .padStart(2, "0")}`;
 }
+
+export function preloadImages(imagePaths: string[]) {
+  imagePaths.forEach(path => {
+    const img = new Image();
+    img.src = path;
+  });
+}

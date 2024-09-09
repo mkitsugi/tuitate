@@ -73,6 +73,10 @@ function resetGameTimeout(gameId: string): void {
   gameTimeouts.set(gameId, timeoutId);
 }
 
+// ランダムマッチ用の待機中のプレイヤーを保持する配列
+let waitingPlayers: Player[] = [];
+
+
 // ルーム一覧を取得するエンドポイントを追加
 app.get("/api/rooms", (req, res) => {
   const activeRooms = Array.from(games.entries())
@@ -87,6 +91,55 @@ app.get("/api/rooms", (req, res) => {
 
 io.on("connection", (socket) => {
   console.log("A user connected");
+
+  socket.on("findRandomMatch", (callback) => {
+    console.log(`Player ${socket.id} is looking for a random match`);
+
+    // 待機中のプレイヤーがいるか確認
+    if (waitingPlayers.length > 0) {
+      const opponent = waitingPlayers.shift()!;
+      const gameId = Math.random().toString(36).substring(7);
+      const game = initializeGame();
+
+      // プレイヤーの順番をランダムに決定
+      const players: Player[] = [
+        { id: socket.id, side: (opponent.side === "先手" ? "後手" : "先手") as Side },
+        { id: opponent.id, side: opponent.side }
+      ].sort(() => Math.random() - 0.5);
+
+      game.players = players;
+      game[players[0].side] = players[0].id;
+      game[players[1].side] = players[1].id;
+      game.currentPlayer = "先手";
+      games.set(gameId, game);
+
+      // 両プレイヤーをルームに参加させる
+      socket.join(gameId);
+      io.sockets.sockets.get(opponent.id)?.join(gameId);
+
+      // マッチング結果を両プレイヤーに通知
+      io.to(gameId).emit("gameStarted", {
+        gameId,
+        board: game.board,
+        currentPlayer: game.currentPlayer,
+        playerSides: {
+          [players[0].id]: players[0].side,
+          [players[1].id]: players[1].side,
+        },
+      });
+
+      // 両プレイヤーにそれぞれの情報を個別に送信
+      io.to(players[0].id).emit("matchFound", { success: true, gameId, side: players[0].side });
+      io.to(players[1].id).emit("matchFound", { success: true, gameId, side: players[1].side });
+
+      callback({ success: true, gameId, side: players.find(p => p.id === socket.id)!.side });
+    } else {
+      // マッチング相手がいない場合、待機リストに追加
+      const side: Side = Math.random() < 0.5 ? "先手" : "後手";
+      waitingPlayers.push({ id: socket.id, side });
+      callback({ success: false, message: "対戦相手を探しています。しばらくお待ちください。" });
+    }
+  });
 
   socket.on("createGame", () => {
     const gameId = Math.random().toString(36).substring(7);
@@ -440,7 +493,6 @@ io.on("connection", (socket) => {
       });
     }
   });
-
 
   socket.on("rejectRematch", ({ gameId }) => {
     const game = games.get(gameId);

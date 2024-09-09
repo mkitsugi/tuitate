@@ -26,6 +26,7 @@ export function PromotionDialog({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>駒を成りますか？</AlertDialogTitle>
+          <AlertDialogDescription />
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel onClick={() => onPromote(false)}>

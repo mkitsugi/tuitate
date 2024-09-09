@@ -19,12 +19,15 @@ import RulesDialog from "./Rules";
 import { VisibleCell } from "@shared/shogi";
 import { formatTime } from "@/lib/utils";
 import FigmaButton from "./ui/figma/button";
+import { preloadImages } from "@/lib/utils";
 
 export default function ImprovedFogOfWarShogi() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [volume, setVolume] = useState(0.5);
   const [isMuted, setIsMuted] = useState(false);
   const [enterGame, setEnterGame] = useState(false);
+
+  const [isSearchingOpponent, setIsSearchingOpponent] = useState(false);
 
   const handleEnterGame = () => {
     setEnterGame(true);
@@ -73,6 +76,7 @@ export default function ImprovedFogOfWarShogi() {
     rematchAccepted,
     opponentRequestedRematch,
     opponentLeft,
+    findRandomMatch,
     requestRematch,
     acceptRematch,
     startNewGame,
@@ -114,6 +118,32 @@ export default function ImprovedFogOfWarShogi() {
 
     return () => clearInterval(interval);
   }, [findExistingRooms, gameStarted]);
+
+  useEffect(() => {
+    // ゲームが開始されたら駒の画像をプリロード
+    if (enterGame) {
+      const pieceTypes = [
+        "歩", "香", "桂", "銀", "金", "角", "飛",
+        "と", "成香", "成桂", "成銀", "馬", "龍", "玉"
+      ];
+      const imagePaths = pieceTypes.map(type => `/pieces/${type}.png`);
+      preloadImages(imagePaths);
+    }
+  }, [enterGame]);
+
+
+  const handleFindRandomMatch = () => {
+    setIsSearchingOpponent(true);
+    findRandomMatch();
+    setSelectedSide(null);
+    playMoveSound();
+  };
+
+  useEffect(() => {
+    if (gameStarted || selectedSide) {
+      setIsSearchingOpponent(false);
+    }
+  }, [gameStarted, selectedSide]);
 
   useEffect(() => {
     if (rematchAccepted) {
@@ -169,9 +199,6 @@ export default function ImprovedFogOfWarShogi() {
   const handleResign = () => {
     resign();
     showAllPieces();
-    toast.info("投了しました。", {
-      position: "bottom-center",
-    });
   };
 
   // board を VisibleCell[][] に変換する関数
@@ -273,15 +300,18 @@ export default function ImprovedFogOfWarShogi() {
                   className="pb-8"
                 />
                 {/* )} */}
-                <Image
-                  src="/ui/title.png"
-                  alt="霧将棋"
-                  width={240}
-                  height={100}
-                  sizes="300vw"
-                  priority
-                  quality={100}
-                />
+                {!isSearchingOpponent && (
+                  <Image
+                    src="/ui/title.png"
+                    alt="霧将棋"
+                    width={240}
+                    height={100}
+                    sizes="300vw"
+                    priority
+                    quality={100}
+                    style={{ height: "auto" }}
+                  />
+                )}
               </div>
               {!enterGame ? (
                 <div className="w-full flex flex-col items-center justify-center pt-12">
@@ -303,19 +333,15 @@ export default function ImprovedFogOfWarShogi() {
                   <div className="flex flex-col justify-start gap-4 w-full max-w-[350px] mx-auto px-2">
                     {!gameCreated && (
                       <>
-                        {!inputGameId && (
+                        {!inputGameId && !isSearchingOpponent ? (
                           <div className="flex flex-row space-x-2 items-center justify-center">
                             <FigmaButton
                               variant="button_rectangle_02"
                               className="w-full max-w-[160px] sm:max-w-[180px]"
                               textClassName="text-[13px] sm:text-[15px]"
-                              onClick={() => {
-                                createGame();
-                                setSelectedSide(null);
-                                playMoveSound();
-                              }}
+                              onClick={handleFindRandomMatch}
                             >
-                              新しいルームを作成
+                              ランダムマッチ
                             </FigmaButton>
 
                             <FigmaButton
@@ -331,10 +357,18 @@ export default function ImprovedFogOfWarShogi() {
                               AIと練習
                             </FigmaButton>
                           </div>
+                        ) : (
+                          <div className="text-center w-full text-white">
+                            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-white" />
+                            <p>対戦相手を探しています...</p>
+                          </div>
                         )}
-                        <div className="w-full sm:w-auto mt-2">
-                          <RulesDialog />
-                        </div>
+
+                        {!isSearchingOpponent && (
+                          <div className="w-full sm:w-auto mt-2">
+                            <RulesDialog />
+                          </div>
+                        )}
 
                         {/* <div className="w-full sm:w-auto mt-2 px-2">
                           <Label htmlFor="gameId" className="text-white">
@@ -360,8 +394,8 @@ export default function ImprovedFogOfWarShogi() {
                               playMoveSound();
                             }}
                             className="w-full max-w-[180px]"
-                            // className="mt-4 w-full bg-sky-600/80 backdrop-blur-sm border-2 border-sky-400/20 text-white hover:bg-sky-700/80 transition-colors"
-                            // className="mt-4 w-full bg-sky-600 hover:bg-sky-700"
+                          // className="mt-4 w-full bg-sky-600/80 backdrop-blur-sm border-2 border-sky-400/20 text-white hover:bg-sky-700/80 transition-colors"
+                          // className="mt-4 w-full bg-sky-600 hover:bg-sky-700"
                           >
                             先手として参加
                           </FigmaButton>
@@ -374,8 +408,8 @@ export default function ImprovedFogOfWarShogi() {
                               playMoveSound();
                             }}
                             className="w-full max-w-[180px]"
-                            // className="mt-2 w-full bg-rose-600/80 backdrop-blur-sm border-2 border-rose-400/20 text-white hover:bg-rose-700/80 transition-colors"
-                            // className="mt-2 w-full bg-rose-600 hover:bg-rose-700"
+                          // className="mt-2 w-full bg-rose-600/80 backdrop-blur-sm border-2 border-rose-400/20 text-white hover:bg-rose-700/80 transition-colors"
+                          // className="mt-2 w-full bg-rose-600 hover:bg-rose-700"
                           >
                             後手として参加
                           </FigmaButton>
@@ -477,9 +511,8 @@ export default function ImprovedFogOfWarShogi() {
                     // playerSide === "先手" ? "bg-rose-600/80" : "bg-sky-600/80"
                   )}
                   style={{
-                    backgroundImage: `url('/ui/tab/text_round_${
-                      playerSide === "先手" ? "01" : "02"
-                    }.png')`,
+                    backgroundImage: `url('/ui/tab/text_round_${playerSide === "先手" ? "01" : "02"
+                      }.png')`,
                     backgroundSize: "cover",
                     backgroundPosition: "center",
                   }}
@@ -537,9 +570,8 @@ export default function ImprovedFogOfWarShogi() {
                       // playerSide === "先手" ? "bg-sky-600/80" : "bg-rose-600/80"
                     )}
                     style={{
-                      backgroundImage: `url('/ui/tab/text_round_${
-                        playerSide === "先手" ? "02" : "01"
-                      }.png')`,
+                      backgroundImage: `url('/ui/tab/text_round_${playerSide === "先手" ? "02" : "01"
+                        }.png')`,
                       backgroundSize: "cover",
                       backgroundPosition: "center",
                     }}
@@ -600,24 +632,40 @@ export default function ImprovedFogOfWarShogi() {
                 lastMove={null}
                 playerSide={playerSide}
                 selectedCapturedPiece={null}
-                onCellClick={() => {}} // クリックを無効化
+                onCellClick={() => { }} // クリックを無効化
               />
             </div>
             <div className="flex space-x-4">
-              <Button
+              <button
                 onClick={handleReturnToLobby}
                 disabled={rematchRequested}
-                className="bg-gray-600 hover:bg-gray-700 text-white"
+                className="py-1 text-md text-white font-black hover:scale-95 transition-all"
+                style={{
+                  backgroundImage: "url('/ui/button/button_rectangle_01_hover.png')",
+                  backgroundSize: "100% 100%",
+                  backgroundPosition: "center",
+                  width: "150px",
+                  height: "40px",
+                  opacity: rematchRequested ? 0.5 : 1,
+                  cursor: rematchRequested ? "not-allowed" : "pointer",
+                }}
               >
                 ルームを抜ける
-              </Button>
+              </button>
               {!rematchRequested && !opponentRequestedRematch && (
-                <Button
+                <button
                   onClick={requestRematch}
-                  className="bg-green-600 hover:bg-green-700 text-white"
+                  className="py-1 text-md text-black/70 font-black hover:scale-95 transition-all"
+                  style={{
+                    backgroundImage: "url('/ui/button/button_rectangle_01.png')",
+                    backgroundSize: "100% 100%",
+                    backgroundPosition: "center",
+                    width: "150px",
+                    height: "40px",
+                  }}
                 >
-                  再戦をリクエスト
-                </Button>
+                  再戦リクエスト
+                </button>
               )}
               {opponentRequestedRematch && (
                 <Button

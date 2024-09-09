@@ -26,9 +26,8 @@ export default function RulesDialog() {
         <div
           className="absolute inset-0 bg-contain bg-center bg-no-repeat"
           style={{
-            backgroundImage: `url('/ui/window/scalable_window_02_01${
-              window.innerWidth <= 768 ? "_sp" : ""
-            }.png')`,
+            backgroundImage: `url('/ui/window/scalable_window_02_01${window.innerWidth <= 500 ? "_sp" : ""
+              }.png')`,
           }}
         />
         <div className="relative z-10 p-6">
