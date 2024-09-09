@@ -79,6 +79,7 @@ export default function ImprovedFogOfWarShogi() {
     opponentRequestedRematch,
     opponentLeft,
     findRandomMatch,
+    handleCancelSearch,
     requestRematch,
     acceptRematch,
     startNewGame,
@@ -158,10 +159,17 @@ export default function ImprovedFogOfWarShogi() {
 
   useEffect(() => {
     if (opponentLeft) {
-      toast.info("相手がルームを抜けました。ロビーに戻ります。");
+      toast.info("相手がルームを抜けました。ロビーに戻ります。", {
+        position: "top-right",
+      });
       handleReturnToLobby();
     }
   }, [opponentLeft, handleReturnToLobby]);
+
+  const CancelSearch = () => {
+    setIsSearchingOpponent(false);
+    handleCancelSearch();
+  };
 
   useEffect(() => {
     if (!gameEnded) {
@@ -365,6 +373,14 @@ export default function ImprovedFogOfWarShogi() {
                           <div className="text-center w-full text-white">
                             <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-white" />
                             <p>対戦相手を探しています...</p>
+                            <FigmaButton
+                              variant="button_rectangle_01"
+                              className="w-full max-w-[100px] sm:max-w-[100px] mt-8"
+                              textClassName="text-[13px] sm:text-[15px]"
+                              onClick={CancelSearch}
+                            >
+                              キャンセル
+                            </FigmaButton>
                           </div>
                         )}
 
@@ -656,7 +672,7 @@ export default function ImprovedFogOfWarShogi() {
               >
                 ルームを抜ける
               </button>
-              {!rematchRequested && !opponentRequestedRematch && (
+              {!rematchRequested && !opponentRequestedRematch && !opponentLeft && (
                 <button
                   onClick={requestRematch}
                   className="py-1 text-md text-black/70 font-black hover:scale-95 transition-all"

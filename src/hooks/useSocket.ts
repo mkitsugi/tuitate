@@ -133,7 +133,10 @@ export default function useSocket() {
     socket.on("gameJoined", handleGameJoined);
     socket.on("availableSidesUpdated", handleAvailableSidesUpdated);
     socket.on("playerJoined", handlePlayerJoined);
-    socket.on("playerLeft", handlePlayerLeft);
+    socket.on("playerLeft", (data) => {
+      handlePlayerLeft(data);
+      setOpponentLeft(true);
+    });
     socket.on("roomCreated", handleRoomCreated);
     socket.on("gameStarted", handleGameStarted);
     socket.on("gameError", handleGameError);
@@ -242,6 +245,19 @@ export default function useSocket() {
       toast.error("サーバーに接続されていません。");
     }
   }, [socket, setGameState]);
+
+  const handleCancelSearch = useCallback(() => {
+    if (socket) {
+      socket.emit("cancelSearch", (response: { success: boolean; message?: string }) => {
+        if (response.success) {
+          // toast.success("マッチング検索をキャンセルしました。");
+        } else {
+          toast.error(response.message || "キャンセルに失敗しました。");
+        }
+      });
+    } else {
+    }
+  }, [socket]);
 
   const createGame = useCallback(() => {
     if (socket) {
@@ -401,6 +417,7 @@ export default function useSocket() {
     joinRoom,
     selectSide,
     findRandomMatch,
+    handleCancelSearch,
     leaveRoom,
     getAvailableSides,
     updateAvailableSides,

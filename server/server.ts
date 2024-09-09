@@ -95,9 +95,12 @@ io.on("connection", (socket) => {
   socket.on("findRandomMatch", (callback) => {
     console.log(`Player ${socket.id} is looking for a random match`);
 
+    // 待機中の他のプレイヤーを探す
+    const opponentIndex = waitingPlayers.findIndex(player => player.id !== socket.id);
+
     // 待機中のプレイヤーがいるか確認
-    if (waitingPlayers.length > 0) {
-      const opponent = waitingPlayers.shift()!;
+    if (opponentIndex !== -1) {
+      const opponent = waitingPlayers.splice(opponentIndex, 1)[0];
       const gameId = Math.random().toString(36).substring(7);
       const game = initializeGame();
 
@@ -139,6 +142,15 @@ io.on("connection", (socket) => {
       waitingPlayers.push({ id: socket.id, side });
       callback({ success: false, message: "対戦相手を探しています。しばらくお待ちください。" });
     }
+  });
+
+  socket.on("cancelSearch", (callback) => {
+    console.log(`Player ${socket.id} is canceling the search for a random match`);
+
+    // 待機中のプレイヤーリストから該当プレイヤーを削除
+    waitingPlayers = waitingPlayers.filter(player => player.id !== socket.id);
+
+    callback({ success: true, message: "マッチング検索をキャンセルしました。" });
   });
 
   socket.on("createGame", () => {
@@ -435,6 +447,8 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", () => {
     console.log("User disconnected");
+    // プレイヤーが切断された場合、待機中のプレイヤーリストからも削除
+    waitingPlayers = waitingPlayers.filter(player => player.id !== socket.id);
     // プレイヤーが切断された場合、そのプレイヤーが参加していたゲームを探す
     games.forEach((game, gameId) => {
       const playerIndex = game.players.findIndex((p) => p.id === socket.id);
@@ -474,6 +488,35 @@ io.on("connection", (socket) => {
     if (game) {
       game.rematchRequests.clear();
       io.to(gameId).emit("rematchRejected");
+    }
+  });
+
+  socket.on("leaveRoom", ({ roomId, side }) => {
+    console.log(`Player ${socket.id} leaving room ${roomId} as ${side}`);
+    const game = games.get(roomId);
+    if (game) {
+      // プレイヤーをゲームから削除
+      game.players = game.players.filter(p => p.id !== socket.id);
+      game[side as keyof Pick<Game, "先手" | "後手">] = undefined;
+      game.availableSides.push(side);
+
+      // ルームから退出
+      socket.leave(roomId);
+
+      // 残りのプレイヤーに通知
+      socket.to(roomId).emit("playerLeft", {
+        side,
+        availableSides: game.availableSides,
+      });
+
+      // オプション: ゲームが空になった場合、ゲームを削除
+      if (game.players.length === 0) {
+        games.delete(roomId);
+        console.log(`Game ${roomId} has been deleted as all players left.`);
+      } else {
+        // プレイヤーが離脱したらタイムアウトをリセット
+        resetGameTimeout(roomId);
+      }
     }
   });
 

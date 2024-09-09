@@ -82,9 +82,6 @@ export function useSocketEvents(
         gameEnded: true,
         winner: prev.playerSide,
       }));
-      toast.info(`${side}のプレイヤーが退出しました。`, {
-        position: "top-right",
-      });
     },
     []
   );
