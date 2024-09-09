@@ -1,9 +1,16 @@
 import type { Metadata } from "next";
+import localFont from "next/font/local";
 import { Nunito } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 
 const nunito = Nunito({ subsets: ["latin"] });
+
+// カスタムフォントの読み込み
+const customFont = localFont({
+  src: "../../public/fonts/tamanegi_kaisho_free.ttf",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "霧将棋",
@@ -23,7 +30,7 @@ export default function RootLayout({
       <head>
         <link rel="manifest" href="/manifest.json" />
       </head>
-      <body className={nunito.className}>
+      <body className={customFont.className}>
         {children}
         <Toaster richColors closeButton />
       </body>
