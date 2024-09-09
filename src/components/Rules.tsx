@@ -42,7 +42,7 @@ export default function RulesDialog() {
               霧将棋はお互いの情報が不完全な状態で将棋をプレイする完全オリジナルな将棋ゲームです。
             </p>
             <ol className="list-decimal pl-5 space-y-2">
-              <li>基本的な駒の配置や動きは将棋と同様です。</li>
+              <li>駒の配置や動きはすべて将棋と同じです。</li>
               <li>
                 お互いの駒は霧に隠れて見ることができません。あなたの駒が進める範囲のみ、視界が開かれます。
               </li>
@@ -53,12 +53,12 @@ export default function RulesDialog() {
             </p>
           </div>
         </div>
-        <DialogClose className="absolute right-4 -top-12 ring-offset-background transition-opacity hover:opacity-100 disabled:pointer-events-none">
+        <DialogClose className="absolute right-4 top-4 ring-offset-background transition-opacity hover:opacity-100 disabled:pointer-events-none">
           <Image
             src="/ui/button/button_close.png"
             alt="Close"
-            width={24}
-            height={24}
+            width={28}
+            height={28}
           />
           <span className="sr-only">Close</span>
         </DialogClose>
