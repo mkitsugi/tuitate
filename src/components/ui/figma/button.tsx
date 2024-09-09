@@ -1,31 +1,38 @@
 "use client";
 import React, { useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface FigmaButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?:
-    | "primary"
-    | "secondary"
-    | "danger"
-    | "red"
-    | "blue"
-    | "green"
-    | "dark";
+  variant?: string;
+  textClassName?: string;
+  hasHoverState?: boolean;
+  customHoverPath?: string;
 }
 
 const FigmaButton: React.FC<FigmaButtonProps> = ({
   children,
   variant = "primary",
   className,
+  textClassName = "",
+  hasHoverState = true,
+  customHoverPath,
   ...props
 }) => {
   const [isPressed, setIsPressed] = useState(false);
-  const buttonSvgPath = `/ui/button/${variant}.svg`;
+  const [isHovered, setIsHovered] = useState(false);
+
+  const buttonDefaultPath = `/ui/button/${variant}.png`;
+  const buttonHoverPath = customHoverPath || `/ui/button/${variant}_hover.png`;
+  const buttonPressedPath = `/ui/button/${variant}_click.png`;
+
+  const currentImagePath =
+    hasHoverState && isHovered ? buttonHoverPath : buttonDefaultPath;
 
   return (
     <button
       {...props}
-      className={`relative inline-block w-full ${className}`}
+      className={`relative inline-block ${className}`}
       style={{
         background: "none",
         border: "none",
@@ -36,19 +43,30 @@ const FigmaButton: React.FC<FigmaButtonProps> = ({
       }}
       onMouseDown={() => setIsPressed(true)}
       onMouseUp={() => setIsPressed(false)}
-      onMouseLeave={() => setIsPressed(false)}
+      onMouseEnter={() => hasHoverState && setIsHovered(true)}
+      onMouseLeave={() => {
+        setIsPressed(false);
+        hasHoverState && setIsHovered(false);
+      }}
     >
-      <div style={{ paddingTop: "33.33%" }}>
+      <div style={{ paddingTop: "33.33%", overflow: "hidden" }}>
         <img
-          src={buttonSvgPath}
+          src={currentImagePath}
           alt={`${variant} button`}
-          className="absolute top-0 left-0 w-full h-full object-cover"
+          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full h-full object-cover"
           style={{
-            opacity: isPressed ? 0.8 : 1,
+            width: "auto",
+            maxWidth: "none",
           }}
         />
       </div>
-      <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white text-sm font-bold pb-1 whitespace-nowrap">
+      <span
+        className={cn(
+          "absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-black text-sm tracking-wide font-bold whitespace-nowrap",
+          hasHoverState && isHovered ? "text-white" : "",
+          textClassName
+        )}
+      >
         {children}
       </span>
     </button>

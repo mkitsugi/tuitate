@@ -91,7 +91,7 @@ export default function useGameLogic(
     for (let row = 0; row < 9; row++) {
       for (let col = 0; col < 9; col++) {
         const piece = board[row][col];
-        if (isDev && false && isCPUMode) {
+        if (isDev && isCPUMode) {
           // Show all pieces in development mode and CPU mode
           newVisibleBoard[row][col] = { piece, isVisible: true };
         } else if (piece && piece.player === playerSide) {

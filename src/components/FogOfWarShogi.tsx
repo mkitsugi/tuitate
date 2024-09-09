@@ -262,10 +262,20 @@ export default function ImprovedFogOfWarShogi() {
           >
             <CardContent className="p-2">
               <div className="flex flex-col justify-between items-start gap-4">
-                <div className="w-full flex justify-center py-4">
+                <div className="w-full flex flex-col items-center justify-center py-4">
+                  {!enterGame && (
+                    <Image
+                      src="/ui/index/line_light.png"
+                      alt="Top decoration"
+                      width={300}
+                      height={300}
+                      className="pb-8"
+                      // className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+                    />
+                  )}
                   <Image
                     src="/ui/title.svg"
-                    className="w-f"
+                    className=""
                     alt="霧将棋"
                     width={240}
                     height={100}
@@ -277,47 +287,58 @@ export default function ImprovedFogOfWarShogi() {
                 {!enterGame ? (
                   <div className="w-full flex flex-col items-center justify-center">
                     <FigmaButton
-                      variant="primary"
+                      variant="button_rectangle_01"
                       className="w-full max-w-[180px]"
+                      textClassName="text-md"
                       onClick={handleEnterGame}
                     >
                       さっそく始める
                     </FigmaButton>
+                    <Image
+                      src="/ui/index/line_light.png"
+                      alt="Top decoration"
+                      width={300}
+                      height={300}
+                      className="pt-12"
+                      // className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+                    />
                   </div>
                 ) : (
                   <div className="w-full space-y-4">
-                    <div className="flex flex-col gap-2 w-full px-2">
+                    <div className="flex flex-col gap-4 w-full px-4">
                       {!gameCreated && (
                         <>
                           {!inputGameId && (
-                            <div className="flex flex-row gap-2">
-                              <div className="flex flex-row items-start w-full space-x-2">
-                                <FigmaButton
-                                  variant="primary"
-                                  className="w-full max-w-[180px]"
-                                  onClick={() => {
-                                    createGame();
-                                    setSelectedSide(null);
-                                    playMoveSound();
-                                  }}
-                                >
-                                  新しいルームを作成
-                                </FigmaButton>
-                              </div>
-                              <RulesDialog />
+                            <div className="flex flex-row space-x-8 items-center justify-center">
+                              <FigmaButton
+                                variant="button_rectangle_02"
+                                className="w-full max-w-[180px]"
+                                onClick={() => {
+                                  createGame();
+                                  setSelectedSide(null);
+                                  playMoveSound();
+                                }}
+                              >
+                                新しいルームを作成
+                              </FigmaButton>
+
+                              <FigmaButton
+                                variant="button_rectangle_02_click"
+                                customHoverPath="/ui/button/button_rectangle_02_hover.png"
+                                className="w-full max-w-[180px]"
+                                textClassName="text-white"
+                                onClick={() => {
+                                  startCPUGame();
+                                  playMoveSound();
+                                }}
+                              >
+                                AIと対戦
+                              </FigmaButton>
                             </div>
                           )}
-
-                          <FigmaButton
-                            variant="primary"
-                            className="w-full max-w-[180px]"
-                            onClick={() => {
-                              startCPUGame();
-                              playMoveSound();
-                            }}
-                          >
-                            AIと対戦
-                          </FigmaButton>
+                          <div className="w-full sm:w-auto mt-2 px-1">
+                            <RulesDialog />
+                          </div>
 
                           <div className="w-full sm:w-auto mt-2 px-2">
                             <Label htmlFor="gameId" className="text-white">

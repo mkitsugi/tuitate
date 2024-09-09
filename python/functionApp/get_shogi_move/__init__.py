@@ -8,7 +8,7 @@ import numpy as np
 from typing import List, Tuple, Dict, Optional
 
 # モデルデータの読み込み
-model_path = os.path.join(os.path.dirname(__file__), 'models', 'fog_shogi_cfr_iter_500.pkl')
+model_path = os.path.join(os.path.dirname(__file__), 'models', 'fog_shogi_cfr_iter_5000.pkl')
 logging.info(f"Attempting to load model from: {model_path}")
 
 # モデルファイルの存在確認と読み込み
@@ -44,7 +44,7 @@ def get_piece_value(piece_type, player):
     # 後手の場合は負の値を返す
     return value if player == "先手" else -value
 
-def get_average_strategy(info_set):
+def get_average_strategy(info_set, model_data):
     # 情報集合に対する戦略の合計を取得
     strategy_sum = model_data['strategy_sum'].get(info_set, {})
     normalized_sum = sum(strategy_sum.values())
@@ -58,11 +58,11 @@ def get_average_strategy(info_set):
         uniform_prob = 1 / len(actions) if actions else 0
         return {action: uniform_prob for action in actions}
 
-def get_cpu_move(board, player):
+def get_cpu_move(board, player, model_data=model_data):
     # 現在の盤面の情報集合を取得
     info_set = get_information_set(board, player)
     # 情報集合に対する戦略を取得
-    strategy = get_average_strategy(info_set)
+    strategy = get_average_strategy(info_set, model_data)
     
     # 合法手を取得
     actions = get_legal_actions(board, player)

@@ -1,7 +1,9 @@
+import os
+from joblib import Parallel, delayed
 import multiprocessing
 from functools import partial
 import sys
-sys.setrecursionlimit(10000)  # Increase the limit, adjust as needed
+sys.setrecursionlimit(100000)  # 再帰の深さ制限を増やす（必要に応じて調整）
 
 import time
 import random
@@ -29,19 +31,20 @@ class FogShogiState:
         self.update_fog()
 
     def initial_setup(self):
-        # 後手の駒
+        # 後手の駒を配置
         self.board[0] = [-2, -3, -4, -6, -8, -6, -4, -3, -2]  # 香、桂、銀、金、玉、金、銀、桂、香
         self.board[1, 1] = -7  # 飛車
         self.board[1, 7] = -5  # 角
         self.board[2] = -1  # 歩
 
-        # 先手の駒
+        # 先手の駒を配置
         self.board[8] = [2, 3, 4, 6, 8, 6, 4, 3, 2]  # 香、桂、銀、金、玉、金、銀、桂、香
         self.board[7, 1] = 5  # 角
         self.board[7, 7] = 7  # 飛車
         self.board[6] = 1  # 歩
 
     def update_fog(self):
+        # 霧の効果を更新する
         self.hidden_info = {1: set(), -1: set()}
         for i in range(9):
             for j in range(9):
@@ -52,8 +55,9 @@ class FogShogiState:
         self.in_check = self.is_in_check(self.turn)  # 現在のプレイヤーが王手されているかを更新
 
     def is_visible(self, i: int, j: int, player: int) -> bool:
+        # 指定された位置がプレイヤーから見えるかどうかを判定する
 
-        # プレイヤーの各駒らの視界をチェック
+        # プレイヤーの各駒からの視界をチェック
         for pi in range(9):
             for pj in range(9):
                 if self.board[pi, pj] * player > 0:  # プレイヤーの駒
@@ -64,6 +68,7 @@ class FogShogiState:
         return False
     
     def is_in_piece_vision(self, piece: int, pi: int, pj: int, i: int, j: int, player: int) -> bool:
+        # 指定された駒の視界内に目標の位置があるかどうかを判定する
         moves = self.get_piece_moves(piece, pi, pj)
         for mi, mj in moves:
             if (mi, mj) == (i, j):
@@ -73,6 +78,7 @@ class FogShogiState:
         return False
 
     def get_legal_actions(self) -> List[Tuple[int, int, int, int, bool]]:
+        # 合法手のリストを取得する
         actions = []
         # 盤上の駒の移動
         for i in range(9):
@@ -113,6 +119,7 @@ class FogShogiState:
         return legal_actions
     
     def is_two_pawns(self, piece: int, column: int) -> bool:
+        # 二歩の判定を行う
         if piece != 1:  # 歩以外の駒は二歩にならない
             return False
         for i in range(9):
@@ -121,7 +128,7 @@ class FogShogiState:
         return False
     
     def is_pawn_drop_mate(self, i: int, j: int) -> bool:
-        # 打ち歩詰めのチェック
+        # 打ち歩詰めのチェックを行う
         opponent_king_pos = self.find_king(-self.turn)
         if opponent_king_pos is None:
             return False  # 相手の玉がない場合は打ち歩詰めにならない
@@ -138,6 +145,7 @@ class FogShogiState:
         return is_mate
 
     def find_king(self, player: int) -> Optional[Tuple[int, int]]:
+        # プレイヤーの玉の位置を探す
         for i in range(9):
             for j in range(9):
                 if self.board[i, j] == 8 * player:
@@ -145,6 +153,7 @@ class FogShogiState:
         return None
 
     def is_checkmate(self, player: int) -> bool:
+        # 詰みの判定を行う
         king_pos = self.find_king(player)
         if king_pos is None:
             return False  # 玉がない場合は詰みではない
@@ -182,6 +191,7 @@ class FogShogiState:
         return True  # 詰み
 
     def is_square_attacked(self, i: int, j: int, attacker: int) -> bool:
+        # 指定されたマスが攻撃されているかどうかを判定する
         for ai in range(9):
             for aj in range(9):
                 if self.board[ai, aj] * attacker > 0:
@@ -192,6 +202,7 @@ class FogShogiState:
         return False
 
     def apply_action(self, action: Tuple[int, int, int, int, bool]):
+        # アクションを適用し、盤面を更新する
         i, j, ni, nj, promote = action
         if i == -1:  # 持ち駒を使用する場合
             piece = j
@@ -217,6 +228,7 @@ class FogShogiState:
             print(f"Player {self.turn} is in check!")  # 王手の通知
 
     def get_piece_moves(self, piece: int, i: int, j: int) -> List[Tuple[int, int]]:
+        # 指定された駒の移動可能な位置のリストを取得する
         moves = []
         directions = []
         if piece == 1:  # 歩
@@ -276,7 +288,8 @@ class FogShogiState:
 class FogShogiCFR:
     def __init__(self):
         self.cache: Dict[str, float] = {}
-        self.max_cache_size = 10000000
+        self.max_cache_size = 100000000
+        self.cache_cleanup_threshold = 0.8
         self.regret_sum: Dict[str, Dict[Tuple[int, int, int, int], float]] = {}
         self.strategy_sum: Dict[str, Dict[Tuple[int, int, int, int], float]] = {}
 
@@ -288,41 +301,102 @@ class FogShogiCFR:
         return f"{visible_board.tobytes()}{state.turn}{state.captured_pieces}"
 
     def get_strategy(self, info_set: str, actions: List[Tuple[int, int, int, int]]) -> Dict[Tuple[int, int, int, int], float]:
+        # 既存の初期化部分を保持
         if info_set not in self.regret_sum:
             self.regret_sum[info_set] = {action: 0.0 for action in actions}
             self.strategy_sum[info_set] = {action: 0.0 for action in actions}
 
-        regrets = self.regret_sum[info_set]
-        positive_regrets = {action: max(regret, 0) for action, regret in regrets.items()}
-        sum_positive_regrets = sum(positive_regrets.values())
+        t = sum(self.strategy_sum[info_set].values()) + 1
+        c = 2  # 探索の程度を制御するパラメータ。この値は調整可能です。
+        ucb_values = {}
 
-        if sum_positive_regrets > 0:
-            strategy = {action: regret / sum_positive_regrets for action, regret in positive_regrets.items()}
-        else:
-            strategy = {action: 1.0 / len(actions) for action in actions}
-
-        return strategy
-
-    def parallel_cfr(self, player: int, num_processes: int = 32, iterations: int = 20):
-        print(f"Starting CFR for Player {player}")
-        with multiprocessing.Pool(processes=num_processes) as pool:
-            results = list(tqdm(pool.imap(partial(self.cfr_iteration, player=player), range(iterations)), total=iterations))
-        print(f"\nCompleted CFR for Player {player}")
+        for action in actions:
+            q = self.strategy_sum[info_set].get(action, 0) / (self.regret_sum[info_set].get(action, 0) + 1)
+            n = self.regret_sum[info_set].get(action, 0) + 1
+            ucb_values[action] = q + c * np.sqrt(np.log(t) / n)
         
-        # 結果の集計
-        for utility in results:
-            # 必要に応じて結果を処理
-            pass
+        total = sum(ucb_values.values())
+        
+        # 合計が0の場合（すべての行動のUCB値が0の場合）の処理
+        if total == 0:
+            return {action: 1.0 / len(actions) for action in actions}
+        
+        return {action: value / total for action, value in ucb_values.items()}
+
+    def parallel_cfr(self, player: int, num_processes: int = 32, iterations: int = 1000, batch_size: int = 100):
+        results = []
+        utilities = []
+        
+        # tqdmを使用してプログレスバーを表示
+        for batch_start in tqdm(range(0, iterations, batch_size), desc="Batch Progress"):
+            batch_end = min(batch_start + batch_size, iterations)
+            batch_iterations = batch_end - batch_start
+            
+            # バッチ内の反復処理を並列実行
+            batch_results = Parallel(n_jobs=num_processes, verbose=0)(
+                delayed(self.cfr_iteration)(iteration, player)
+                for iteration in range(batch_start, batch_end)
+            )
+            
+            results.extend(batch_results)
+            
+            # バッチの平均ユーティリティを計算
+            batch_avg_utility = np.mean(batch_results)
+            utilities.append(batch_avg_utility)
+            
+            # 中間結果の表示
+            print(f"\nBatch {batch_start//batch_size + 1} completed:")
+            print(f"  Iterations: {batch_start+1}-{batch_end}")
+            print(f"  Batch Average Utility: {batch_avg_utility:.4f}")
+            
+            # 定期的にモデルを保存
+            if (batch_start + batch_size) % (batch_size * 10) == 0:
+                self.save_model(f"fog_shogi_cfr_player{player}_iter_{batch_end}.pkl")
+            
+            # メモリ使用量の最適化（必要に応じて）
+            self.optimize_memory()
+        
+        # 全体の結果を集計
+        total_utility = sum(results)
+        average_utility = total_utility / iterations
+        max_utility = max(results)
+        min_utility = min(results)
+        
+        print(f"\nPlayer {player} CFR Results:")
+        print(f"  Total Utility: {total_utility}")
+        print(f"  Average Utility: {average_utility:.4f}")
+        print(f"  Max Utility: {max_utility}")
+        print(f"  Min Utility: {min_utility}")
+        
+        # 収束の指標として、最後の10%のイテレーションの平均を計算
+        last_10_percent = results[-int(iterations * 0.1):]
+        last_10_percent_avg = sum(last_10_percent) / len(last_10_percent)
+        print(f"  Last 10% Average Utility: {last_10_percent_avg:.4f}")
+        
+        # ユーティリティの変化の要約を表示
+        print("\nUtility Summary:")
+        print(f"  Initial: {utilities[0]:.4f}")
+        print(f"  Final: {utilities[-1]:.4f}")
+        print(f"  Improvement: {utilities[-1] - utilities[0]:.4f}")
+        
+        return average_utility
+
+    def optimize_memory(self):
+        # キャッシュのクリーンアップなど、メモリ最適化のロジックをここに実装
+        if len(self.cache) > self.max_cache_size:
+            num_to_remove = int(self.max_cache_size * 0.3)
+            for _ in range(num_to_remove):
+                self.cache.popitem()
 
     def cfr_iteration(self, iteration: int, player: int):
         state = FogShogiState()
-        result = self.cfr(state, player, 1.0, max_depth=5)
+        result = self.cfr(state, player, 1.0, max_depth=8)
         if iteration % 5 == 0:  # 5イテレーションごとに進捗を表示
             print(f"Iteration: {iteration}, Player: {player}", end='\r')
             sys.stdout.flush()
         return result
 
-    def cfr(self, state: FogShogiState, player: int, reach_probability: float, depth: int = 0, max_depth: int = 20) -> float:
+    def cfr(self, state: FogShogiState, player: int, reach_probability: float, depth: int = 0, max_depth: int = 6) -> float:
         if depth % 10 == 0:
             print(f"Current depth: {depth}, Player: {player}", end='\r')
             sys.stdout.flush()
@@ -362,8 +436,9 @@ class FogShogiCFR:
         if state.turn == player:
             for action in actions:
                 regret = reach_probability * (action_utilities[action] - utility)
-                self.regret_sum[info_set][action] = self.regret_sum[info_set].get(action, 0) + regret
-                self.strategy_sum[info_set][action] = self.strategy_sum[info_set].get(action, 0) + reach_probability * strategy[action]
+                learning_rate = 0.1  # 学習率を追加
+                self.regret_sum[info_set][action] = self.regret_sum[info_set].get(action, 0) + regret * learning_rate
+                self.strategy_sum[info_set][action] = self.strategy_sum[info_set].get(action, 0) + reach_probability * strategy[action] * learning_rate
 
         self.cache[cache_key] = utility
         return utility
@@ -372,16 +447,15 @@ class FogShogiCFR:
     def evaluate_position(self, state: FogShogiState, player: int) -> float:
         # 霧将棋用に調整された駒の基本価値
         piece_values = {
-            1: 80,   # 歩：情報収集の観点から少し高めに
-            2: 300,  # 香：長距離の情報収集が可能だが、霧の影響で価値減
-            3: 350,  # 桂：飛び越え能力は有用だが、情報収集は限定的
-            4: 400,  # 銀：多方向の動きが可能で情報収集に有用
-            5: 600,  # 角：長距離の情報収集が可能だが、霧の影響で価値減
-            6: 500,  # 金：多方向の動きと前進能力で情報収集に有用
-            7: 700,  # 飛：長距離の情報収集が可能だが、霧の影響で価値減
-            8: 10000,# 玉：ゲームの勝敗を決定するので高価値
-            # 成り駒は通常より価値が上がる（情報収集能力の向上）
-            11: 150, 12: 400, 13: 450, 14: 500, 15: 750, 17: 850
+            1: 100,   # 歩
+            2: 400,   # 香
+            3: 450,   # 桂
+            4: 500,   # 銀
+            5: 800,   # 角
+            6: 600,   # 金
+            7: 900,   # 飛
+            8: 15000, # 玉：さらに高い価値を設定
+            11: 200,  12: 500, 13: 550, 14: 600, 15: 1000, 17: 1100  # 成り駒の価値を上げる
         }
         
         score = 0
@@ -399,6 +473,10 @@ class FogShogiCFR:
                     # 基本点数
                     value = piece_values[abs_piece]
                     score += value * piece_player
+                    
+                    # 駒の位置による追加評価
+                    position_bonus = self.get_position_bonus(abs_piece, i, j, piece_player)
+                    score += position_bonus * piece_player
                     
                     # 可視駒のカウント
                     if (i, j) not in state.hidden_info[player]:
@@ -431,8 +509,64 @@ class FogShogiCFR:
                              if state.board[i][j] * player > 0) * 30
         score += center_control
         
+        # 駒の危険度評価を追加
+        for i in range(9):
+            for j in range(9):
+                piece = state.board[i, j]
+                if piece * player > 0:  # プレイヤーの駒
+                    danger_score = self.evaluate_piece_danger(state, i, j, player)
+                    score -= danger_score * piece_values[abs(piece)] * 0.1  # 危険度に応じてスコアを減少
+
+        # 攻撃の機会の評価を追加
+        attack_opportunities = self.evaluate_attack_opportunities(state, player)
+        score += attack_opportunities * 50  # 攻撃の機会にボーナスを与える
+        
         # プレイヤーの視点から正規化（-1から1の範囲に）
         return np.tanh(score * player / 6000)  # 正規化係数を調整
+
+    def evaluate_piece_danger(self, state: FogShogiState, i: int, j: int, player: int) -> float:
+        danger = 0
+        for di in [-1, 0, 1]:
+            for dj in [-1, 0, 1]:
+                if di == 0 and dj == 0:
+                    continue
+                ni, nj = i + di, j + dj
+                if 0 <= ni < 9 and 0 <= nj < 9:
+                    if state.board[ni, nj] * player < 0:  # 敵の駒
+                        danger += 1  # 隣接する敵の駒の数をカウント
+        return danger
+
+    def evaluate_attack_opportunities(self, state: FogShogiState, player: int) -> int:
+        opportunities = 0
+        for i in range(9):
+            for j in range(9):
+                if state.board[i, j] * player > 0:  # プレイヤーの駒
+                    piece = abs(state.board[i, j])
+                    moves = state.get_piece_moves(piece, i, j)
+                    for mi, mj in moves:
+                        if state.board[mi, mj] * player < 0:  # 敵の駒を取れる
+                            opportunities += 1
+        return opportunities
+    
+    def get_position_bonus(self, piece: int, i: int, j: int, player: int) -> float:
+        # 駒の位置による追加ボーナスを計算
+        bonus = 0
+        if player == 1:  # 先手
+            bonus += (9 - i) * 10  # 相手陣地に近いほど価値が上がる
+        else:  # 後手
+            bonus += i * 10  # 相手陣地に近いほど価値が上がる
+        
+        # 中央にある駒にボーナス
+        if 2 <= j <= 6:
+            bonus += 20
+        
+        # 特定の駒に対する追加ボーナス
+        if piece in [5, 7]:  # 角と飛車
+            bonus += 50  # 重要な駒なので追加ボーナス
+        elif piece in [15, 17]:  # 馬と龍
+            bonus += 100  # さらに重要な成り駒なので高いボーナス
+        
+        return bonus
             
     def train_parallel(self, iterations: int, num_processes: int, save_interval: int, filename: str):
         start_time = time.time()
@@ -440,24 +574,26 @@ class FogShogiCFR:
             print(f"\nイテレーション {i+1}-{min(i+save_interval, iterations)}/{iterations} 開始")
             
             print("先手のCFR開始")
-            self.parallel_cfr(1, num_processes, save_interval)
+            avg_utility_player1 = self.parallel_cfr(1, num_processes, save_interval)
             print("先手のCFR完了")
             
             print("後手のCFR開始")
-            self.parallel_cfr(-1, num_processes, save_interval)
+            avg_utility_player2 = self.parallel_cfr(-1, num_processes, save_interval)
             print("後手のCFR完了")
+            
+            print(f"Average Utility - Player 1: {avg_utility_player1:.4f}, Player -1: {avg_utility_player2:.4f}")
             
             self.save_model(f"{filename}_iter_{i+save_interval}.pkl")
             print(f"{i+save_interval} イテレーション完了")
 
-            if i % 10 == 0:  # 10イテレーションごとにリソース使用状況を表示
+            if i % 10 == 0:
                 monitor_resources()
-                
-        if len(self.cache) > self.max_cache_size:
-            # 最も古いエントリーの20%を削除
-            num_to_remove = int(self.max_cache_size * 0.2)
-            for _ in range(num_to_remove):
-                self.cache.popitem()
+            
+            # キャッシュのクリーンアップ
+            if len(self.cache) > self.max_cache_size:
+                num_to_remove = int(self.max_cache_size * 0.3)
+                for _ in range(num_to_remove):
+                    self.cache.popitem()
 
         end_time = time.time()
         print(f"トレーニング完了 (総所要時間: {end_time - start_time:.2f}秒)")
@@ -506,10 +642,10 @@ def monitor_resources():
 # 使用例
 def train_new_model():
     cfr_model = FogShogiCFR()
-    # num_processes = multiprocessing.cpu_count()  # 利用可能なCPUコア数
-    num_processes = 48
+    num_processes = os.cpu_count()  # 利用可能なCPUコア数
+    # num_processes = 48
     print(f"num_processes: {num_processes}")
-    cfr_model.train_parallel(iterations=50000, num_processes=num_processes, save_interval=250, filename="fog_shogi_cfr")
+    cfr_model.train_parallel(iterations=1000, num_processes=num_processes, save_interval=100, filename="fog_shogi_cfr")
 
 if __name__ == "__main__":
     train_new_model()

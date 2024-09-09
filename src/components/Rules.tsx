@@ -12,7 +12,11 @@ export default function RulesDialog() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <FigmaButton variant="dark" className="w-fit max-w-[180px]">
+        <FigmaButton
+          variant="button_rectangle_02"
+          // customHoverPath="/ui/button/button_rectangle_02_.png"
+          className="w-full max-w-[180px]"
+        >
           ルールについて
         </FigmaButton>
       </DialogTrigger>
