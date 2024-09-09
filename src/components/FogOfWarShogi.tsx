@@ -563,6 +563,7 @@ export default function ImprovedFogOfWarShogi() {
                     backgroundSize: "100% 100%",
                     backgroundPosition: "center",
                     width: "85px",
+                    marginTop: "-3px",
                   }}
                 >
                   投了
