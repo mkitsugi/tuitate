@@ -1,4 +1,5 @@
 import React from "react";
+import Image from "next/image";
 import FigmaButton from "./ui/figma/button";
 import {
   Dialog,
@@ -6,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogClose,
 } from "@/components/ui/dialog";
 
 export default function RulesDialog() {
@@ -51,6 +53,15 @@ export default function RulesDialog() {
             </p>
           </div>
         </div>
+        <DialogClose className="absolute right-4 -top-12 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
+          <Image
+            src="/ui/button/button_close.png"
+            alt="Close"
+            width={24}
+            height={24}
+          />
+          <span className="sr-only">Close</span>
+        </DialogClose>
       </DialogContent>
     </Dialog>
   );
