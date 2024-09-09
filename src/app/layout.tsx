@@ -8,7 +8,7 @@ const nunito = Nunito({ subsets: ["latin"] });
 
 // カスタムフォントの読み込み
 const customFont = localFont({
-  src: "../../public/fonts/tamanegi_kaisho_free.ttf",
+  src: "../../public/fonts/tamanegi_kaisho.ttf",
   display: "swap",
 });
 
