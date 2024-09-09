@@ -16,7 +16,7 @@ export default function RulesDialog() {
       <DialogTrigger asChild>
         <FigmaButton
           variant="button_rectangle_02"
-          className="w-full max-w-[160px] sm:max-w-[180px]"
+          className="w-full max-w-[160px] sm:max-w-[160px]"
           textClassName="text-[13px] sm:text-[15px]"
         >
           ルールについて
@@ -53,7 +53,7 @@ export default function RulesDialog() {
             </p>
           </div>
         </div>
-        <DialogClose className="absolute right-4 -top-12 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
+        <DialogClose className="absolute right-4 -top-12 ring-offset-background transition-opacity hover:opacity-100 disabled:pointer-events-none">
           <Image
             src="/ui/button/button_close.png"
             alt="Close"

@@ -252,220 +252,221 @@ export default function ImprovedFogOfWarShogi() {
     <div className="flex justify-center items-center w-full h-full z-10">
       <div className="space-y-3 w-full">
         {!gameStarted && (
-          <Card
-            className={cn(
-              "mx-auto w-full",
-              enterGame
-                ? "max-w-[450px] py-8 overflow-hidden backdrop-blur-md border border-white/20 shadow-lg bg-white/10"
-                : "w-fit p-8 px-12 bg-white/0 border-0 shadow-none"
-            )}
-          >
-            <CardContent className="p-2">
-              <div className="flex flex-col justify-between items-start gap-4">
-                <div className="w-full flex flex-col items-center justify-center py-4">
-                  {!enterGame && (
-                    <Image
-                      src="/ui/index/line_light.png"
-                      alt="Top decoration"
-                      width={300}
-                      height={300}
-                      className="pb-8"
-                      // className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
-                    />
-                  )}
-                  <Image
-                    src="/ui/title.svg"
-                    className=""
-                    alt="霧将棋"
-                    width={240}
-                    height={100}
-                    sizes="300vw"
-                    priority
-                    quality={100}
-                  />
+          <div className="w-fill max-w-[450px] items-center justify-center mx-auto">
+            {/* // <Card
+          // className={cn(
+          //   "mx-auto w-full",
+          //   enterGame
+          //     ? "max-w-[450px] py-8 overflow-hidden backdrop-blur-md border border-white/20 shadow-lg bg-white/10"
+          //     : "w-fit p-8 px-12 bg-white/0 border-0 shadow-none"
+          // )}
+          // >
+          //   <CardContent className="p-2"> */}
+            <div className="w-full flex flex-col justify-between items-start gap-4">
+              <div className="w-full flex flex-col items-center justify-center py-4">
+                {/* {!enterGame && ( */}
+                <Image
+                  src="/ui/index/line_light.png"
+                  alt="Top decoration"
+                  width={300}
+                  height={300}
+                  className="pb-8"
+                />
+                {/* )} */}
+                <Image
+                  src="/ui/title.png"
+                  alt="霧将棋"
+                  width={240}
+                  height={100}
+                  sizes="300vw"
+                  priority
+                  quality={100}
+                />
+              </div>
+              {!enterGame ? (
+                <div className="w-full flex flex-col items-center justify-center">
+                  <FigmaButton
+                    variant="button_rectangle_01"
+                    className="w-full max-w-[150px] sm:max-w-[180px]"
+                    textClassName="text-[14px] font-bold sm:text-[15px]"
+                    onClick={() => {
+                      handleEnterGame();
+                      playMoveSound();
+                    }}
+                  >
+                    さっそく始める
+                  </FigmaButton>
                 </div>
-                {!enterGame ? (
-                  <div className="w-full flex flex-col items-center justify-center">
-                    <FigmaButton
-                      variant="button_rectangle_01"
-                      className="w-full max-w-[150px] sm:max-w-[180px]"
-                      textClassName="text-[14px] font-bold sm:text-[15px]"
-                      onClick={() => {
-                        handleEnterGame();
-                        playMoveSound();
-                      }}
-                    >
-                      さっそく始める
-                    </FigmaButton>
-                    <Image
-                      src="/ui/index/line_light.png"
-                      alt="Top decoration"
-                      width={300}
-                      height={300}
-                      className="pt-12"
-                      // className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
-                    />
-                  </div>
-                ) : (
-                  <div className="w-full space-y-4">
-                    <div className="flex flex-col gap-4 w-full px-4">
-                      {!gameCreated && (
-                        <>
-                          {!inputGameId && (
-                            <div className="flex flex-row space-x-4 items-center justify-center">
-                              <FigmaButton
-                                variant="button_rectangle_02"
-                                className="w-full max-w-[160px] sm:max-w-[180px]"
-                                textClassName="text-[13px] sm:text-[15px]"
-                                onClick={() => {
-                                  createGame();
-                                  setSelectedSide(null);
-                                  playMoveSound();
-                                }}
-                              >
-                                新しいルームを作成
-                              </FigmaButton>
-
-                              <FigmaButton
-                                variant="button_rectangle_02_click"
-                                customHoverPath="/ui/button/button_rectangle_02_hover.png"
-                                className="w-full max-w-[160px] sm:max-w-[180px]"
-                                textClassName="text-[13px] sm:text-[15px] text-white"
-                                onClick={() => {
-                                  startCPUGame();
-                                  playMoveSound();
-                                }}
-                              >
-                                AIと対戦
-                              </FigmaButton>
-                            </div>
-                          )}
-                          <div className="w-full sm:w-auto mt-2 sm:px-2">
-                            <RulesDialog />
-                          </div>
-
-                          <div className="w-full sm:w-auto mt-2 px-2">
-                            <Label htmlFor="gameId" className="text-white">
-                              友達のルームに参加
-                            </Label>
-                            <Input
-                              id="gameId"
-                              placeholder="ルームIDを入力"
-                              value={inputGameId}
-                              onChange={(e) => setInputGameId(e.target.value)}
-                              className="mt-1"
-                            />
-                          </div>
-                        </>
-                      )}
-                      {(gameCreated || inputGameId) && (
-                        <div className="flex flex-row gap-2 w-full items-center justify-center">
-                          {availableSides.includes("先手") && !selectedSide && (
+              ) : (
+                <div className="w-full space-y-4">
+                  <div className="flex flex-col justify-start gap-4 w-full max-w-[350px] mx-auto px-2">
+                    {!gameCreated && (
+                      <>
+                        {!inputGameId && (
+                          <div className="flex flex-row space-x-2 items-center justify-center">
                             <FigmaButton
-                              variant="blue"
+                              variant="button_rectangle_02"
+                              className="w-full max-w-[160px] sm:max-w-[180px]"
+                              textClassName="text-[13px] sm:text-[15px]"
                               onClick={() => {
-                                handleJoinGame("先手" as Player);
+                                createGame();
+                                setSelectedSide(null);
                                 playMoveSound();
                               }}
-                              className="w-full max-w-[180px]"
-                              // className="mt-4 w-full bg-sky-600/80 backdrop-blur-sm border-2 border-sky-400/20 text-white hover:bg-sky-700/80 transition-colors"
-                              // className="mt-4 w-full bg-sky-600 hover:bg-sky-700"
                             >
-                              先手として参加
+                              新しいルームを作成
                             </FigmaButton>
-                          )}
-                          {availableSides.includes("後手") && !selectedSide && (
+
                             <FigmaButton
-                              variant="red"
+                              variant="button_rectangle_02_click"
+                              customHoverPath="/ui/button/button_rectangle_02_hover.png"
+                              className="w-full max-w-[160px] sm:max-w-[180px]"
+                              textClassName="text-[13px] sm:text-[15px] text-white"
                               onClick={() => {
-                                handleJoinGame("後手" as Player);
+                                startCPUGame();
                                 playMoveSound();
                               }}
-                              className="w-full max-w-[180px]"
-                              // className="mt-2 w-full bg-rose-600/80 backdrop-blur-sm border-2 border-rose-400/20 text-white hover:bg-rose-700/80 transition-colors"
-                              // className="mt-2 w-full bg-rose-600 hover:bg-rose-700"
                             >
-                              後手として参加
+                              AIと練習
                             </FigmaButton>
-                          )}
-                          {selectedSide && !gameStarted && (
-                            <div className="mt-4 text-center w-full text-white">
-                              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-white" />
-                              <p>
-                                {selectedSide === "先手" ? "先手" : "後手"}
-                                として参加しました
-                              </p>
-                              <p>相手のプレイヤーを待っています...</p>
-                            </div>
-                          )}
+                          </div>
+                        )}
+                        <div className="w-full sm:w-auto mt-2">
+                          <RulesDialog />
                         </div>
-                      )}
-                    </div>
+
+                        {/* <div className="w-full sm:w-auto mt-2 px-2">
+                          <Label htmlFor="gameId" className="text-white">
+                            友達のルームに参加
+                          </Label>
+                          <Input
+                            id="gameId"
+                            placeholder="ルームIDを入力"
+                            value={inputGameId}
+                            onChange={(e) => setInputGameId(e.target.value)}
+                            className="mt-1"
+                          />
+                        </div> */}
+                      </>
+                    )}
+                    {(gameCreated || inputGameId) && (
+                      <div className="flex flex-row gap-2 w-full items-center justify-center">
+                        {availableSides.includes("先手") && !selectedSide && (
+                          <FigmaButton
+                            variant="blue"
+                            onClick={() => {
+                              handleJoinGame("先手" as Player);
+                              playMoveSound();
+                            }}
+                            className="w-full max-w-[180px]"
+                            // className="mt-4 w-full bg-sky-600/80 backdrop-blur-sm border-2 border-sky-400/20 text-white hover:bg-sky-700/80 transition-colors"
+                            // className="mt-4 w-full bg-sky-600 hover:bg-sky-700"
+                          >
+                            先手として参加
+                          </FigmaButton>
+                        )}
+                        {availableSides.includes("後手") && !selectedSide && (
+                          <FigmaButton
+                            variant="red"
+                            onClick={() => {
+                              handleJoinGame("後手" as Player);
+                              playMoveSound();
+                            }}
+                            className="w-full max-w-[180px]"
+                            // className="mt-2 w-full bg-rose-600/80 backdrop-blur-sm border-2 border-rose-400/20 text-white hover:bg-rose-700/80 transition-colors"
+                            // className="mt-2 w-full bg-rose-600 hover:bg-rose-700"
+                          >
+                            後手として参加
+                          </FigmaButton>
+                        )}
+                        {selectedSide && !gameStarted && (
+                          <div className="mt-4 text-center w-full text-white">
+                            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-white" />
+                            <p>
+                              {selectedSide === "先手" ? "先手" : "後手"}
+                              として参加しました
+                            </p>
+                            <p>相手のプレイヤーを待っています...</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* {enterGame && (
+              <div className="w-full flex flex-col md:flex-row justify-start md:justify-start pt-2 px-2">
+                {gameId && (
+                  <div className="flex w-full mt-4 items-center text-sm text-white text-center justify-start md:justify-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={copyGameId}
+                      title="ルームIDをコピー"
+                      className="w-fit px-4 rounded-full bg-black/80 backdrop-blur-sm hover:none"
+                    >
+                      <div className="flex space-x-2 w-full">
+                        <p>ルームID : {gameId}</p>
+                        <Copy className="h-4 w-4" />
+                      </div>
+                    </Button>
                   </div>
                 )}
               </div>
+            )} */}
 
-              {enterGame && (
-                <div className="w-full flex flex-col md:flex-row justify-start md:justify-start pt-2 px-2">
-                  {gameId && (
-                    <div className="flex w-full mt-4 items-center text-sm text-white text-center justify-start md:justify-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={copyGameId}
-                        title="ルームIDをコピー"
-                        className="w-fit px-4 rounded-full bg-black/80 backdrop-blur-sm hover:none"
-                      >
-                        <div className="flex space-x-2 w-full">
-                          <p>ルームID : {gameId}</p>
-                          <Copy className="h-4 w-4" />
-                        </div>
-                      </Button>
+            {/* {!gameId && enterGame && (
+              <>
+                {isLoadingRooms && (
+                  <p className="px-4 pt-4 text-white text-sm">
+                    ルームを検索中...
+                  </p>
+                )}
+                {existingRooms.length > 0 && (
+                  <div className="mt-4 px-4">
+                    <h3 className="text-sm text-white mb-2">
+                      利用可能なルーム:
+                    </h3>
+                    <div className="grid grid-cols-2 gap-2 overflow-y-auto max-h-[200px]">
+                      {existingRooms.map((room) => (
+                        <Button
+                          key={room.id}
+                          onClick={() => setInputGameId(room.id)}
+                          className="w-full text-left bg-white/90 backdrop-blur-md text-black hover:bg-white/70 transition-colors text-sm"
+                        >
+                          {room.id} ({room.players}/2)
+                        </Button>
+                      ))}
                     </div>
-                  )}
-                </div>
-              )}
-
-              {!gameId && enterGame && (
-                <>
-                  {isLoadingRooms && (
-                    <p className="px-4 pt-4 text-white text-sm">
-                      ルームを検索中...
-                    </p>
-                  )}
-                  {existingRooms.length > 0 && (
-                    <div className="mt-4 px-4">
-                      <h3 className="text-sm text-white mb-2">
-                        利用可能なルーム:
-                      </h3>
-                      <div className="grid grid-cols-2 gap-2 overflow-y-auto max-h-[200px]">
-                        {existingRooms.map((room) => (
-                          <Button
-                            key={room.id}
-                            onClick={() => setInputGameId(room.id)}
-                            className="w-full text-left bg-white/90 backdrop-blur-md text-black hover:bg-white/70 transition-colors text-sm"
-                          >
-                            {room.id} ({room.players}/2)
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {existingRooms.length === 0 && !isLoadingRooms && (
-                    <p className="mt-8 px-4 text-white text-sm">
-                      利用可能なルームがありません。
-                    </p>
-                  )}
-                </>
-              )}
-            </CardContent>
-          </Card>
+                  </div>
+                )}
+                {existingRooms.length === 0 && !isLoadingRooms && (
+                  <p className="mt-8 px-4 text-white text-sm">
+                    利用可能なルームがありません。
+                  </p>
+                )}
+              </>
+            )} */}
+            <div className="w-full flex flex-col items-center justify-center py-4">
+              <Image
+                src="/ui/index/line_light.png"
+                alt="Top decoration"
+                width={300}
+                height={300}
+                className="pt-12"
+              />
+            </div>
+            {/* //   </CardContent> */}
+            {/* // </Card> */}
+          </div>
         )}
 
         {gameStarted && !gameEnded && (
           <>
             <div className="flex flex-col justify-center items-center space-y-2 w-full">
-              <div className="w-full max-w-[400px] flex flex-col items-end justify-center px-2 sm:px-8">
+              <div className="w-full max-w-[400px] flex flex-col items-end justify-center px-2 sm:px-2">
                 <div className="text-white text-sm pr-1 pb-1">
                   {formatTime(playerSide === "先手" ? gote時間 : sente時間)}
                 </div>

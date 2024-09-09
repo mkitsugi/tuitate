@@ -59,6 +59,28 @@
   }
 }
 
+img,
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+span {
+  pointer-events: none;
+  user-select: none;
+}
+
+*:focus {
+  outline: none;
+}
+
+*:focus-visible {
+  outline: 0px solid #000; /* または任意の色やスタイル */
+  outline-offset: 2px;
+}
+
 @keyframes cloud {
   0% {
     background-position: 0px;
