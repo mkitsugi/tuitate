@@ -620,11 +620,14 @@ export default function useGameLogic(
     setLastMove(null);
     setCapturedPieces({ 先手: [], 後手: [] });
     setSelectedCapturedPiece(null);
+    setIsPlayerInCheck(false);
+    setIsOpponentInCheck(false);
   }, []);
 
   const resetForNewGame = useCallback(() => {
     resetGameState();
-  }, [resetGameState]);
+    updateVisibleBoard();
+  }, [resetGameState, updateVisibleBoard]);
 
   useEffect(() => {
     if (gameId) {

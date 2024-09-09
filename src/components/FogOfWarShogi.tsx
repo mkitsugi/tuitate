@@ -74,6 +74,8 @@ export default function ImprovedFogOfWarShogi() {
     returnToLobby,
     rematchRequested,
     rematchAccepted,
+    setRematchRequested,
+    setRematchAccepted,
     opponentRequestedRematch,
     opponentLeft,
     findRandomMatch,
@@ -145,13 +147,6 @@ export default function ImprovedFogOfWarShogi() {
     }
   }, [gameStarted, selectedSide]);
 
-  useEffect(() => {
-    if (rematchAccepted) {
-      resetForNewGame();
-      startNewGame();
-    }
-  }, [rematchAccepted, resetForNewGame, startNewGame]);
-
   const handleReturnToLobby = () => {
     returnToLobby();
     setInputGameId("");
@@ -167,6 +162,15 @@ export default function ImprovedFogOfWarShogi() {
       handleReturnToLobby();
     }
   }, [opponentLeft, handleReturnToLobby]);
+
+  useEffect(() => {
+    if (!gameEnded) {
+      resetForNewGame();
+    } else {
+      setRematchRequested(false);
+      setRematchAccepted(false);
+    }
+  }, [gameEnded]);
 
   const handleCapturedPieceClickWrapper = (
     piece: Piece,
@@ -192,7 +196,7 @@ export default function ImprovedFogOfWarShogi() {
   const copyGameId = useCallback(() => {
     navigator.clipboard.writeText(gameId || "");
     toast.success("ルームIDをクリップボードにコピーしました。", {
-      position: "bottom-center",
+      position: "top-right",
     });
   }, [gameId]);
 
@@ -668,12 +672,25 @@ export default function ImprovedFogOfWarShogi() {
                 </button>
               )}
               {opponentRequestedRematch && (
-                <Button
+                <button
                   onClick={acceptRematch}
-                  className="bg-green-600 hover:bg-green-700 text-white"
+                  className="py-1 text-md text-white font-black hover:scale-95 transition-all"
+                  style={{
+                    backgroundImage: "url('/ui/button/button_rectangle_01_click.png')",
+                    backgroundSize: "100% 100%",
+                    backgroundPosition: "center",
+                    width: "150px",
+                    height: "40px",
+                  }}
                 >
-                  再戦を受け入れる
-                </Button>
+                  再選する
+                </button>
+                // <Button
+                //   onClick={acceptRematch}
+                //   className="bg-green-600 hover:bg-green-700 text-white"
+                // >
+                //   再戦を受け入れる
+                // </Button>
               )}
             </div>
             {rematchRequested && (

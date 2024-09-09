@@ -101,7 +101,7 @@ export default function useSocket() {
       console.error("WebSocket connection error:", error);
       toast.error("接続エラー", {
         description: "サーバーに接続できません。",
-        position: "bottom-center",
+        position: "top-right",
       });
     });
 
@@ -140,24 +140,26 @@ export default function useSocket() {
     socket.on("gameEnded", handleGameEnded);
 
     socket.on("rematchRequested", () => {
-      toast.info("相手が再戦をリクエストしました。", {
-        position: "bottom-center",
-        action: {
-          label: "承諾",
-          onClick: () => acceptRematch(),
-        },
-      });
+      setRematchRequested(true);
+      // toast.info("相手が再戦をリクエストしました。", {
+      //   position: "top-right",
+      //   action: {
+      //     label: "承諾",
+      //     onClick: () => acceptRematch(),
+      //   },
+      // });
     });
 
     socket.on("opponentRequestedRematch", () => {
       setOpponentRequestedRematch(true);
-      toast.info("相手が再戦をリクエストしました。", {
-        position: "bottom-center",
-      });
+      // toast.info("相手が再戦をリクエストしました。", {
+      //   position: "top-right",
+      // });
     });
 
     socket.on("rematchAccepted", () => {
       setRematchAccepted(true);
+      setRematchRequested(false);
     });
 
     socket.on("opponentLeft", () => {
@@ -251,7 +253,7 @@ export default function useSocket() {
     } else {
       toast.error("エラー", {
         description: "サーバーに接続されていません。",
-        position: "bottom-center",
+        position: "top-right",
       });
     }
   }, [socket]);
@@ -388,6 +390,8 @@ export default function useSocket() {
     ...roomState,
     rematchRequested,
     rematchAccepted,
+    setRematchAccepted,
+    setRematchRequested,
     opponentLeft,
     opponentRequestedRematch,
     requestRematch,

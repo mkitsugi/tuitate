@@ -466,32 +466,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("acceptRematch", ({ gameId }) => {
-    const game = games.get(gameId);
-    if (game) {
-      // プレイヤーの順番をランダムに決定
-      const shuffledPlayers = game.players.sort(() => Math.random() - 0.5);
-
-      // 新しいゲーム状態を初期化
-      const newGame = initializeGame();
-      newGame.players = shuffledPlayers;
-      newGame.先手 = shuffledPlayers[0].id;
-      newGame.後手 = shuffledPlayers[1].id;
-      newGame.currentPlayer = "先手";
-
-      // 新しいゲーム状態を保存
-      games.set(gameId, newGame);
-
-      // 両プレイヤーに新しいゲームが開始されたことを通知
-      io.to(gameId).emit("gameStarted", {
-        gameId,
-        board: newGame.board,
-        currentPlayer: newGame.currentPlayer,
-        playerSides: {
-          [shuffledPlayers[0].id]: "先手",
-          [shuffledPlayers[1].id]: "後手",
-        },
-      });
-    }
+    startNewGame(gameId);
   });
 
   socket.on("rejectRematch", ({ gameId }) => {

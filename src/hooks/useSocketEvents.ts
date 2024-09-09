@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { toast } from "sonner";
-import { Player, Room, GameState, RoomState } from "@shared/shogi";
+import { Player, Room, GameState, RoomState, Board } from "@shared/shogi";
 
 export function useSocketEvents(
   setGameState: React.Dispatch<React.SetStateAction<GameState>>,
@@ -27,7 +27,7 @@ export function useSocketEvents(
       }));
       toast("ゲームが作成されました", {
         description: `ゲームID: ${id.trim()}`,
-        position: "bottom-center",
+        position: "top-right",
       });
     },
     [setGameState]
@@ -43,7 +43,7 @@ export function useSocketEvents(
       }));
       toast("ゲームに参加しました", {
         description: `ゲームID: ${gameId}, 手番: ${side}`,
-        position: "bottom-center",
+        position: "top-right",
       });
     },
     [setGameState]
@@ -92,7 +92,7 @@ export function useSocketEvents(
   const handleGameStarted = useCallback(
     ({ gameId, board, currentPlayer, playerSides }: {
       gameId: string;
-      board: any; // boardの型を適切に定義してください
+      board: Board;
       currentPlayer: Player;
       playerSides: { [key: string]: Player }
     }) => {
@@ -100,6 +100,7 @@ export function useSocketEvents(
         ...prev,
         gameId,
         board,
+        playerSides,
         currentPlayer,
         gameStarted: true,
         gameEnded: false,
@@ -114,7 +115,7 @@ export function useSocketEvents(
     toast("エラー", {
       description: message,
       style: { background: "#dc2626", color: "#fff" },
-      position: "bottom-center",
+      position: "top-right",
     });
   }, []);
 
@@ -126,10 +127,6 @@ export function useSocketEvents(
         gameEnded: true,
         winner: winner,
       }));
-      toast.info(`ゲーム終了: ${reason}`, {
-        description: winner ? `勝者: ${winner}` : "引き分け",
-        position: "bottom-center",
-      });
     },
     [setGameState]
   );
