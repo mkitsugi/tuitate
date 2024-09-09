@@ -284,7 +284,7 @@ export default function ImprovedFogOfWarShogi() {
                 />
               </div>
               {!enterGame ? (
-                <div className="w-full flex flex-col items-center justify-center">
+                <div className="w-full flex flex-col items-center justify-center pt-12">
                   <FigmaButton
                     variant="button_rectangle_01"
                     className="w-full max-w-[150px] sm:max-w-[180px]"
@@ -449,7 +449,7 @@ export default function ImprovedFogOfWarShogi() {
                 )}
               </>
             )} */}
-            <div className="w-full flex flex-col items-center justify-center py-4">
+            <div className="w-full flex flex-col items-center justify-center">
               <Image
                 src="/ui/index/line_light.png"
                 alt="Top decoration"
