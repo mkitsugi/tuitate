@@ -1,0 +1,38 @@
+config:
+  target: "wss://tuitate-g7ggbserhhgtd8gv.eastasia-01.azurewebsites.net"
+  phases:
+    - name: "Warm up"
+      duration: 30
+      arrivalRate: 1
+      rampTo: 10
+    - name: "Ramp up load"
+      duration: 60
+      arrivalRate: 10
+      rampTo: 20
+    - name: "Sustained load"
+      duration: 60
+      arrivalRate: 30
+    - name: "Peak load"
+      duration: 60
+      arrivalRate: 40
+      rampTo: 50
+  ws:
+    # subprotocols: ["protocol1", "protocol2"]
+  plugins:
+    metrics-by-endpoint: {}
+    expect: {}
+
+scenarios:
+  - name: "WebSocket connection test"
+    engine: "ws"
+    flow:
+      - think: 2
+      - send: "Hello"
+      - expect:
+          - hasProperty: "data"
+      - think: 1
+      - send: "World"
+      - expect:
+          - hasProperty: "data"
+      - think: 5
+      - close: 1000

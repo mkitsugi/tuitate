@@ -13,6 +13,7 @@ import {
   getPromotedType,
   getOriginalType,
   isInCheck,
+  findKing,
 } from "@shared/boardUtils";
 
 export default function useGameLogic(
@@ -126,28 +127,6 @@ export default function useGameLogic(
         capturedPiece: targetPiece ? { ...targetPiece } : null,
       });
 
-      // 相手の駒を取る場合
-      if (targetPiece && targetPiece.player !== piece.player) {
-        const capturedPieceType = getOriginalType(targetPiece.type);
-        setCapturedPieces((prev) => {
-          const newCapturedPieces = { ...prev };
-          newCapturedPieces[piece.player] = [
-            ...newCapturedPieces[piece.player],
-            {
-              id: uuidv4(),
-              type: capturedPieceType,
-              player: piece.player,
-              promoted: false,
-            },
-          ];
-          // 相手の持ち駒から取られた駒を削除
-          newCapturedPieces[targetPiece.player] = newCapturedPieces[
-            targetPiece.player
-          ].filter((p) => p.id !== targetPiece.id);
-          return newCapturedPieces;
-        });
-      }
-
       // 駒を移動
       newBoard[toRow][toCol] = piece;
       if (from) {
@@ -171,6 +150,28 @@ export default function useGameLogic(
           });
         }
         return board; // 移動を実行せずに関数を終了
+      }
+
+      // 相手の駒を取る場合
+      if (targetPiece && targetPiece.player !== piece.player) {
+        const capturedPieceType = getOriginalType(targetPiece.type);
+        setCapturedPieces((prev) => {
+          const newCapturedPieces = { ...prev };
+          newCapturedPieces[piece.player] = [
+            ...newCapturedPieces[piece.player],
+            {
+              id: uuidv4(),
+              type: capturedPieceType,
+              player: piece.player,
+              promoted: false,
+            },
+          ];
+          // 相手の持ち駒から取られた駒を削除
+          newCapturedPieces[targetPiece.player] = newCapturedPieces[
+            targetPiece.player
+          ].filter((p) => p.id !== targetPiece.id);
+          return newCapturedPieces;
+        });
       }
 
       // 移動後に王手状態をチェック
