@@ -290,7 +290,10 @@ export default function ImprovedFogOfWarShogi() {
                       variant="button_rectangle_01"
                       className="w-full max-w-[150px] sm:max-w-[180px]"
                       textClassName="text-[14px] font-bold sm:text-[15px]"
-                      onClick={handleEnterGame}
+                      onClick={() => {
+                        handleEnterGame();
+                        playMoveSound();
+                      }}
                     >
                       さっそく始める
                     </FigmaButton>
