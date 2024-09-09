@@ -289,7 +289,7 @@ export default function ImprovedFogOfWarShogi() {
                     <FigmaButton
                       variant="button_rectangle_01"
                       className="w-full max-w-[150px] sm:max-w-[180px]"
-                      textClassName="text-[12px] font-extrabold sm:text-[15px]"
+                      textClassName="text-[14px] font-bold sm:text-[15px]"
                       onClick={handleEnterGame}
                     >
                       さっそく始める
@@ -313,7 +313,7 @@ export default function ImprovedFogOfWarShogi() {
                               <FigmaButton
                                 variant="button_rectangle_02"
                                 className="w-full max-w-[160px] sm:max-w-[180px]"
-                                textClassName="text-[12px] sm:text-[15px]"
+                                textClassName="text-[13px] sm:text-[15px]"
                                 onClick={() => {
                                   createGame();
                                   setSelectedSide(null);
@@ -327,7 +327,7 @@ export default function ImprovedFogOfWarShogi() {
                                 variant="button_rectangle_02_click"
                                 customHoverPath="/ui/button/button_rectangle_02_hover.png"
                                 className="w-full max-w-[160px] sm:max-w-[180px]"
-                                textClassName="text-[12px] sm:text-[15px] text-white"
+                                textClassName="text-[13px] sm:text-[15px] text-white"
                                 onClick={() => {
                                   startCPUGame();
                                   playMoveSound();
