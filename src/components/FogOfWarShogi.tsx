@@ -472,11 +472,20 @@ export default function ImprovedFogOfWarShogi() {
                 </div>
                 <div
                   className={cn(
-                    "px-2 py-0.5 rounded-full w-fit text-sm bg-sky-600/80 backdrop-blur-sm border-2 border-white text-white",
-                    playerSide === "先手" ? "bg-rose-600/80" : "bg-sky-600/80"
+                    "px-2 py-0.5 rounded-full w-fit text-sm border-2 border-white text-white relative"
+                    // playerSide === "先手" ? "bg-rose-600/80" : "bg-sky-600/80"
                   )}
+                  style={{
+                    backgroundImage: `url('/ui/tab/text_round_${
+                      playerSide === "先手" ? "01" : "02"
+                    }.png')`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                  }}
                 >
-                  {playerSide === "先手" ? "後手" : "先手"}
+                  <span className="relative z-10">
+                    {playerSide === "先手" ? "後手" : "先手"}
+                  </span>
                 </div>
               </div>
               <div className="relative max-w-[480px]">
@@ -518,14 +527,21 @@ export default function ImprovedFogOfWarShogi() {
                 )} */}
               </div>
             </div>
-            <div className="w-full flex flex-col justify-center items-center px-2 sm:px-8 space-y-2">
-              <div className="w-full max-w-[400px] flex flex-row justify-between items-start">
+            <div className="w-full flex flex-col justify-center items-center px-1 sm:px-8 space-y-2">
+              <div className="relative w-full max-w-[400px] flex flex-row justify-between items-start">
                 <div className="flex flex-col items-start justify-start space-y-2">
                   <div
                     className={cn(
-                      "px-2 py-0.5 rounded-full text-sm bg-sky-600/80 backdrop-blur-sm border-2 border-white text-white",
-                      playerSide === "先手" ? "bg-sky-600/80" : "bg-rose-600/80"
+                      "px-2 py-0.5 rounded-full text-sm bg-sky-600/80 backdrop-blur-sm border-2 border-white text-white"
+                      // playerSide === "先手" ? "bg-sky-600/80" : "bg-rose-600/80"
                     )}
+                    style={{
+                      backgroundImage: `url('/ui/tab/text_round_${
+                        playerSide === "先手" ? "02" : "01"
+                      }.png')`,
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                    }}
                   >
                     {playerSide}
                   </div>
@@ -534,11 +550,20 @@ export default function ImprovedFogOfWarShogi() {
                   </div>
                 </div>
                 {currentPlayer === playerSide && (
-                  <div className="text-white font-semibold">あなたの番です</div>
+                  <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 pb-6 text-white font-semibold">
+                    あなたの番です
+                  </div>
                 )}
                 <button
                   onClick={openResignDialog}
-                  className="px-3 py-0.5 text-sm rounded-md bg-black/80 backdrop-blur-sm border border-white text-white hover:bg-white hover:text-black  transition-colors"
+                  className="py-1 text-md text-white font-black hover:scale-95 transition-colors"
+                  style={{
+                    backgroundImage:
+                      "url('/ui/button/button_rectangle_01_hover.png')",
+                    backgroundSize: "100% 100%",
+                    backgroundPosition: "center",
+                    width: "85px",
+                  }}
                 >
                   投了
                 </button>
