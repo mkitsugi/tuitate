@@ -15,7 +15,8 @@ export default function RulesDialog() {
         <FigmaButton
           variant="button_rectangle_02"
           // customHoverPath="/ui/button/button_rectangle_02_.png"
-          className="w-full max-w-[180px]"
+          className="w-full max-w-[160px] sm:max-w-[180px]"
+          textClassName="text-[12px] sm:text-[15px]"
         >
           ルールについて
         </FigmaButton>

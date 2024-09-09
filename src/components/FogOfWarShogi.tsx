@@ -288,8 +288,8 @@ export default function ImprovedFogOfWarShogi() {
                   <div className="w-full flex flex-col items-center justify-center">
                     <FigmaButton
                       variant="button_rectangle_01"
-                      className="w-full max-w-[180px]"
-                      textClassName="text-md"
+                      className="w-full max-w-[150px] sm:max-w-[180px]"
+                      textClassName="text-[12px] sm:text-[15px]"
                       onClick={handleEnterGame}
                     >
                       さっそく始める
@@ -309,10 +309,11 @@ export default function ImprovedFogOfWarShogi() {
                       {!gameCreated && (
                         <>
                           {!inputGameId && (
-                            <div className="flex flex-row space-x-8 items-center justify-center">
+                            <div className="flex flex-row space-x-4 items-center justify-center">
                               <FigmaButton
                                 variant="button_rectangle_02"
-                                className="w-full max-w-[180px]"
+                                className="w-full max-w-[160px] sm:max-w-[180px]"
+                                textClassName="text-[12px] sm:text-[15px]"
                                 onClick={() => {
                                   createGame();
                                   setSelectedSide(null);
@@ -325,8 +326,8 @@ export default function ImprovedFogOfWarShogi() {
                               <FigmaButton
                                 variant="button_rectangle_02_click"
                                 customHoverPath="/ui/button/button_rectangle_02_hover.png"
-                                className="w-full max-w-[180px]"
-                                textClassName="text-white"
+                                className="w-full max-w-[160px] sm:max-w-[180px]"
+                                textClassName="text-[12px] sm:text-[15px] text-white"
                                 onClick={() => {
                                   startCPUGame();
                                   playMoveSound();
@@ -336,7 +337,7 @@ export default function ImprovedFogOfWarShogi() {
                               </FigmaButton>
                             </div>
                           )}
-                          <div className="w-full sm:w-auto mt-2 px-1">
+                          <div className="w-full sm:w-auto mt-2 sm:px-2">
                             <RulesDialog />
                           </div>
 
