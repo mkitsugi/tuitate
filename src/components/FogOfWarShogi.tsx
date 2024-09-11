@@ -309,7 +309,11 @@ export default function ImprovedFogOfWarShogi() {
                   alt="Top decoration"
                   width={300}
                   height={300}
+                  sizes="300vw"
+                  priority
+                  quality={100}
                   className="pb-8"
+                  style={{ width: '100%', height: '100%', maxWidth: '300px' }}
                 />
                 {/* )} */}
                 {!isSearchingOpponent && (
@@ -321,7 +325,7 @@ export default function ImprovedFogOfWarShogi() {
                     sizes="300vw"
                     priority
                     quality={100}
-                    style={{ height: "auto" }}
+                    style={{ width: '90%', height: 'auto', maxWidth: '300px' }}
                   />
                 )}
               </div>
@@ -510,6 +514,10 @@ export default function ImprovedFogOfWarShogi() {
                 alt="Top decoration"
                 width={300}
                 height={300}
+                sizes="300vw"
+                priority
+                quality={100}
+                style={{ width: '100%', height: '100%', maxWidth: '300px' }}
                 className="pt-12"
               />
             </div>

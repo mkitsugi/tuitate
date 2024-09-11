@@ -9,8 +9,8 @@ import {
   createInitialVisibleBoard,
 } from "./useRoomManagement";
 
-const WEBSOCKET_URL = process.env.NEXT_PUBLIC_WEBSOCKET_URL || "http://localhost:3001";
-// const AZURE_WEBPUBSUB_ENDPOINT = process.env.NEXT_PUBLIC_AZURE_WEBPUBSUB_ENDPOINT || "http://localhost:3001";
+// const WEBSOCKET_URL = process.env.NEXT_PUBLIC_WEBSOCKET_URL || "http://localhost:3001";
+const AZURE_WEBPUBSUB_ENDPOINT = process.env.NEXT_PUBLIC_AZURE_WEBPUBSUB_ENDPOINT || "http://localhost:3001";
 
 export default function useSocket() {
   const [socket, setSocket] = useState<Socket | null>(null);
@@ -50,10 +50,14 @@ export default function useSocket() {
     let newSocket: Socket | null = null;
 
     if (!isCPUMode) {
-      console.log("Connecting to Azure Web PubSub...", WEBSOCKET_URL);
-      newSocket = io(WEBSOCKET_URL, {
-        withCredentials: true,
-        transports: ["websocket"],
+      console.log("Connecting to Azure Web PubSub...", AZURE_WEBPUBSUB_ENDPOINT);
+      newSocket = io(AZURE_WEBPUBSUB_ENDPOINT, {
+        // withCredentials: true,
+        transports: ["websocket", "polling"],
+        path: "/clients/socketio/hubs/Hub",
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000,
+        timeout: 10000,
       });
 
       newSocket.on("connect", () => {
@@ -86,9 +90,10 @@ export default function useSocket() {
   useEffect(() => {
     if (isCPUMode) return;
 
-    const newSocket = io(WEBSOCKET_URL, {
+    const newSocket = io(AZURE_WEBPUBSUB_ENDPOINT, {
+      path: "/clients/socketio/hubs/Hub",
       withCredentials: true,
-      transports: ["websocket"],
+      transports: ["websocket", "polling"],
     });
     setSocket(newSocket);
 
