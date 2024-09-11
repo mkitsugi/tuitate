@@ -55,20 +55,16 @@ export default function useSocket() {
         withCredentials: true,
         transports: ["websocket"],
       });
-
       newSocket.on("connect", () => {
         setMySocketId(newSocket?.id as string);
         console.log("Connected to WebSocket server");
         findExistingRooms();
       });
-
       newSocket.on("connect_error", (error) => {
         console.error("WebSocket connection error:", error);
       });
-
       setSocket(newSocket);
     } else {
-      // CPU モードの場合、既存の接続を切断
       if (socket) {
         socket.disconnect();
         setSocket(null);
