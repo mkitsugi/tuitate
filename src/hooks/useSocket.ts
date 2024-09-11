@@ -52,6 +52,7 @@ export default function useSocket() {
     let newSocket: Socket | null = null;
 
     if (!isCPUMode) {
+      console.log("Connecting to Azure Web PubSub...", AZURE_WEBPUBSUB_ENDPOINT);
       newSocket = io(AZURE_WEBPUBSUB_ENDPOINT, {
         // withCredentials: true,
         path: "/clients/socketio/hubs/Hub",
