@@ -2,9 +2,7 @@ import "module-alias/register";
 import path from "path";
 import dotenv from 'dotenv';
 
-// ... 残りのコード
 import express from "express";
-import { useAzureSocketIO } from "@azure/web-pubsub-socket.io";
 import http from "http";
 import { Server, Socket } from "socket.io";
 import cors from "cors";
@@ -28,27 +26,27 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: ["https://tuitate.vercel.app/", "http://localhost:3000"],
+    origin: ["https://tuitate.vercel.app/", "http://localhost:3000", "https://kirishogi.com"],
     methods: ["GET", "POST"],
     credentials: true,
   },
 });
 
-const connectionString = process.env.AZURE_WEBPUBSUB_CONNECTION_STRING;
-const isProduction = process.env.NODE_ENV === 'production';
+// const connectionString = process.env.AZURE_WEBPUBSUB_CONNECTION_STRING;
+// const isProduction = process.env.NODE_ENV === 'production';
 
-if (isProduction && connectionString) {
-  useAzureSocketIO(io, {
-    hub: "Hub",
-    connectionString: connectionString
-  });
-  console.log('Using Azure Web PubSub for Socket.IO');
-} else if (isProduction) {
-  console.error('AZURE_WEBPUBSUB_CONNECTION_STRING is not set in production');
-  process.exit(1);
-} else {
-  console.log('Running in local environment, using standard Socket.IO');
-}
+// if (isProduction && connectionString) {
+//   useAzureSocketIO(io, {
+//     hub: "Hub",
+//     connectionString: connectionString
+//   });
+//   console.log('Using Azure Web PubSub for Socket.IO');
+// } else if (isProduction) {
+//   console.error('AZURE_WEBPUBSUB_CONNECTION_STRING is not set in production');
+//   process.exit(1);
+// } else {
+//   console.log('Running in local environment, using standard Socket.IO');
+// }
 
 type Side = "先手" | "後手";
 type Player = { id: string; side: Side };
