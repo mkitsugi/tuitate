@@ -1,38 +1,58 @@
 config:
-  target: "wss://tuitate-g7ggbserhhgtd8gv.eastasia-01.azurewebsites.net"
+  target: "http://localhost:3001"
   phases:
-    - name: "Warm up"
-      duration: 30
-      arrivalRate: 1
-      rampTo: 10
-    - name: "Ramp up load"
-      duration: 60
-      arrivalRate: 10
+    - duration: 60
+      arrivalRate: 5
       rampTo: 20
-    - name: "Sustained load"
-      duration: 60
-      arrivalRate: 30
-    - name: "Peak load"
-      duration: 60
-      arrivalRate: 40
-      rampTo: 50
-  ws:
-    # subprotocols: ["protocol1", "protocol2"]
-  plugins:
-    metrics-by-endpoint: {}
-    expect: {}
+      name: "Ramping up the load"
+  engines:
+    socketio: {}
+  socketio:
+    transports: ["websocket"]
+    query: "EIO=4"
+    connectTimeout: 5000
+    reconnection: true
+    reconnectionAttempts: 3
+    reconnectionDelay: 1000
+  verbose: true
 
 scenarios:
-  - name: "WebSocket connection test"
-    engine: "ws"
+  - engine: socketio
+    name: "WebSocket game scenario"
     flow:
-      - think: 2
-      - send: "Hello"
-      - expect:
-          - hasProperty: "data"
+      - connect:
+          function: "setSocketId"
       - think: 1
-      - send: "World"
-      - expect:
-          - hasProperty: "data"
-      - think: 5
-      - close: 1000
+      - emit:
+          channel: "createGame"
+          response:
+            channel: "gameCreated"
+            data: "gameId"
+          capture:
+            json: "$.gameId"
+            as: "gameId"
+      - log: "Game created with ID: {{ gameId }}"
+      - think: 1
+      - emit:
+          channel: "joinGame"
+          data:
+            gameId: "{{ gameId }}"
+            side: "先手"
+      - think: 2
+      - emit:
+          channel: "move"
+          data:
+            gameId: "{{ gameId }}"
+            from: [6, 0]
+            to: [5, 0]
+            player: "先手"
+      - think: 1
+      - emit:
+          channel: "leaveRoom"
+          data:
+            roomId: "{{ gameId }}"
+            side: "先手"
+
+functions:
+  setSocketId:
+    function: "setSocketId"

@@ -1,6 +1,10 @@
 import "module-alias/register";
 import path from "path";
+import dotenv from 'dotenv';
+
+// ... 残りのコード
 import express from "express";
+import { useAzureSocketIO } from "@azure/web-pubsub-socket.io";
 import http from "http";
 import { Server, Socket } from "socket.io";
 import cors from "cors";
@@ -15,16 +19,36 @@ import {
 } from "../shared/boardUtils";
 import { Piece, Board, CapturedPieces } from "../shared/shogi";
 
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+
+
 const app = express();
 app.use(cors());
 const server = http.createServer(app);
+
 const io = new Server(server, {
   cors: {
-    origin: ["https://tuitate.vercel.app/", "http://localhost:3000"],
+    origin: ["https://tuitate.vercel.app/", "http://localhost:3000, *"],
     methods: ["GET", "POST"],
     credentials: true,
   },
 });
+
+const connectionString = process.env.AZURE_WEBPUBSUB_CONNECTION_STRING;
+const isProduction = process.env.NODE_ENV === 'production';
+
+if (isProduction && connectionString) {
+  useAzureSocketIO(io, {
+    hub: "ShogiHub",
+    connectionString: connectionString
+  });
+  console.log('Using Azure Web PubSub for Socket.IO');
+} else if (isProduction) {
+  console.error('AZURE_WEBPUBSUB_CONNECTION_STRING is not set in production');
+  process.exit(1);
+} else {
+  console.log('Running in local environment, using standard Socket.IO');
+}
 
 type Side = "先手" | "後手";
 type Player = { id: string; side: Side };
@@ -445,8 +469,11 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("disconnect", () => {
-    console.log("User disconnected");
+  socket.on("disconnect", (reason) => {
+    console.log("User disconnected", socket.id, "Reason:", reason);
+    if (reason === "client namespace disconnect") {
+      console.log("Additional info:", socket.disconnected);
+    }
     // プレイヤーが切断された場合、待機中のプレイヤーリストからも削除
     waitingPlayers = waitingPlayers.filter(player => player.id !== socket.id);
     // プレイヤーが切断された場合、そのプレイヤーが参加していたゲームを探す
@@ -467,6 +494,10 @@ io.on("connection", (socket) => {
         return false; // Stop iterating after finding the game
       }
     });
+  });
+
+  socket.on("error", (error) => {
+    console.error("Socket error:", error);
   });
 
   socket.on("requestRematch", ({ gameId }) => {
