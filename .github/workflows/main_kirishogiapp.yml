@@ -74,5 +74,5 @@ jobs:
         with:
           app-name: 'kirishogiApp'
           slot-name: 'Production'
-          package: .
+          package: ./deploy
           
