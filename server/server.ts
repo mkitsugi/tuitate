@@ -39,7 +39,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 if (isProduction && connectionString) {
   useAzureSocketIO(io, {
-    hub: "ShogiHub",
+    hub: "Hub",
     connectionString: connectionString
   });
   console.log('Using Azure Web PubSub for Socket.IO');

@@ -54,6 +54,7 @@ export default function useSocket() {
     if (!isCPUMode) {
       newSocket = io(AZURE_WEBPUBSUB_ENDPOINT, {
         // withCredentials: true,
+        path: "/clients/socketio/hubs/Hub",
         transports: ["websocket"],
       });
 
