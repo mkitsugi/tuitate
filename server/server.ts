@@ -28,7 +28,8 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: ["https://tuitate.vercel.app/", "http://localhost:3000, *"],
+    // origin: ["https://tuitate.vercel.app/", "http://localhost:3000, *"],
+    origin: "*",
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -113,10 +114,10 @@ app.get("/api/rooms", (req, res) => {
   res.json(activeRooms);
 });
 
-io.on("connection", (socket) => {
+io.on("connection", async (socket) => {
   console.log("A user connected");
 
-  socket.on("findRandomMatch", (callback) => {
+  await socket.on("findRandomMatch", (callback) => {
     console.log(`Player ${socket.id} is looking for a random match`);
 
     // 待機中の他のプレイヤーを探す
@@ -168,7 +169,7 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("cancelSearch", (callback) => {
+  await socket.on("cancelSearch", (callback) => {
     console.log(`Player ${socket.id} is canceling the search for a random match`);
 
     // 待機中のプレイヤーリストから該当プレイヤーを削除
@@ -177,7 +178,7 @@ io.on("connection", (socket) => {
     callback({ success: true, message: "マッチング検索をキャンセルしました。" });
   });
 
-  socket.on("createGame", () => {
+  await socket.on("createGame", () => {
     const gameId = Math.random().toString(36).substring(7);
     games.set(gameId, initializeGame());
     socket.join(gameId);
@@ -192,7 +193,7 @@ io.on("connection", (socket) => {
     resetGameTimeout(gameId);
   });
 
-  socket.on("joinRoom", ({ roomId }) => {
+  await socket.on("joinRoom", ({ roomId }) => {
     console.log(`Player ${socket.id} joining room ${roomId}`);
     socket.join(roomId);
     const game = games.get(roomId);
