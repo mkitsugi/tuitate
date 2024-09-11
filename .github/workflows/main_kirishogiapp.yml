@@ -75,4 +75,6 @@ jobs:
           app-name: 'kirishogiApp'
           slot-name: 'Production'
           package: ./deploy
+          clean: true
+          restart: true
           
