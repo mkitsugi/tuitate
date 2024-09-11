@@ -9,7 +9,8 @@ import {
   createInitialVisibleBoard,
 } from "./useRoomManagement";
 
-const WEBSOCKET_URL = process.env.NEXT_PUBLIC_WEBSOCKET_URL || "http://localhost:3001";
+const isProduction = process.env.NODE_ENV === "production";
+const WEBSOCKET_URL = process.env.NEXT_PUBLIC_WEBSOCKET_URL || isProduction ? "tuitate-g7ggbserhhgtd8gv.eastasia-01.azurewebsites.net" : "http://localhost:3001";
 // const AZURE_WEBPUBSUB_ENDPOINT = process.env.NEXT_PUBLIC_AZURE_WEBPUBSUB_ENDPOINT || "http://localhost:3001";
 
 export default function useSocket() {
