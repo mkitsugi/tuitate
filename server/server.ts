@@ -28,8 +28,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    // origin: ["https://tuitate.vercel.app/", "http://localhost:3000, *"],
-    origin: "*",
+    origin: ["https://tuitate.vercel.app/", "http://localhost:3000"],
     methods: ["GET", "POST"],
     credentials: true,
   },
