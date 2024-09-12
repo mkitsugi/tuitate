@@ -321,7 +321,11 @@ export default function LandingPage() {
       </section>
 
       {/* Second section */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center p-4">
+      <section
+        className={`relative min-h-screen flex flex-col items-center justify-center ${
+          isMobile ? "p-1" : "p-4"
+        }`}
+      >
         <div className="max-w-md w-full relative">
           <div
             className="absolute inset-0 bg-contain bg-center bg-no-repeat"
@@ -334,8 +338,8 @@ export default function LandingPage() {
           <div
             className="relative z-10"
             style={{
-              fontSize: isMobile ? "12px" : "14px",
-              padding: isMobile ? "3rem 4rem" : "4rem",
+              fontSize: isMobile ? "13px" : "14px",
+              padding: isMobile ? "4rem 4rem" : "4rem",
             }}
           >
             <RulesContent />
@@ -372,9 +376,9 @@ export default function LandingPage() {
 
       {/* New Contact section using shadcn/ui */}
       <section
-        className={`relative min-h-screen flex flex-col items-center justify-center p-4 ${nunito.className}`}
+        className={`relative min-h-screen flex flex-col items-center justify-center w-full p-4 ${nunito.className}`}
       >
-        <Card className="w-[430px] max-w-md bg-white/10 backdrop-blur-md border border-white/20 shadow-lg rounded-xl">
+        <Card className="w-[100%] max-w-md bg-white/10 backdrop-blur-md border border-white/20 shadow-lg rounded-xl">
           <CardHeader>
             <CardTitle className="text-white">お問い合わせ</CardTitle>
             <CardDescription className="text-white/60">
