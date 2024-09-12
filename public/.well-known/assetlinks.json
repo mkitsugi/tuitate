@@ -5,7 +5,7 @@
     ],
     "target": {
       "namespace": "android_app",
-      "package_name": "app.vercel.tuitate.twa",
+      "package_name": "com.kirishogi.twa",
       "sha256_cert_fingerprints": [
         "C0:B2:9F:61:DE:7E:9F:11:0B:BC:8C:5D:6B:0A:AD:A8:FD:74:1E:64:D3:FE:9D:90:A0:74:83:55:92:B1:8B:FF"
       ]
