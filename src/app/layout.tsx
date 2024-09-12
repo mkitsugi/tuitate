@@ -32,13 +32,13 @@ export const metadata: Metadata = {
     url: "https://kirishogi.com",
     images: [
       {
-        url: 'https://kirishogi.com/ogp/image-1200x630.png',
+        url: 'https://kirishogi.com/ogp/image-m.png',
         width: 1200,
         height: 630,
         alt: '霧将棋 | 新感覚の将棋ゲーム',
       },
       {
-        url: 'https://kirishogi.com/ogp/image-400x300.png',
+        url: 'https://kirishogi.com/ogp/image-s.png',
         width: 400,
         height: 300,
         alt: '霧将棋 | 新感覚の将棋ゲーム',
