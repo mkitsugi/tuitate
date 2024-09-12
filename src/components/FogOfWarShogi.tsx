@@ -28,6 +28,7 @@ export default function ImprovedFogOfWarShogi() {
   const [enterGame, setEnterGame] = useState(false);
 
   const [showCutIn, setShowCutIn] = useState(false);
+  const [showCheckMateCutIn, setShowCheckMateCutIn] = useState(false);
 
   const [isSearchingOpponent, setIsSearchingOpponent] = useState(false);
 
@@ -97,6 +98,8 @@ export default function ImprovedFogOfWarShogi() {
     lastMove,
     capturedPieces,
     selectedCapturedPiece,
+    isPlayerInCheck,
+    isOpponentInCheck,
     PromotionDialog,
     handlePromotionChoice,
     playMoveSound,
@@ -112,11 +115,22 @@ export default function ImprovedFogOfWarShogi() {
       setShowCutIn(true);
       const timer = setTimeout(() => {
         setShowCutIn(false);
-      }, 3000); // 3秒後に非表示
+      }, 1500); // 2秒後に非表示
 
       return () => clearTimeout(timer);
     }
   }, [gameStarted]);
+
+  useEffect(() => {
+    if (isPlayerInCheck || isOpponentInCheck) {
+      setShowCheckMateCutIn(true);
+      const timer = setTimeout(() => {
+        setShowCheckMateCutIn(false);
+      }, 1000); // 1秒後に非表示
+
+      return () => clearTimeout(timer);
+    }
+  }, [isPlayerInCheck, isOpponentInCheck]);
 
   // 選択された持ち駒のインデックスを追跡するための状態
   const [selectedPieceIndex, setSelectedPieceIndex] = useState<number | null>(
@@ -518,7 +532,8 @@ export default function ImprovedFogOfWarShogi() {
                   selectedCapturedPiece={selectedCapturedPiece}
                 />
                 {currentPlayer !== playerSide && <WaitingOverlay />}
-                {showCutIn && <CutInOverlay />}
+                {showCutIn && <StartCutIn />}
+                {showCheckMateCutIn && <CheckMateCutIn />}
               </div>
 
               <div className="flex justify-between gap-4 max-w-[400px] w-full ">
@@ -694,16 +709,54 @@ export default function ImprovedFogOfWarShogi() {
   );
 }
 
-function CutInOverlay() {
+function StartCutIn() {
+  const [animate, setAnimate] = useState(false);
+
+  useEffect(() => {
+    setAnimate(true);
+    const timer = setTimeout(() => setAnimate(false), 3000); // 3秒後に非表示
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (!animate) return null;
+
   return (
-    <div className="absolute inset-0 flex items-center justify-center z-50">
-      <Image
-        src="/gif/戦闘開始_和.png"  // カットイン画像のパスを適切に設定してください
-        alt="Game Start"
-        width={300}
-        height={150}
-        className="animate-fadeOut"  // アニメーション用のクラス
-      />
+    <div className="absolute inset-0 flex items-center justify-center z-50 overflow-hidden pointer-events-none">
+      <div className="relative w-full h-24 bg-indigo-900/90 animate-fadeInFromTop">
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-center">
+            <span className="block text-5xl font-bold text-white animate-fadeIn" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>
+              選局開始
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CheckMateCutIn() {
+  const [animate, setAnimate] = useState(false);
+
+  useEffect(() => {
+    setAnimate(true);
+    const timer = setTimeout(() => setAnimate(false), 1000); // 1秒後に非表示
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (!animate) return null;
+
+  return (
+    <div className="absolute inset-0 flex items-center justify-center z-50 overflow-hidden pointer-events-none">
+      <div className="relative w-full h-24">
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-center animate-fadeInOutRight">
+            <span className="block text-5xl font-bold text-red-500" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>
+              王手！
+            </span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
