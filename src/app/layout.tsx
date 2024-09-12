@@ -4,8 +4,6 @@ import { Nunito } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 
-const nunito = Nunito({ subsets: ["latin"] });
-
 // カスタムフォントの読み込み
 const customFont = localFont({
   src: "../../public/fonts/tamanegi_kaisho.ttf",

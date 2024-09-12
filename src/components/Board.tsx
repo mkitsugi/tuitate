@@ -17,7 +17,6 @@ interface BoardProps {
   onCellClick: (row: number, col: number) => void;
   selectedCapturedPiece: Piece | null;
 }
-// ... existing imports ...
 
 export default function Board({
   visibleBoard,
@@ -89,12 +88,9 @@ export default function Board({
                 >
                   <Image
                     src={`/pieces/${cell.piece.type}.png`}
-                    className={cn(
-                      "object-contain",
-                      {
-                        "transform rotate-180": cell.piece.player !== playerSide,
-                      }
-                    )}
+                    className={cn("object-contain", {
+                      "transform rotate-180": cell.piece.player !== playerSide,
+                    })}
                     alt={`${cell.piece.player}の${cell.piece.type}`}
                     fill
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"

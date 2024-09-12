@@ -92,7 +92,8 @@ export default function useGameLogic(
     for (let row = 0; row < 9; row++) {
       for (let col = 0; col < 9; col++) {
         const piece = board[row][col];
-        if (isDev && isCPUMode) {
+        // if (isDev && isCPUMode) {
+        if (false && isCPUMode) {
           // Show all pieces in development mode and CPU mode
           newVisibleBoard[row][col] = { piece, isVisible: true };
         } else if (piece && piece.player === playerSide) {
@@ -470,10 +471,10 @@ export default function useGameLogic(
         const { from, to, piece } = pendingMove;
         const promotedPiece = shouldPromote
           ? {
-            ...piece,
-            type: getPromotedType(piece.type as PieceType),
-            promoted: true,
-          }
+              ...piece,
+              type: getPromotedType(piece.type as PieceType),
+              promoted: true,
+            }
           : piece;
         executeMove(promotedPiece, from, to);
         setPendingMove(null);
