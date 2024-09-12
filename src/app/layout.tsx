@@ -52,7 +52,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: '霧将棋 | 新感覚の将棋ゲーム',
     description: '索敵しながら王を仕留めろ！新感覚の将棋ゲーム「霧将棋」',
-    images: ['https://kirishogi.com/ogp/image-1200x630.png'],
+    images: ['https://kirishogi.com/ogp/image-m.png'],
     creator: '@palpa_kg',
   },
 };
