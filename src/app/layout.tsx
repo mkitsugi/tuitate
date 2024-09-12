@@ -13,10 +13,44 @@ const customFont = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "霧将棋",
-  description: "索敵しながら王を仕留めろ！新感覚の将棋ゲーム「霧将棋」",
+  title: {
+    default: "霧将棋 | 新感覚の将棋ゲーム",
+    template: "%s | 霧将棋",
+  },
+  description: "索敵しながら王を仕留めろ！新感覚の不完全情報将棋ゲーム「霧将棋」",
   icons: {
     icon: "/favicon.ico",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+  openGraph: {
+    title: "霧将棋 | 新感覚の将棋ゲーム",
+    description: "索敵しながら王を仕留めろ！新感覚の将棋ゲーム「霧将棋」",
+    type: "website",
+    url: "https://kirishogi.com",
+    images: [
+      {
+        url: 'https://kirishogi.com/ogp/image-1200x630.png',
+        width: 1200,
+        height: 630,
+        alt: '霧将棋 | 新感覚の将棋ゲーム',
+      },
+      {
+        url: 'https://kirishogi.com/ogp/image-400x300.png',
+        width: 400,
+        height: 300,
+        alt: '霧将棋 | 新感覚の将棋ゲーム',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: '霧将棋 | 新感覚の将棋ゲーム',
+    description: '索敵しながら王を仕留めろ！新感覚の将棋ゲーム「霧将棋」',
+    images: ['https://kirishogi.com/ogp/image-1200x630.png'],
+    creator: '@palpa_kg',
   },
 };
 
