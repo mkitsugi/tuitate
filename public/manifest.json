@@ -2,11 +2,11 @@
   "background_color": "#ffffff",
   "description": "索敵しながら王を仕留めろ！新感覚の将棋ゲーム「霧将棋」",
   "dir": "ltr",
-  "display": "standalone",
+  "display": "fullscreen",
   "name": "霧将棋",
-  "orientation": "any",
+  "orientation": "portrait",
   "scope": "/",
-  "short_name": "kirishogi.vercel",
+  "short_name": "霧将棋",
   "start_url": "/",
   "theme_color": "#ffffff",
   "icons": [
@@ -463,5 +463,23 @@
       "src": "/icon/ios/1024.png",
       "sizes": "1024x1024"
     }
-  ]
+  ],
+  "lang": "ja",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone"
+  ],
+  "categories": [
+    "entertainment",
+    "games"
+  ],
+  "share_target": {
+    "method": "GET",
+    "action": "/",
+    "params": {
+      "url": "https://kirishogi.com",
+      "title": "霧将棋",
+      "text": "索敵しながら王を仕留めろ！新感覚の将棋ゲーム「霧将棋」"
+    }
+  }
 }
