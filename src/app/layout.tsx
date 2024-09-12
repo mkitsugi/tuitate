@@ -18,6 +18,7 @@ export const metadata: Metadata = {
     template: "%s | 霧将棋",
   },
   description: "索敵しながら王を仕留めろ！新感覚の不完全情報将棋ゲーム「霧将棋」",
+  keywords: "将棋, 霧将棋, 不完全情報ゲーム, オンライン, ついたて将棋, 衝立将棋",
   icons: {
     icon: "/favicon.ico",
   },
@@ -30,6 +31,8 @@ export const metadata: Metadata = {
     description: "索敵しながら王を仕留めろ！新感覚の将棋ゲーム「霧将棋」",
     type: "website",
     url: "https://kirishogi.com",
+    siteName: "霧将棋",
+    locale: "ja_JP",
     images: [
       {
         url: 'https://kirishogi.com/ogp/image-m.png',
