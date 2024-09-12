@@ -7,7 +7,9 @@
       "namespace": "android_app",
       "package_name": "com.kirishogi.twa",
       "sha256_cert_fingerprints": [
-        "C0:B2:9F:61:DE:7E:9F:11:0B:BC:8C:5D:6B:0A:AD:A8:FD:74:1E:64:D3:FE:9D:90:A0:74:83:55:92:B1:8B:FF"
+        "C0:B2:9F:61:DE:7E:9F:11:0B:BC:8C:5D:6B:0A:AD:A8:FD:74:1E:64:D3:FE:9D:90:A0:74:83:55:92:B1:8B:FF",
+        "D3:C1:9C:CB:9A:8B:15:A9:8D:86:D7:83:CE:86:4A:82:82:3A:E7:6D:79:FC:53:0C:3F:C5:1D:2B:AF:9E:2F:81",
+        "4C:19:D6:16:6F:31:A7:29:2F:50:8C:83:E9:FC:4B:6B:89:B5:BA:4C:45:17:A2:74:A7:19:8E:03:5E:1D:5E:31"
       ]
     }
   }
