@@ -338,8 +338,8 @@ export default function LandingPage() {
           <div
             className="relative z-10"
             style={{
-              fontSize: isMobile ? "13px" : "14px",
-              padding: isMobile ? "4rem 4rem" : "4rem",
+              fontSize: isMobile ? "14px" : "14px",
+              padding: isMobile ? "3rem 4rem" : "4rem",
             }}
           >
             <RulesContent />

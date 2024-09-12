@@ -343,10 +343,8 @@ export default function ImprovedFogOfWarShogi() {
                     alt="霧将棋"
                     width={240}
                     height={100}
-                    sizes="300vw"
                     priority
                     quality={100}
-                    style={{ width: "90%", height: "auto", maxWidth: "300px" }}
                   />
                 )}
               </div>
