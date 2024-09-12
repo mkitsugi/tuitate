@@ -266,7 +266,7 @@ export default function LandingPage() {
           height={100}
           priority
           quality={100}
-          // style={{ width: "100%", height: "auto", maxWidth: "300px" }}
+        // style={{ width: "100%", height: "auto", maxWidth: "300px" }}
         />
         <p className="text-xl">
           索敵しながら王を仕留めろ！
@@ -322,17 +322,15 @@ export default function LandingPage() {
 
       {/* Second section */}
       <section
-        className={`relative min-h-screen flex flex-col items-center justify-center ${
-          isMobile ? "p-1" : "p-4"
-        }`}
+        className={`relative min-h-screen flex flex-col items-center justify-center ${isMobile ? "p-1" : "p-4"
+          }`}
       >
         <div className="max-w-md w-full relative">
           <div
             className="absolute inset-0 bg-contain bg-center bg-no-repeat"
             style={{
-              backgroundImage: `url('/ui/window/scalable_window_02_01${
-                isMobile ? "_sp" : ""
-              }.png')`,
+              backgroundImage: `url('/ui/window/scalable_window_02_01${isMobile ? "_sp" : ""
+                }.png')`,
             }}
           />
           <div
