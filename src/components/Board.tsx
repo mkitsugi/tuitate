@@ -88,7 +88,7 @@ export default function Board({
                   transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 >
                   <Image
-                    src={`/pieces/${cell.piece.type}.png`}
+                    src={`/pieces/v2/${cell.piece.type}.png`}
                     className={cn(
                       "object-contain",
                       {

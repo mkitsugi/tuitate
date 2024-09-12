@@ -142,7 +142,7 @@ export default function ImprovedFogOfWarShogi() {
         "歩", "香", "桂", "銀", "金", "角", "飛",
         "と", "成香", "成桂", "成銀", "馬", "龍", "玉"
       ];
-      const imagePaths = pieceTypes.map(type => `/pieces/${type}.png`);
+      const imagePaths = pieceTypes.map(type => `/pieces/v2/${type}.png`);
       preloadImages(imagePaths);
     }
   }, [enterGame]);
