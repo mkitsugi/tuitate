@@ -3,7 +3,7 @@ import localFont from "next/font/local";
 import { Nunito } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
-
+import Script from "next/script";
 const nunito = Nunito({ subsets: ["latin"] });
 
 // カスタムフォントの読み込み
@@ -29,6 +29,19 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <link rel="manifest" href="/manifest.json" />
+        <link rel="canonical" href="https://kirishogi.com" />
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-W7ZTTZCN3W"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-W7ZTTZCN3W');
+          `}
+        </Script>
       </head>
       <body className={customFont.className}>
         {children}
