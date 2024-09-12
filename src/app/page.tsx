@@ -442,6 +442,39 @@ export default function LandingPage() {
         </Card>
       </section>
 
+      <section
+        className={`relative min-h-fit flex flex-col items-center justify-center w-full p-4 ${nunito.className}`}
+      >
+        <div className="flex justify-center items-center space-x-4 mt-8">
+          <Link
+            href="https://apps.apple.com/jp/app/your-app-id"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block cursor-pointer hover:scale-95"
+          >
+            <Image
+              src="/Download_on_the_App_Store_Badge_JP_RGB_wht_100317.svg"
+              alt="Download on the App Store"
+              width={120}
+              height={40}
+            />
+          </Link>
+          <Link
+            href="https://play.google.com/store/apps/details?id=your.app.id"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block cursor-pointer hover:scale-95"
+          >
+            <Image
+              src="/GetItOnGooglePlay_Badge_Web_color_Japanese.png"
+              alt="Get it on Google Play"
+              width={135}
+              height={40}
+            />
+          </Link>
+        </div>
+      </section>
+
       <footer className="w-full text-center py-4 text-white text-sm z-50">
         © 2024 Palpa,Inc. All Rights Reserved.
       </footer>
