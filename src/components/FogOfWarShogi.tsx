@@ -333,9 +333,10 @@ export default function ImprovedFogOfWarShogi() {
                 <div className="w-full flex flex-col items-center justify-center pt-12">
                   <FigmaButton
                     variant="button_rectangle_01_long"
+                    customHoverPath="/ui/button/button_rectangle_01_hover_long.png"
                     className="w-full max-w-[160px] sm:max-w-[170px]"
                     textClassName="text-[17px] font-bold sm:text-[18px]"
-                    hasHoverState={false}
+                    // hasHoverState={false}
                     onClick={() => {
                       handleEnterGame();
                       playMoveSound();
