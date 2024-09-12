@@ -288,8 +288,16 @@ export const getVisibleCellsForPiece = (
       addKingMoves(row, col, addVisibleCell);
       break;
     case "馬":
-      addDiagonalMoves(row, col, addVisibleCell);
-      addKingMoves(row, col, addVisibleCell);
+      // addDiagonalMoves(row, col, addVisibleCell);
+      // addKingMoves(row, col, addVisibleCell);
+      addLineOfSight(row, col, 1, 1);
+      addLineOfSight(row, col, 1, -1);
+      addLineOfSight(row, col, -1, 1);
+      addLineOfSight(row, col, -1, -1);
+      addVisibleCell(row + 1, col);
+      addVisibleCell(row - 1, col);
+      addVisibleCell(row, col + 1);
+      addVisibleCell(row, col - 1);
       break;
     case "龍":
       addStraightMoves(row, col, board, addVisibleCell);
