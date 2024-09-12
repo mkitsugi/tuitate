@@ -27,6 +27,8 @@ export default function ImprovedFogOfWarShogi() {
   const [isMuted, setIsMuted] = useState(false);
   const [enterGame, setEnterGame] = useState(false);
 
+  const [showCutIn, setShowCutIn] = useState(false);
+
   const [isSearchingOpponent, setIsSearchingOpponent] = useState(false);
 
   const handleEnterGame = () => {
@@ -104,6 +106,17 @@ export default function ImprovedFogOfWarShogi() {
     resetGameState,
     resetForNewGame,
   } = useGameLogic(socket, gameId, playerSide, isCPUMode);
+
+  useEffect(() => {
+    if (gameStarted) {
+      setShowCutIn(true);
+      const timer = setTimeout(() => {
+        setShowCutIn(false);
+      }, 3000); // 3秒後に非表示
+
+      return () => clearTimeout(timer);
+    }
+  }, [gameStarted]);
 
   // 選択された持ち駒のインデックスを追跡するための状態
   const [selectedPieceIndex, setSelectedPieceIndex] = useState<number | null>(
@@ -455,60 +468,6 @@ export default function ImprovedFogOfWarShogi() {
                 </div>
               )}
             </div>
-
-            {/* {enterGame && (
-              <div className="w-full flex flex-col md:flex-row justify-start md:justify-start pt-2 px-2">
-                {gameId && (
-                  <div className="flex w-full mt-4 items-center text-sm text-white text-center justify-start md:justify-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={copyGameId}
-                      title="ルームIDをコピー"
-                      className="w-fit px-4 rounded-full bg-black/80 backdrop-blur-sm hover:none"
-                    >
-                      <div className="flex space-x-2 w-full">
-                        <p>ルームID : {gameId}</p>
-                        <Copy className="h-4 w-4" />
-                      </div>
-                    </Button>
-                  </div>
-                )}
-              </div>
-            )} */}
-
-            {/* {!gameId && enterGame && (
-              <>
-                {isLoadingRooms && (
-                  <p className="px-4 pt-4 text-white text-sm">
-                    ルームを検索中...
-                  </p>
-                )}
-                {existingRooms.length > 0 && (
-                  <div className="mt-4 px-4">
-                    <h3 className="text-sm text-white mb-2">
-                      利用可能なルーム:
-                    </h3>
-                    <div className="grid grid-cols-2 gap-2 overflow-y-auto max-h-[200px]">
-                      {existingRooms.map((room) => (
-                        <Button
-                          key={room.id}
-                          onClick={() => setInputGameId(room.id)}
-                          className="w-full text-left bg-white/90 backdrop-blur-md text-black hover:bg-white/70 transition-colors text-sm"
-                        >
-                          {room.id} ({room.players}/2)
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {existingRooms.length === 0 && !isLoadingRooms && (
-                  <p className="mt-8 px-4 text-white text-sm">
-                    利用可能なルームがありません。
-                  </p>
-                )}
-              </>
-            )} */}
             <div className="w-full flex flex-col items-center justify-center">
               <Image
                 src="/ui/index/line_light.png"
@@ -522,8 +481,6 @@ export default function ImprovedFogOfWarShogi() {
                 className="pt-12"
               />
             </div>
-            {/* //   </CardContent> */}
-            {/* // </Card> */}
           </div>
         )}
 
@@ -561,6 +518,7 @@ export default function ImprovedFogOfWarShogi() {
                   selectedCapturedPiece={selectedCapturedPiece}
                 />
                 {currentPlayer !== playerSide && <WaitingOverlay />}
+                {showCutIn && <CutInOverlay />}
               </div>
 
               <div className="flex justify-between gap-4 max-w-[400px] w-full ">
@@ -710,12 +668,6 @@ export default function ImprovedFogOfWarShogi() {
                 >
                   再選する
                 </button>
-                // <Button
-                //   onClick={acceptRematch}
-                //   className="bg-green-600 hover:bg-green-700 text-white"
-                // >
-                //   再戦を受け入れる
-                // </Button>
               )}
             </div>
             {rematchRequested && (
@@ -738,6 +690,20 @@ export default function ImprovedFogOfWarShogi() {
           {isMuted ? <VolumeX size={24} /> : <Volume2 size={24} />}
         </Button>
       </div>
+    </div>
+  );
+}
+
+function CutInOverlay() {
+  return (
+    <div className="absolute inset-0 flex items-center justify-center z-50">
+      <Image
+        src="/gif/戦闘開始_和.png"  // カットイン画像のパスを適切に設定してください
+        alt="Game Start"
+        width={300}
+        height={150}
+        className="animate-fadeOut"  // アニメーション用のクラス
+      />
     </div>
   );
 }

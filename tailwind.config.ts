@@ -43,6 +43,16 @@ const config: Config = {
           foreground: "hsl(var(--card-foreground))",
         },
       },
+      animation: {
+        fadeOut: 'fadeOut 3s ease-in-out',
+      },
+      keyframes: {
+        fadeOut: {
+          '0%': { opacity: '1' },
+          '80%': { opacity: '1' },
+          '100%': { opacity: '0' },
+        },
+      },
     },
   },
   plugins: [require("tailwindcss-animate")],
