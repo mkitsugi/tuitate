@@ -45,8 +45,8 @@ export default function CapturedPieces({
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
               >
                 <Image
-                  src={`/pieces/${pieceType}.png`}
-                  alt={`${pieceType}`}
+                  src={`/pieces/v2/${piece.type}.png`}
+                  alt={`${piece.player}の${piece.type}`}
                   layout="fill"
                   objectFit="contain"
                 />

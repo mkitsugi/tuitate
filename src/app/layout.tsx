@@ -16,6 +16,7 @@ export const metadata: Metadata = {
     template: "%s | 霧将棋",
   },
   description: "索敵しながら王を仕留めろ！新感覚の不完全情報将棋ゲーム「霧将棋」",
+  keywords: "将棋, 霧将棋, 不完全情報ゲーム, オンライン, ついたて将棋, 衝立将棋",
   icons: {
     icon: "/favicon.ico",
   },
@@ -28,15 +29,17 @@ export const metadata: Metadata = {
     description: "索敵しながら王を仕留めろ！新感覚の将棋ゲーム「霧将棋」",
     type: "website",
     url: "https://kirishogi.com",
+    siteName: "霧将棋",
+    locale: "ja_JP",
     images: [
       {
-        url: 'https://kirishogi.com/ogp/image-1200x630.png',
+        url: 'https://kirishogi.com/ogp/image-m.png',
         width: 1200,
         height: 630,
         alt: '霧将棋 | 新感覚の将棋ゲーム',
       },
       {
-        url: 'https://kirishogi.com/ogp/image-400x300.png',
+        url: 'https://kirishogi.com/ogp/image-s.png',
         width: 400,
         height: 300,
         alt: '霧将棋 | 新感覚の将棋ゲーム',
@@ -47,7 +50,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: '霧将棋 | 新感覚の将棋ゲーム',
     description: '索敵しながら王を仕留めろ！新感覚の将棋ゲーム「霧将棋」',
-    images: ['https://kirishogi.com/ogp/image-1200x630.png'],
+    images: ['https://kirishogi.com/ogp/image-m.png'],
     creator: '@palpa_kg',
   },
 };

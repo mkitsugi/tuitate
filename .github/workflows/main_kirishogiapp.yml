@@ -29,10 +29,12 @@ jobs:
 
       - name: Copy artifact for deployment job
         run: |
-          mkdir deploy
-          cp -r ./.next/standalone/. ./deploy
+          mkdir -p deploy/.next/static
+          cp -r ./out/standalone/. ./deploy
           cp -r ./public ./deploy
-          cp -r ./.next/static/. ./deploy/.next/static
+          cp -r ./out/static/. ./deploy/.next/static
+          # Exclude capacitor directory
+          rm -rf ./deploy/capacitor
 
       - name: Zip artifact for deployment
         run: zip release.zip ./deploy -r

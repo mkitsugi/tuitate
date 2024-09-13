@@ -87,10 +87,13 @@ export default function Board({
                   transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 >
                   <Image
-                    src={`/pieces/${cell.piece.type}.png`}
-                    className={cn("object-contain", {
-                      "transform rotate-180": cell.piece.player !== playerSide,
-                    })}
+                    src={`/pieces/v2/${cell.piece.type}.png`}
+                    className={cn(
+                      "object-contain",
+                      {
+                        "transform rotate-180": cell.piece.player !== playerSide,
+                      }
+                    )}
                     alt={`${cell.piece.player}の${cell.piece.type}`}
                     fill
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"

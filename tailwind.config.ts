@@ -43,6 +43,29 @@ const config: Config = {
           foreground: "hsl(var(--card-foreground))",
         },
       },
+      animation: {
+        fadeInFromTop: 'fadeInFromTop 0.5s ease-out',
+        fadeIn: 'fadeIn 0.5s ease-out',
+        fadeOut: 'fadeOut 3s ease-in-out',
+        fadeInOutRight: 'fadeInOutRight 1s ease-in-out forwards',
+      },
+      keyframes: {
+        fadeInFromTop: {
+          '0%': { opacity: '0', transform: 'translateY(-100%)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        fadeInOutRight: {
+          '0%': { opacity: '0', transform: 'translateX(-100%)' },
+          '20%': { opacity: '1', transform: 'translateX(0)' },
+          '80%': { opacity: '1', transform: 'translateX(0)' },
+          '100%': { opacity: '0', transform: 'translateX(100%)' },
+        },
+        fadeOut: {
+          '0%': { opacity: '1' },
+          '80%': { opacity: '0.8' },
+          '100%': { opacity: '0' },
+        },
+      },
     },
   },
   plugins: [require("tailwindcss-animate")],
