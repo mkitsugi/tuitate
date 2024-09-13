@@ -23,6 +23,8 @@ export default function ImprovedFogOfWarShogi() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [volume, setVolume] = useState(0.5);
   const [isMuted, setIsMuted] = useState(false);
+  const [currentAudioSrc, setCurrentAudioSrc] = useState<string | null>(null);
+
   const [enterGame, setEnterGame] = useState(false);
 
   const [showCutIn, setShowCutIn] = useState(false);
@@ -43,13 +45,31 @@ export default function ImprovedFogOfWarShogi() {
     const audio = new Audio(src);
     audio.loop = true;
     audio.volume = volume;
-    if (!isMuted) {
+    setCurrentAudioSrc(src);
+    if (!isMuted && document.visibilityState === 'visible') {
       audio
         .play()
         .catch((error) => console.error("Audio playback failed:", error));
     }
     audioRef.current = audio;
   };
+
+  const handleVisibilityChange = () => {
+    if (audioRef.current) {
+      if (document.hidden) {
+        audioRef.current.pause();
+      } else if (!isMuted && currentAudioSrc) {
+        audioRef.current.play().catch((error) => console.error("Audio playback failed:", error));
+      }
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isMuted, currentAudioSrc]);
 
   const [inputGameId, setInputGameId] = useState<string>("");
   const { openResignDialog, ResignDialog } = useResignDialog();
