@@ -57,6 +57,7 @@ export async function showBannerAd() {
             adId: 'ca-app-pub-3940256099942544/6300978111', // Test ad unit ID
             adSize: BannerAdSize.BANNER,
             position: BannerAdPosition.BOTTOM_CENTER,
+            margin: 60
         };
         AdMob.showBanner(options);
 
