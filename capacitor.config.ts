@@ -6,7 +6,7 @@ const config: CapacitorConfig = {
   webDir: 'out',
   bundledWebRuntime: false,
   server: {
-    url: 'https://kirishogi.com',
+    url: 'https://kirishogi.com/app',
     cleartext: true
   },
 };

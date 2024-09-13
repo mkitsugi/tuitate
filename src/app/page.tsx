@@ -276,7 +276,7 @@ export default function LandingPage() {
 
         <div className="flex justify-center items-center space-x-4 mt-8">
           <Link
-            href="https://apps.apple.com/jp/app/your-app-id"
+            href="https://apps.apple.com/app/%E9%9C%A7%E5%B0%86%E6%A3%8B/id6677011574"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-block cursor-pointer hover:scale-95"

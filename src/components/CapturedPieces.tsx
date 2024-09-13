@@ -31,11 +31,10 @@ export default function CapturedPieces({
           return (
             <button
               key={pieceType}
-              className={`w-10 h-10 flex items-center justify-center rounded-md text-gray-800 transition-colors duration-200 select-none ${
-                isSelected
+              className={`w-10 h-10 flex items-center justify-center rounded-md text-gray-800 transition-colors duration-200 select-none ${isSelected
                   ? "bg-yellow-300 ring-2 ring-yellow-500"
                   : "bg-none border-none"
-              }`}
+                }`}
               onClick={() => onPieceClick({ type: pieceType } as Piece, index)}
             >
               <motion.div
@@ -45,8 +44,8 @@ export default function CapturedPieces({
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
               >
                 <Image
-                  src={`/pieces/v2/${piece.type}.png`}
-                  alt={`${piece.player}の${piece.type}`}
+                  src={`/pieces/v2/${pieceType}.png`}
+                  alt={`${pieceType}`}
                   layout="fill"
                   objectFit="contain"
                 />
