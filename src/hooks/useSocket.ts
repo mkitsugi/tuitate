@@ -137,9 +137,6 @@ export default function useSocket() {
             gameId: response.gameId,
             playerSide: response.side,
           }));
-          toast.success("マッチングしました！", {
-            position: "top-right",
-          });
         }
       }
     );

@@ -12,7 +12,6 @@ export default function Page() {
       try {
         await initializePushNotifications();
         const token = await getFCMToken();
-        console.log('FCMトークン:', token);
       } catch (error) {
         console.error('プッシュ通知の初期化エラー:', error);
       }
