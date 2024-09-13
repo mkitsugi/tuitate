@@ -7,6 +7,7 @@ import { SplashScreen } from '@capacitor/splash-screen';
 
 export default function Page() {
   useEffect(() => {
+    SplashScreen.hide();
     const setup = async () => {
       try {
         await initializePushNotifications();
