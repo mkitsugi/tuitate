@@ -482,8 +482,8 @@ export default function ImprovedFogOfWarShogi() {
                               playMoveSound();
                             }}
                             className="w-full max-w-[180px]"
-                            // className="mt-4 w-full bg-sky-600/80 backdrop-blur-sm border-2 border-sky-400/20 text-white hover:bg-sky-700/80 transition-colors"
-                            // className="mt-4 w-full bg-sky-600 hover:bg-sky-700"
+                          // className="mt-4 w-full bg-sky-600/80 backdrop-blur-sm border-2 border-sky-400/20 text-white hover:bg-sky-700/80 transition-colors"
+                          // className="mt-4 w-full bg-sky-600 hover:bg-sky-700"
                           >
                             先手として参加
                           </FigmaButton>
@@ -496,8 +496,8 @@ export default function ImprovedFogOfWarShogi() {
                               playMoveSound();
                             }}
                             className="w-full max-w-[180px]"
-                            // className="mt-2 w-full bg-rose-600/80 backdrop-blur-sm border-2 border-rose-400/20 text-white hover:bg-rose-700/80 transition-colors"
-                            // className="mt-2 w-full bg-rose-600 hover:bg-rose-700"
+                          // className="mt-2 w-full bg-rose-600/80 backdrop-blur-sm border-2 border-rose-400/20 text-white hover:bg-rose-700/80 transition-colors"
+                          // className="mt-2 w-full bg-rose-600 hover:bg-rose-700"
                           >
                             後手として参加
                           </FigmaButton>
@@ -547,9 +547,8 @@ export default function ImprovedFogOfWarShogi() {
                     // playerSide === "先手" ? "bg-rose-600/80" : "bg-sky-600/80"
                   )}
                   style={{
-                    backgroundImage: `url('/ui/tab/text_round_${
-                      playerSide === "先手" ? "01" : "02"
-                    }.png')`,
+                    backgroundImage: `url('/ui/tab/text_round_${playerSide === "先手" ? "01" : "02"
+                      }.png')`,
                     backgroundSize: "cover",
                     backgroundPosition: "center",
                   }}
@@ -609,9 +608,8 @@ export default function ImprovedFogOfWarShogi() {
                       // playerSide === "先手" ? "bg-sky-600/80" : "bg-rose-600/80"
                     )}
                     style={{
-                      backgroundImage: `url('/ui/tab/text_round_${
-                        playerSide === "先手" ? "02" : "01"
-                      }.png')`,
+                      backgroundImage: `url('/ui/tab/text_round_${playerSide === "先手" ? "02" : "01"
+                        }.png')`,
                       backgroundSize: "cover",
                       backgroundPosition: "center",
                     }}
@@ -672,7 +670,7 @@ export default function ImprovedFogOfWarShogi() {
                 lastMove={null}
                 playerSide={playerSide}
                 selectedCapturedPiece={null}
-                onCellClick={() => {}} // クリックを無効化
+                onCellClick={() => { }} // クリックを無効化
               />
             </div>
             <div className="flex space-x-4">
