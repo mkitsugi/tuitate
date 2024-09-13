@@ -2,14 +2,12 @@
 import React, { useEffect } from "react";
 import Image from "next/image";
 import ImprovedFogOfWarShogi from "@/components/FogOfWarShogi";
-import { initializeAdMob } from "@/utils/admob";
-
+import { SplashScreen } from '@capacitor/splash-screen';
 
 export default function Page() {
   useEffect(() => {
-    initializeAdMob();
+    SplashScreen.hide();
   }, []);
-
   return (
     <div className="h-dvh py-12 px-1 sm:px-1 lg:px-8 flex items-center justify-center overflow-hidden relative">
       <Image

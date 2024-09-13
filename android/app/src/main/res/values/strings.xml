@@ -4,4 +4,5 @@
     <string name="title_activity_main">霧将棋</string>
     <string name="package_name">com.kirishogi</string>
     <string name="custom_url_scheme">com.kirishogi</string>
+    <string name="admob_app_id">ca-app-pub-3928514295615403~2814966336</string>
 </resources>

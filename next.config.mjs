@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     output: 'standalone',
-    // distDir: 'out',
+    distDir: process.env.NODE_ENV === 'azure' ? '.next' : 'out',
     async rewrites() {
         return [
             {

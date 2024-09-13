@@ -17,7 +17,7 @@ import { VisibleCell } from "@shared/shogi";
 import { formatTime } from "@/lib/utils";
 import FigmaButton from "./ui/figma/button";
 import { preloadImages } from "@/lib/utils";
-import { showBannerAd, hideBannerAd } from "@/utils/admob";
+import { initializeAdMob, showBannerAd, hideBannerAd } from "@/utils/admob";
 
 export default function ImprovedFogOfWarShogi() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -110,6 +110,10 @@ export default function ImprovedFogOfWarShogi() {
   } = useGameLogic(socket, gameId, playerSide, isCPUMode);
 
   useEffect(() => {
+    initializeAdMob();
+  }, []);
+
+  useEffect(() => {
     if (gameStarted) {
       setShowCutIn(true);
       const timer = setTimeout(() => {
@@ -122,6 +126,7 @@ export default function ImprovedFogOfWarShogi() {
 
   useEffect(() => {
     if (!gameStarted) {
+      initializeAdMob();
       showBannerAd();
     } else {
       hideBannerAd();
