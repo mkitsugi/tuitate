@@ -19,7 +19,7 @@ import FigmaButton from "./ui/figma/button";
 import { preloadImages } from "@/lib/utils";
 import { initializeAdMob, showBannerAd, hideBannerAd } from "@/utils/admob";
 import { Capacitor } from '@capacitor/core';
-import { App, AppState } from '@capacitor/app';
+import { App } from '@capacitor/app';
 
 export default function ImprovedFogOfWarShogi() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -68,27 +68,50 @@ export default function ImprovedFogOfWarShogi() {
     }
   };
 
-  const handleVisibilityChange = () => {
-    if (Capacitor.isNativePlatform()) return; // ネイティブプラットフォームでは無視
-    handleAppStateChange(document.hidden ? 'inactive' : 'active');
-  };
-
   useEffect(() => {
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    let stateChangeListener: any;
+    let cleanupFunction: (() => void) | undefined;
 
-    if (Capacitor.isNativePlatform()) {
-      App.addListener('appStateChange', (state: AppState) => {
-        handleAppStateChange(state.isActive ? 'active' : 'inactive');
-      });
-    }
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    const setupListener = async () => {
       if (Capacitor.isNativePlatform()) {
-        App.removeAllListeners();
+        stateChangeListener = await App.addListener('appStateChange', ({ isActive }) => {
+          handleAppStateChange(isActive ? 'active' : 'inactive');
+        });
+      } else {
+        // ウェブブラウザ用のイベントリスナー
+        const handleVisibilityChange = () => {
+          handleAppStateChange(document.hidden ? 'inactive' : 'active');
+        };
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        cleanupFunction = () => {
+          document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
       }
     };
-  }, [isMuted, currentAudioSrc]);
+
+    setupListener();
+
+    return () => {
+      const cleanup = async () => {
+        if (Capacitor.isNativePlatform() && stateChangeListener) {
+          await stateChangeListener.remove();
+        } else if (cleanupFunction) {
+          cleanupFunction();
+        }
+      };
+      cleanup();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (audioRef.current) {
+      if (isMuted || !isAppActive) {
+        audioRef.current.pause();
+      } else if (currentAudioSrc) {
+        audioRef.current.play().catch((error) => console.error("Audio playback failed:", error));
+      }
+    }
+  }, [isMuted, isAppActive, currentAudioSrc]);
 
   const [inputGameId, setInputGameId] = useState<string>("");
   const { openResignDialog, ResignDialog } = useResignDialog();
