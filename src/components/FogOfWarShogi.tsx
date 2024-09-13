@@ -647,9 +647,7 @@ export default function ImprovedFogOfWarShogi() {
                     onPieceClick={(piece, index) =>
                       handleCapturedPieceClickWrapper(piece, index, playerSide)
                     }
-                    selectedPieceIndex={
-                      playerSide === "先手" ? selectedPieceIndex : null
-                    }
+                    selectedPieceIndex={selectedPieceIndex}
                   />
                 )}
                 {/* {playerSide === "後手" && gameStarted && (
