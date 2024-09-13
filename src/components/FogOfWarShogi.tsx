@@ -20,6 +20,7 @@ import { VisibleCell } from "@shared/shogi";
 import { formatTime } from "@/lib/utils";
 import FigmaButton from "./ui/figma/button";
 import { preloadImages } from "@/lib/utils";
+import { showBannerAd, hideBannerAd } from "@/utils/admob";
 
 export default function ImprovedFogOfWarShogi() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -120,6 +121,14 @@ export default function ImprovedFogOfWarShogi() {
       return () => clearTimeout(timer);
     }
   }, [gameStarted]);
+
+  useEffect(() => {
+    if (!gameStarted) {
+      showBannerAd();
+    } else {
+      hideBannerAd();
+    }
+  }, [gameStarted, gameEnded]);
 
   useEffect(() => {
     if (isPlayerInCheck || isOpponentInCheck) {
@@ -695,7 +704,7 @@ export default function ImprovedFogOfWarShogi() {
         )}
       </div>
 
-      <div className="absolute top-4 left-4 flex items-center space-x-2">
+      <div className="absolute top-16 left-4 flex items-center space-x-2">
         <Button
           variant="ghost"
           size="icon"

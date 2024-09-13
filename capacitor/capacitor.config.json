@@ -1,0 +1,10 @@
+{
+  "appId": "com.kirishogi",
+  "appName": "霧将棋",
+  "webDir": "dist",
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 0
+    }
+  }
+}
