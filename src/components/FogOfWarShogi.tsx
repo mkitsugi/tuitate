@@ -18,12 +18,15 @@ import { formatTime } from "@/lib/utils";
 import FigmaButton from "./ui/figma/button";
 import { preloadImages } from "@/lib/utils";
 import { initializeAdMob, showBannerAd, hideBannerAd } from "@/utils/admob";
+import { Capacitor } from '@capacitor/core';
+import { App, AppState } from '@capacitor/app';
 
 export default function ImprovedFogOfWarShogi() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [volume, setVolume] = useState(0.5);
   const [isMuted, setIsMuted] = useState(false);
   const [currentAudioSrc, setCurrentAudioSrc] = useState<string | null>(null);
+  const [isAppActive, setIsAppActive] = useState(true);
 
   const [enterGame, setEnterGame] = useState(false);
 
@@ -46,7 +49,7 @@ export default function ImprovedFogOfWarShogi() {
     audio.loop = true;
     audio.volume = volume;
     setCurrentAudioSrc(src);
-    if (!isMuted && document.visibilityState === 'visible') {
+    if (!isMuted && isAppActive) {
       audio
         .play()
         .catch((error) => console.error("Audio playback failed:", error));
@@ -54,9 +57,10 @@ export default function ImprovedFogOfWarShogi() {
     audioRef.current = audio;
   };
 
-  const handleVisibilityChange = () => {
+  const handleAppStateChange = (state: 'active' | 'inactive') => {
+    setIsAppActive(state === 'active');
     if (audioRef.current) {
-      if (document.hidden) {
+      if (state === 'inactive') {
         audioRef.current.pause();
       } else if (!isMuted && currentAudioSrc) {
         audioRef.current.play().catch((error) => console.error("Audio playback failed:", error));
@@ -64,10 +68,25 @@ export default function ImprovedFogOfWarShogi() {
     }
   };
 
+  const handleVisibilityChange = () => {
+    if (Capacitor.isNativePlatform()) return; // ネイティブプラットフォームでは無視
+    handleAppStateChange(document.hidden ? 'inactive' : 'active');
+  };
+
   useEffect(() => {
     document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    if (Capacitor.isNativePlatform()) {
+      App.addListener('appStateChange', (state: AppState) => {
+        handleAppStateChange(state.isActive ? 'active' : 'inactive');
+      });
+    }
+
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (Capacitor.isNativePlatform()) {
+        App.removeAllListeners();
+      }
     };
   }, [isMuted, currentAudioSrc]);
 
