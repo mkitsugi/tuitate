@@ -1,12 +1,9 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import Image from "next/image";
-import { Card, CardContent } from "@/components/ui/card";
 import { Volume2, VolumeX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import Board from "./Board";
 import CapturedPieces from "./CapturedPieces";
 import WaitingOverlay from "./WaitingOverlay";
@@ -89,6 +86,7 @@ export default function ImprovedFogOfWarShogi() {
     startNewGame,
     isCPUMode,
     startCPUGame,
+    isConnected,
   } = useSocket();
 
   const {
@@ -162,14 +160,25 @@ export default function ImprovedFogOfWarShogi() {
     // ゲームが開始されたら駒の画像をプリロード
     if (enterGame) {
       const pieceTypes = [
-        "歩", "香", "桂", "銀", "金", "角", "飛",
-        "と", "成香", "成桂", "成銀", "馬", "龍", "玉"
+        "歩",
+        "香",
+        "桂",
+        "銀",
+        "金",
+        "角",
+        "飛",
+        "と",
+        "成香",
+        "成桂",
+        "成銀",
+        "馬",
+        "龍",
+        "玉",
       ];
       const imagePaths = pieceTypes.map(type => `/pieces/v2/${type}.png`);
       preloadImages(imagePaths);
     }
   }, [enterGame]);
-
 
   const handleFindRandomMatch = () => {
     setIsSearchingOpponent(true);
@@ -191,6 +200,18 @@ export default function ImprovedFogOfWarShogi() {
     clearExistingRooms();
     findExistingRooms();
     resetGameState();
+  };
+
+  const handleRematch = () => {
+    if (isCPUMode) {
+      console.log("rematch CPU");
+      resetForNewGame();
+      startCPUGame();
+      playMoveSound();
+    } else {
+      console.log("rematch request");
+      requestRematch();
+    }
   };
 
   useEffect(() => {
@@ -349,7 +370,7 @@ export default function ImprovedFogOfWarShogi() {
                   priority
                   quality={100}
                   className="pb-8"
-                  style={{ width: '100%', height: '100%', maxWidth: '300px' }}
+                  style={{ width: "100%", height: "100%", maxWidth: "300px" }}
                 />
                 {/* )} */}
                 {!isSearchingOpponent && (
@@ -358,10 +379,8 @@ export default function ImprovedFogOfWarShogi() {
                     alt="霧将棋"
                     width={240}
                     height={100}
-                    sizes="300vw"
                     priority
                     quality={100}
-                    style={{ width: '90%', height: 'auto', maxWidth: '300px' }}
                   />
                 )}
               </div>
@@ -393,8 +412,16 @@ export default function ImprovedFogOfWarShogi() {
                               className="w-full max-w-[160px] sm:max-w-[180px]"
                               textClassName="text-[13px] sm:text-[15px]"
                               onClick={handleFindRandomMatch}
+                              disabled={!isConnected}
                             >
-                              ランダムマッチ
+                              {isConnected ? (
+                                "ランダムマッチ"
+                              ) : (
+                                <div className="flex items-center">
+                                  <Loader2 className="w-4 h-4 animate-spin mx-auto text-gray" />
+                                  <span className="ml-2">接続中...</span>
+                                </div>
+                              )}
                             </FigmaButton>
 
                             <FigmaButton
@@ -455,8 +482,8 @@ export default function ImprovedFogOfWarShogi() {
                               playMoveSound();
                             }}
                             className="w-full max-w-[180px]"
-                          // className="mt-4 w-full bg-sky-600/80 backdrop-blur-sm border-2 border-sky-400/20 text-white hover:bg-sky-700/80 transition-colors"
-                          // className="mt-4 w-full bg-sky-600 hover:bg-sky-700"
+                            // className="mt-4 w-full bg-sky-600/80 backdrop-blur-sm border-2 border-sky-400/20 text-white hover:bg-sky-700/80 transition-colors"
+                            // className="mt-4 w-full bg-sky-600 hover:bg-sky-700"
                           >
                             先手として参加
                           </FigmaButton>
@@ -469,8 +496,8 @@ export default function ImprovedFogOfWarShogi() {
                               playMoveSound();
                             }}
                             className="w-full max-w-[180px]"
-                          // className="mt-2 w-full bg-rose-600/80 backdrop-blur-sm border-2 border-rose-400/20 text-white hover:bg-rose-700/80 transition-colors"
-                          // className="mt-2 w-full bg-rose-600 hover:bg-rose-700"
+                            // className="mt-2 w-full bg-rose-600/80 backdrop-blur-sm border-2 border-rose-400/20 text-white hover:bg-rose-700/80 transition-colors"
+                            // className="mt-2 w-full bg-rose-600 hover:bg-rose-700"
                           >
                             後手として参加
                           </FigmaButton>
@@ -500,7 +527,7 @@ export default function ImprovedFogOfWarShogi() {
                 sizes="300vw"
                 priority
                 quality={100}
-                style={{ width: '100%', height: '100%', maxWidth: '300px' }}
+                style={{ width: "100%", height: "100%", maxWidth: "300px" }}
                 className="pt-12"
               />
             </div>
@@ -520,8 +547,9 @@ export default function ImprovedFogOfWarShogi() {
                     // playerSide === "先手" ? "bg-rose-600/80" : "bg-sky-600/80"
                   )}
                   style={{
-                    backgroundImage: `url('/ui/tab/text_round_${playerSide === "先手" ? "01" : "02"
-                      }.png')`,
+                    backgroundImage: `url('/ui/tab/text_round_${
+                      playerSide === "先手" ? "01" : "02"
+                    }.png')`,
                     backgroundSize: "cover",
                     backgroundPosition: "center",
                   }}
@@ -581,8 +609,9 @@ export default function ImprovedFogOfWarShogi() {
                       // playerSide === "先手" ? "bg-sky-600/80" : "bg-rose-600/80"
                     )}
                     style={{
-                      backgroundImage: `url('/ui/tab/text_round_${playerSide === "先手" ? "02" : "01"
-                        }.png')`,
+                      backgroundImage: `url('/ui/tab/text_round_${
+                        playerSide === "先手" ? "02" : "01"
+                      }.png')`,
                       backgroundSize: "cover",
                       backgroundPosition: "center",
                     }}
@@ -643,7 +672,7 @@ export default function ImprovedFogOfWarShogi() {
                 lastMove={null}
                 playerSide={playerSide}
                 selectedCapturedPiece={null}
-                onCellClick={() => { }} // クリックを無効化
+                onCellClick={() => {}} // クリックを無効化
               />
             </div>
             <div className="flex space-x-4">
@@ -652,7 +681,8 @@ export default function ImprovedFogOfWarShogi() {
                 disabled={rematchRequested}
                 className="py-1 text-md text-white font-black hover:scale-95 transition-all"
                 style={{
-                  backgroundImage: "url('/ui/button/button_rectangle_01_hover.png')",
+                  backgroundImage:
+                    "url('/ui/button/button_rectangle_01_hover.png')",
                   backgroundSize: "100% 100%",
                   backgroundPosition: "center",
                   width: "150px",
@@ -661,29 +691,33 @@ export default function ImprovedFogOfWarShogi() {
                   cursor: rematchRequested ? "not-allowed" : "pointer",
                 }}
               >
-                ルームを抜ける
+                {isCPUMode ? "ゲームを抜ける" : "ルームを抜ける"}
               </button>
-              {!rematchRequested && !opponentRequestedRematch && !opponentLeft && (
-                <button
-                  onClick={requestRematch}
-                  className="py-1 text-md text-black/70 font-black hover:scale-95 transition-all"
-                  style={{
-                    backgroundImage: "url('/ui/button/button_rectangle_01.png')",
-                    backgroundSize: "100% 100%",
-                    backgroundPosition: "center",
-                    width: "150px",
-                    height: "40px",
-                  }}
-                >
-                  再戦リクエスト
-                </button>
-              )}
+              {!rematchRequested &&
+                !opponentRequestedRematch &&
+                !opponentLeft && (
+                  <button
+                    onClick={handleRematch}
+                    className="py-1 text-md text-black/70 font-black hover:scale-95 transition-all"
+                    style={{
+                      backgroundImage:
+                        "url('/ui/button/button_rectangle_01.png')",
+                      backgroundSize: "100% 100%",
+                      backgroundPosition: "center",
+                      width: "150px",
+                      height: "40px",
+                    }}
+                  >
+                    {isCPUMode ? "再戦する" : "再戦をリクエスト"}
+                  </button>
+                )}
               {opponentRequestedRematch && (
                 <button
                   onClick={acceptRematch}
                   className="py-1 text-md text-white font-black hover:scale-95 transition-all"
                   style={{
-                    backgroundImage: "url('/ui/button/button_rectangle_01_click.png')",
+                    backgroundImage:
+                      "url('/ui/button/button_rectangle_01_click.png')",
                     backgroundSize: "100% 100%",
                     backgroundPosition: "center",
                     width: "150px",

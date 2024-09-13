@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { io, Socket } from "socket.io-client";
 import { toast } from "sonner";
 import { Player, GameState, RoomState, Room } from "@shared/shogi";
@@ -10,12 +10,18 @@ import {
 } from "./useRoomManagement";
 
 const isProduction = process.env.NODE_ENV === "production";
-const WEBSOCKET_URL = process.env.NEXT_PUBLIC_WEBSOCKET_URL || isProduction ? "tuitate-g7ggbserhhgtd8gv.eastasia-01.azurewebsites.net" : "http://localhost:3001";
+const WEBSOCKET_URL =
+  process.env.NEXT_PUBLIC_WEBSOCKET_URL || isProduction
+    ? "tuitate-g7ggbserhhgtd8gv.eastasia-01.azurewebsites.net"
+    : "http://localhost:3001";
 // const AZURE_WEBPUBSUB_ENDPOINT = process.env.NEXT_PUBLIC_AZURE_WEBPUBSUB_ENDPOINT || "http://localhost:3001";
 
 export default function useSocket() {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [mySocketId, setMySocketId] = useState<string | null>(null);
+
+  const [isConnected, setIsConnected] = useState(false);
+  const isConnectedRef = useRef(false);
 
   const [rematchRequested, setRematchRequested] = useState<boolean>(false);
   const [rematchAccepted, setRematchAccepted] = useState<boolean>(false);
@@ -59,10 +65,16 @@ export default function useSocket() {
       newSocket.on("connect", () => {
         setMySocketId(newSocket?.id as string);
         console.log("Connected to WebSocket server");
+        setIsConnected(true);
+        isConnectedRef.current = true;
         findExistingRooms();
       });
       newSocket.on("connect_error", (error) => {
         console.error("WebSocket connection error:", error);
+      });
+      newSocket.on("disconnect", () => {
+        setIsConnected(false);
+        isConnectedRef.current = false;
       });
       setSocket(newSocket);
     } else {
@@ -92,11 +104,15 @@ export default function useSocket() {
     newSocket.on("connect", () => {
       setMySocketId(newSocket.id as string);
       console.log("Connected to WebSocket server");
+      setIsConnected(true);
+      isConnectedRef.current = true;
       findExistingRooms();
     });
 
     newSocket.on("connect_error", (error) => {
       console.error("WebSocket connection error:", error);
+      setIsConnected(false);
+      isConnectedRef.current = false;
       toast.error("接続エラー", {
         description: "サーバーに接続できません。",
         position: "top-right",
@@ -112,18 +128,21 @@ export default function useSocket() {
     if (!socket) return;
 
     socket.on("roomList", handleRoomList);
-    socket.on("matchFound", (response: { success: boolean; gameId: string; side: Player }) => {
-      if (response.success) {
-        setGameState((prev: GameState) => ({
-          ...prev,
-          gameId: response.gameId,
-          playerSide: response.side,
-        }));
-        toast.success("マッチングしました！", {
-          position: "top-right",
-        });
+    socket.on(
+      "matchFound",
+      (response: { success: boolean; gameId: string; side: Player }) => {
+        if (response.success) {
+          setGameState((prev: GameState) => ({
+            ...prev,
+            gameId: response.gameId,
+            playerSide: response.side,
+          }));
+          toast.success("マッチングしました！", {
+            position: "top-right",
+          });
+        }
       }
-    });
+    );
     socket.on("gameCreated", handleGameCreated);
     socket.on("newRoomCreated", (newRoom: Room) => {
       addNewRoom(newRoom);
@@ -212,6 +231,10 @@ export default function useSocket() {
   );
 
   const resign = useCallback(() => {
+    if (isCPUMode) {
+      handleGameEnded({ winner: "後手", reason: "あなたが投了しました" });
+      return;
+    }
     if (socket && gameState.gameId) {
       socket.emit("resign", { gameId: gameState.gameId });
     }
@@ -229,16 +252,24 @@ export default function useSocket() {
 
   const findRandomMatch = useCallback(() => {
     if (socket) {
-      socket.emit("findRandomMatch", (response: { success: boolean; gameId: string; side: Player; message?: string }) => {
-        if (response.success && response.gameId && response.side) {
-          setGameState((prev: GameState) => ({
-            ...prev,
-            gameId: response.gameId,
-            playerSide: response.side,
-          }));
-          // toast.success("マッチングしました！");
+      socket.emit(
+        "findRandomMatch",
+        (response: {
+          success: boolean;
+          gameId: string;
+          side: Player;
+          message?: string;
+        }) => {
+          if (response.success && response.gameId && response.side) {
+            setGameState((prev: GameState) => ({
+              ...prev,
+              gameId: response.gameId,
+              playerSide: response.side,
+            }));
+            // toast.success("マッチングしました！");
+          }
         }
-      });
+      );
     } else {
       toast.error("サーバーに接続されていません。");
     }
@@ -246,13 +277,16 @@ export default function useSocket() {
 
   const handleCancelSearch = useCallback(() => {
     if (socket) {
-      socket.emit("cancelSearch", (response: { success: boolean; message?: string }) => {
-        if (response.success) {
-          // toast.success("マッチング検索をキャンセルしました。");
-        } else {
-          toast.error(response.message || "キャンセルに失敗しました。");
+      socket.emit(
+        "cancelSearch",
+        (response: { success: boolean; message?: string }) => {
+          if (response.success) {
+            // toast.success("マッチング検索をキャンセルしました。");
+          } else {
+            toast.error(response.message || "キャンセルに失敗しました。");
+          }
         }
-      });
+      );
     } else {
     }
   }, [socket]);
@@ -382,6 +416,7 @@ export default function useSocket() {
     setRematchRequested(false);
     setRematchAccepted(false);
     setOpponentLeft(false);
+    setIsCPUMode(false);
   }, [leaveRoom, setGameState]);
 
   const startCPUGame = useCallback(() => {
@@ -392,6 +427,7 @@ export default function useSocket() {
       playerSide: "先手",
       gameCreated: true,
       gameStarted: true,
+      gameEnded: false,
       board: initialBoard,
       currentPlayer: "先手",
     }));
@@ -400,6 +436,7 @@ export default function useSocket() {
   return {
     socket,
     mySocketId,
+    isConnected,
     ...gameState,
     ...roomState,
     rematchRequested,

@@ -17,7 +17,6 @@ interface BoardProps {
   onCellClick: (row: number, col: number) => void;
   selectedCapturedPiece: Piece | null;
 }
-// ... existing imports ...
 
 export default function Board({
   visibleBoard,

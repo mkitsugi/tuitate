@@ -5,9 +5,9 @@
   "display": "fullscreen",
   "name": "霧将棋",
   "orientation": "portrait",
-  "scope": "/",
+  "scope": "/app",
   "short_name": "霧将棋",
-  "start_url": "/",
+  "start_url": "/app",
   "theme_color": "#ffffff",
   "icons": [
     {
@@ -475,9 +475,9 @@
   ],
   "share_target": {
     "method": "GET",
-    "action": "/",
+    "action": "/app",
     "params": {
-      "url": "https://kirishogi.com",
+      "url": "https://kirishogi.com/app",
       "title": "霧将棋",
       "text": "索敵しながら王を仕留めろ！新感覚の将棋ゲーム「霧将棋」"
     }

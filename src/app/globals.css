@@ -126,3 +126,25 @@ span {
     @apply bg-background text-foreground;
   }
 }
+
+.custom-cursor {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  transition: transform 0.1s ease;
+}
+
+.custom-cursor-active,
+.custom-cursor-active * {
+  cursor: none !important;
+}
+
+/* リンクやボタンにホバー効果を追加 */
+.custom-cursor-active a:hover,
+.custom-cursor-active button:hover {
+  cursor: pointer !important;
+}

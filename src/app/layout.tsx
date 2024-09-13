@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import { Nunito } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import Script from "next/script";
-const nunito = Nunito({ subsets: ["latin"] });
 
 // カスタムフォントの読み込み
 const customFont = localFont({
@@ -63,7 +61,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="ja">
       <head>
         <link rel="manifest" href="/manifest.json" />
         <link rel="canonical" href="https://kirishogi.com" />
