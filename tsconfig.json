@@ -38,6 +38,9 @@
     "out/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "capacitor",
+    "ios",
+    "android"
   ]
 }
