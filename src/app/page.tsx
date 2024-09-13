@@ -14,7 +14,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import FigmaButton from "@/components/ui/figma/button";
 import RulesContent from "@/components/RulesContent";
-import Lenis from "@studio-freight/lenis";
+import Lenis from "lenis";
 import Board from "@/components/Board";
 import { Player, Piece, VisibleCell, PieceType } from "@shared/shogi";
 import {
