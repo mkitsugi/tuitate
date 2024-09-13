@@ -410,15 +410,15 @@ export default function useGameLogic(
         ? isPlayerInCheck
         : isOpponentInCheck;
 
-      if (isPlayerInDanger && !prevIsPlayerInCheck.current) {
-        toast.error("王手されました！", {
-          position: "top-right",
-        });
-      } else if (isPlayerChecking && !prevIsOpponentInCheck.current) {
-        toast.success("王手！", {
-          position: "top-right",
-        });
-      }
+      // if (isPlayerInDanger && !prevIsPlayerInCheck.current) {
+      //   toast.error("王手されました！", {
+      //     position: "top-right",
+      //   });
+      // } else if (isPlayerChecking && !prevIsOpponentInCheck.current) {
+      //   toast.success("王手！", {
+      //     position: "top-right",
+      //   });
+      // }
 
       prevIsPlayerInCheck.current = isPlayerInCheck;
       prevIsOpponentInCheck.current = isOpponentInCheck;
@@ -471,10 +471,10 @@ export default function useGameLogic(
         const { from, to, piece } = pendingMove;
         const promotedPiece = shouldPromote
           ? {
-              ...piece,
-              type: getPromotedType(piece.type as PieceType),
-              promoted: true,
-            }
+            ...piece,
+            type: getPromotedType(piece.type as PieceType),
+            promoted: true,
+          }
           : piece;
         executeMove(promotedPiece, from, to);
         setPendingMove(null);

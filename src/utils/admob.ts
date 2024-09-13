@@ -9,7 +9,7 @@ export async function initializeAdMob() {
     if (!isMobile()) { return; }
     console.log('Initializing AdMob');
     try {
-        await AdMob.initialize({ initializeForTesting: true });
+        await AdMob.initialize();
 
         console.log('Requesting tracking and consent info');
         const trackingInfo = await AdMob.trackingAuthorizationStatus();
