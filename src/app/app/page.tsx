@@ -2,13 +2,22 @@
 import React, { useEffect } from "react";
 import Image from "next/image";
 import ImprovedFogOfWarShogi from "@/components/FogOfWarShogi";
-import { initializePushNotifications } from "@/utils/notification";
+import { initializePushNotifications, getFCMToken } from "@/utils/notification";
 import { SplashScreen } from '@capacitor/splash-screen';
 
 export default function Page() {
   useEffect(() => {
-    SplashScreen.hide();
-    initializePushNotifications();
+    const setup = async () => {
+      try {
+        await initializePushNotifications();
+        const token = await getFCMToken();
+        console.log('FCMトークン:', token);
+      } catch (error) {
+        console.error('プッシュ通知の初期化エラー:', error);
+      }
+    };
+
+    setup();
   }, []);
 
   return (
