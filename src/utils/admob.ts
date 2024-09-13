@@ -5,6 +5,10 @@ function isMobile() {
     return Capacitor.getPlatform() === 'ios' || Capacitor.getPlatform() === 'android';
 }
 
+function Platform() {
+    return Capacitor.getPlatform();
+}
+
 export async function initializeAdMob() {
     if (!isMobile()) { return; }
     console.log('Initializing AdMob');
@@ -54,7 +58,7 @@ export async function showBannerAd() {
     if (!isMobile()) { return; }
     try {
         const options: BannerAdOptions = {
-            adId: 'ca-app-pub-3940256099942544/6300978111', // Test ad unit ID
+            adId: Platform() === 'ios' ? 'ca-app-pub-3928514295615403/1779729020' : 'ca-app-pub-3928514295615403/8515160788', // Test ad unit ID
             adSize: BannerAdSize.BANNER,
             position: BannerAdPosition.BOTTOM_CENTER,
             margin: 60
