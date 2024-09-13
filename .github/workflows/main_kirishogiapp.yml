@@ -30,7 +30,11 @@ jobs:
       - name: Copy artifact for deployment job
         run: |
           mkdir -p deploy
-          cp -r ./.next/standalone/. ./deploy
+          if [ -d "./.next/standalone" ]; then
+            cp -r ./.next/standalone/. ./deploy
+          else
+            cp -r ./.next/. ./deploy
+          fi
           cp -r ./public ./deploy
           cp -r ./.next/static/. ./deploy/.next/static
           # Exclude capacitor directory
