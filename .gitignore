@@ -69,3 +69,6 @@ MANIFEST
 .venv
 venv/
 ENV/
+
+# Android
+android/app/google-services.json
