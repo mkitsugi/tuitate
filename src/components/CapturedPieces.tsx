@@ -32,8 +32,8 @@ export default function CapturedPieces({
             <button
               key={pieceType}
               className={`w-10 h-10 flex items-center justify-center rounded-md text-gray-800 transition-colors duration-200 select-none ${isSelected
-                  ? "bg-yellow-300 ring-2 ring-yellow-500"
-                  : "bg-none border-none"
+                ? "bg-yellow-300 ring-2 ring-yellow-500"
+                : "bg-none border-none"
                 }`}
               onClick={() => onPieceClick({ type: pieceType } as Piece, index)}
             >

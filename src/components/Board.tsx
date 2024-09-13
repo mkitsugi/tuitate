@@ -64,7 +64,7 @@ export default function Board({
                 },
                 cell.isVisible
                   ? "bg-white border-slate-300"
-                  : "bg-white/10 border-white/10"
+                  : "bg-white/10 border-white/10",
               )}
               onClick={() => onCellClick(actualRow, actualCol)}
               aria-label={

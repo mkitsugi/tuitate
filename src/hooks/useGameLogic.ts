@@ -244,6 +244,7 @@ export default function useGameLogic(
 
       if (selectedCapturedPiece) {
         if (board[row][col] === null) {
+
           // 二歩チェックを追加
           if (selectedCapturedPiece.type === "歩") {
             const isNifu = board.some(
@@ -263,24 +264,35 @@ export default function useGameLogic(
             }
           }
 
-          executeMove({ ...selectedCapturedPiece, promoted: false }, null, [
-            row,
-            col,
-          ]);
-          moveExecuted = true;
-          setCapturedPieces((prev) => ({
-            ...prev,
-            [playerSide as Player]: prev[playerSide as Player].filter(
-              (p) => p !== selectedCapturedPiece
-            ),
-          }));
-        } else {
+          if (visibleBoard[row][col].isVisible) {
+            executeMove({ ...selectedCapturedPiece, promoted: false }, null, [
+              row,
+              col,
+            ]);
+            moveExecuted = true;
+            setCapturedPieces((prev) => ({
+              ...prev,
+              [playerSide as Player]: prev[playerSide as Player].filter(
+                (p) => p !== selectedCapturedPiece
+              ),
+            }));
+          } else {
+            toast.info("無効な移動です", {
+              description: "視界の範囲にのみ持ち駒を打つことができます。",
+              position: "top-right",
+            });
+          }
+        }
+
+        else {
           toast.info("無効な移動です", {
             description: "空いているマスにのみ持ち駒を打てます。",
             position: "top-right",
           });
         }
+
         setSelectedCapturedPiece(null);
+
         return;
       }
 
@@ -398,6 +410,7 @@ export default function useGameLogic(
     },
     [currentPlayer, playerSide]
   );
+
 
   useEffect(() => {
     // CPU戦（socketがない場合）の処理を追加
