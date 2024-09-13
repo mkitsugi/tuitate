@@ -1,6 +1,12 @@
 import { AdMob, AdmobConsentStatus, BannerAdOptions, BannerAdSize, BannerAdPosition } from '@capacitor-community/admob';
+import { Capacitor } from '@capacitor/core';
+
+function isMobile() {
+    return Capacitor.getPlatform() === 'ios' || Capacitor.getPlatform() === 'android';
+}
 
 export async function initializeAdMob() {
+    if (!isMobile()) { return; }
     console.log('Initializing AdMob');
     try {
         await AdMob.initialize({ initializeForTesting: true });
@@ -45,6 +51,7 @@ export async function initializeAdMob() {
 
 
 export async function showBannerAd() {
+    if (!isMobile()) { return; }
     try {
         const options: BannerAdOptions = {
             adId: 'ca-app-pub-3940256099942544/6300978111', // Test ad unit ID
@@ -59,6 +66,7 @@ export async function showBannerAd() {
 }
 
 export async function hideBannerAd() {
+    if (!isMobile()) { return; }
     try {
         await AdMob.hideBanner();
         await AdMob.removeBanner();
