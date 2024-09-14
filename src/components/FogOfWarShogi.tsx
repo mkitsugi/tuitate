@@ -747,13 +747,28 @@ export default function ImprovedFogOfWarShogi() {
 
         {gameEnded && (
           <div className="flex flex-col items-center space-y-4">
-            <h2 className="text-2xl font-bold text-white">ゲーム終了</h2>
-            {winner && (
-              <p className="text-xl text-white">
-                {winner === playerSide
-                  ? "あなたの勝利です！"
-                  : "相手の勝利です。"}
-              </p>
+            {!isReplayMode ? (
+              <>
+                <h2 className="text-2xl font-bold text-white">ゲーム終了</h2>
+                {winner && (
+                  <p className="text-xl text-white">
+                    {winner === playerSide
+                      ? "あなたの勝利です！"
+                      : "相手の勝利です。"}
+                  </p>
+                )}
+              </>
+            ) : (
+              <div className="flex justify-between gap-4 max-w-[400px] w-full ">
+                {playerSide && isReplayMode && (
+                  <CapturedPieces
+                    title="相手の持ち駒"
+                    pieces={capturedPieces[playerSide === "先手" ? "後手" : "先手"]}
+                    onPieceClick={() => { }}
+                    selectedPieceIndex={null}
+                  />
+                )}
+              </div>
             )}
             <div className="relative max-w-[450px]">
               <Board

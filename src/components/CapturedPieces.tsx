@@ -37,11 +37,11 @@ export default function CapturedPieces({
                 }`}
               onClick={() => onPieceClick({ type: pieceType } as Piece, index)}
             >
-              <motion.div
+              <div
                 className="w-10 h-10 relative"
-                layoutId={pieceType}
+                // layoutId={pieceType}
                 key={pieceType}
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              // transition={{ type: "spring", stiffness: 300, damping: 30 }}
               >
                 <Image
                   src={`/pieces/v2/${pieceType}.png`}
@@ -54,7 +54,7 @@ export default function CapturedPieces({
                     {count}
                   </div>
                 )}
-              </motion.div>
+              </div>
             </button>
           );
         })}

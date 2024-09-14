@@ -123,6 +123,7 @@ export default function useGameLogic(
       //   const [fromRow, fromCol] = from;
       const [toRow, toCol] = to;
       const newBoard = board.map((row) => [...row]);
+
       const targetPiece = newBoard[toRow][toCol];
 
       // 移動前の状態を記録
@@ -178,6 +179,28 @@ export default function useGameLogic(
           ].filter((p) => p.id !== targetPiece.id);
           return newCapturedPieces;
         });
+        // setCapturedHistoryをsetCapturedPiecesの外に移動
+        setCapturedHistory((prevHistory) => {
+          const newCaptured = {
+            先手: [...capturedPieces.先手, ...(piece.player === "先手" ? [{ id: uuidv4(), type: capturedPieceType, player: piece.player, promoted: false }] : [])],
+            後手: [...capturedPieces.後手, ...(piece.player === "後手" ? [{ id: uuidv4(), type: capturedPieceType, player: piece.player, promoted: false }] : [])]
+          };
+          return [...prevHistory, newCaptured];
+        });
+        console.log(capturedPieces, "1");
+      } else if (isCPUMode) {
+        console.log(capturedPieces, "0");
+        setCapturedHistory((prevHistory) => {
+          const newCaptured = {
+            先手: [...(capturedPieces.先手 || [])],
+            後手: [...(capturedPieces.後手 || [])]
+          };
+          return [...prevHistory, newCaptured];
+        });
+      }
+
+      if (isCPUMode) {
+        setMoveHistory(prevHistory => [...prevHistory, newBoard]);
       }
 
       // 移動後に王手状態をチェック
@@ -199,6 +222,8 @@ export default function useGameLogic(
       // setLastMove([toRow, toCol]);
       setSelectedCell(null);
       updateVisibleBoard();
+
+
 
       // サーバーに移動を通知（CPU戦でない場合のみ）
       if (!isCPUMode && socket && gameId) {
