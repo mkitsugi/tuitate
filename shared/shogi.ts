@@ -64,3 +64,11 @@ export interface RoomState {
   existingRooms: Room[];
   isLoadingRooms: boolean;
 }
+
+export interface Move {
+  piece: Piece;
+  from: [number, number];
+  to: [number, number];
+  capturedPiece: Piece | null;
+  promotedTo: string | null;
+}

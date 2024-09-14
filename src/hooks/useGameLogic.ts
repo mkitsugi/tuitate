@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from "uuid";
 import { useState, useCallback, useEffect, useRef } from "react";
 import { Socket } from "socket.io-client";
 import { toast } from "sonner";
-import { Player, Piece, PieceType, PromotedPieceType } from "@shared/shogi";
+import { Player, Piece, PieceType, PromotedPieceType, Board, CapturedPieces } from "@shared/shogi";
 import { usePromotionDialog } from "@/components/PromotionDialog";
 import { initializeVisibleBoard } from "@shared/boardUtils";
 import {
@@ -66,6 +66,11 @@ export default function useGameLogic(
   const prevIsOpponentInCheck = useRef(false);
 
   const [isCPUTurn, setIsCPUTurn] = useState(false);
+
+  const [moveHistory, setMoveHistory] = useState<Board[]>([initialBoard()]);
+  const [capturedHistory, setCapturedHistory] = useState<CapturedPieces[]>([{ 先手: [], 後手: [] }]);
+
+  const [replayIndex, setReplayIndex] = useState<number | null>(null);
 
   useEffect(() => {
     moveAudioRef.current = new Audio("/move.mp3");
@@ -423,16 +428,6 @@ export default function useGameLogic(
         ? isPlayerInCheck
         : isOpponentInCheck;
 
-      // if (isPlayerInDanger && !prevIsPlayerInCheck.current) {
-      //   toast.error("王手されました！", {
-      //     position: "top-right",
-      //   });
-      // } else if (isPlayerChecking && !prevIsOpponentInCheck.current) {
-      //   toast.success("王手！", {
-      //     position: "top-right",
-      //   });
-      // }
-
       prevIsPlayerInCheck.current = isPlayerInCheck;
       prevIsOpponentInCheck.current = isOpponentInCheck;
     };
@@ -460,6 +455,16 @@ export default function useGameLogic(
         setIsOpponentInCheck(isOpponentInCheck);
         updateVisibleBoard();
         playMoveSound();
+
+        setMoveHistory(prevHistory => [...prevHistory, newBoard]);
+        setCapturedHistory((prevHistory) => {
+          const newCaptured = {
+            先手: [...(newCapturedPieces.先手 || [])],
+            後手: [...(newCapturedPieces.後手 || [])]
+          };
+          return [...prevHistory, newCaptured];
+        });
+
       }
     );
 
@@ -641,6 +646,8 @@ export default function useGameLogic(
 
   const resetForNewGame = useCallback(() => {
     resetGameState();
+    setMoveHistory([initialBoard()]);
+    setCapturedHistory([{ 先手: [], 後手: [] }]);
     updateVisibleBoard();
   }, [resetGameState, updateVisibleBoard]);
 
@@ -649,6 +656,44 @@ export default function useGameLogic(
       resetGameState();
     }
   }, [gameId, resetGameState]);
+
+  // リプレイ関連の新しい関数
+  const startReplay = useCallback(() => {
+    resetGameState();
+    setReplayIndex(0);
+  }, [resetGameState]);
+
+  const nextMove = () => {
+    if (replayIndex === null || replayIndex >= moveHistory.length - 1) return;
+    setCapturedPieces(capturedHistory[replayIndex + 1]);
+    setBoard(moveHistory[replayIndex + 1]);
+    setCurrentPlayer(currentPlayer === "先手" ? "後手" : "先手");
+    setReplayIndex(replayIndex + 1);
+  };
+
+  const previousMove = () => {
+    if (replayIndex === null || replayIndex <= 0) return;
+    setCapturedPieces(capturedHistory[replayIndex - 1]);
+    setBoard(moveHistory[replayIndex - 1]);
+    setCurrentPlayer(currentPlayer === "先手" ? "後手" : "先手");
+    setReplayIndex(replayIndex - 1);
+  };
+
+  const lastBoard = () => {
+    console.log("replayIndex", replayIndex);
+    if (replayIndex === null || replayIndex >= moveHistory.length - 1) return;
+    setCapturedPieces(capturedHistory[moveHistory.length - 1]);
+    setBoard(moveHistory[moveHistory.length - 1]);
+    setCurrentPlayer(currentPlayer === "先手" ? "後手" : "先手");
+    setReplayIndex(moveHistory.length - 1);
+  };
+
+  const endReplay = () => {
+    setBoard(moveHistory[moveHistory.length - 1]);
+    setCapturedPieces(capturedHistory[moveHistory.length - 1]);
+    setCurrentPlayer(currentPlayer === "先手" ? "後手" : "先手");
+    setReplayIndex(moveHistory.length - 1);
+  };
 
   return {
     board,
@@ -660,6 +705,14 @@ export default function useGameLogic(
     selectedCapturedPiece,
     isPlayerInCheck,
     isOpponentInCheck,
+    moveHistory,
+    replayIndex,
+    setReplayIndex,
+    startReplay,
+    nextMove,
+    previousMove,
+    endReplay,
+    lastBoard,
     PromotionDialog,
     handlePromotionChoice,
     playMoveSound,

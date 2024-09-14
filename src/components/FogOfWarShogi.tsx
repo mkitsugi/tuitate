@@ -18,6 +18,7 @@ import { formatTime } from "@/lib/utils";
 import FigmaButton from "./ui/figma/button";
 import { preloadImages } from "@/lib/utils";
 import { initializeAdMob, showBannerAd, hideBannerAd } from "@/utils/admob";
+import { ChevronLeft, ChevronRight, SkipBack, SkipForward } from "lucide-react";
 import { Capacitor } from '@capacitor/core';
 import { App } from '@capacitor/app';
 
@@ -27,13 +28,22 @@ export default function ImprovedFogOfWarShogi() {
   const [isMuted, setIsMuted] = useState(false);
   const [currentAudioSrc, setCurrentAudioSrc] = useState<string | null>(null);
   const [isAppActive, setIsAppActive] = useState(true);
-
   const [enterGame, setEnterGame] = useState(false);
-
   const [showCutIn, setShowCutIn] = useState(false);
   const [showCheckMateCutIn, setShowCheckMateCutIn] = useState(false);
-
   const [isSearchingOpponent, setIsSearchingOpponent] = useState(false);
+
+  // 選択された持ち駒のインデックスを追跡するための状態
+  const [selectedPieceIndex, setSelectedPieceIndex] = useState<number | null>(
+    null
+  );
+
+  const [sente時間, setSente時間] = useState(0); // 10分 = 600秒
+  const [gote時間, setGote時間] = useState(0);
+
+  const [inputGameId, setInputGameId] = useState<string>("");
+  const { openResignDialog, ResignDialog } = useResignDialog();
+  const [selectedSide, setSelectedSide] = useState<Player | null>(null);
 
   const handleEnterGame = () => {
     setEnterGame(true);
@@ -113,10 +123,7 @@ export default function ImprovedFogOfWarShogi() {
     }
   }, [isMuted, isAppActive, currentAudioSrc]);
 
-  const [inputGameId, setInputGameId] = useState<string>("");
-  const { openResignDialog, ResignDialog } = useResignDialog();
-  const [selectedSide, setSelectedSide] = useState<Player | null>(null);
-
+  // ソケット
   const {
     socket,
     gameId,
@@ -151,6 +158,7 @@ export default function ImprovedFogOfWarShogi() {
     isConnected,
   } = useSocket();
 
+  // ゲームロジック
   const {
     board,
     visibleBoard,
@@ -169,6 +177,13 @@ export default function ImprovedFogOfWarShogi() {
     showAllPieces,
     resetGameState,
     resetForNewGame,
+    moveHistory,
+    replayIndex,
+    lastBoard,
+    startReplay,
+    nextMove,
+    previousMove,
+    endReplay,
   } = useGameLogic(socket, gameId, playerSide, isCPUMode);
 
   useEffect(() => {
@@ -196,6 +211,12 @@ export default function ImprovedFogOfWarShogi() {
   }, [gameStarted, gameEnded]);
 
   useEffect(() => {
+    if (gameEnded) {
+      setIsReplayMode(false);
+    }
+  }, [gameEnded]);
+
+  useEffect(() => {
     if (isPlayerInCheck || isOpponentInCheck) {
       setShowCheckMateCutIn(true);
       const timer = setTimeout(() => {
@@ -205,11 +226,6 @@ export default function ImprovedFogOfWarShogi() {
       return () => clearTimeout(timer);
     }
   }, [isPlayerInCheck, isOpponentInCheck]);
-
-  // 選択された持ち駒のインデックスを追跡するための状態
-  const [selectedPieceIndex, setSelectedPieceIndex] = useState<number | null>(
-    null
-  );
 
   // 初回マウント時にルーム一覧を取得
   useEffect(() => {
@@ -283,12 +299,11 @@ export default function ImprovedFogOfWarShogi() {
 
   useEffect(() => {
     if (opponentLeft) {
-      toast.info("相手がルームを抜けました。ロビーに戻ります。", {
+      toast.info("相手がルームを抜けました。", {
         position: "top-right",
       });
-      handleReturnToLobby();
     }
-  }, [opponentLeft, handleReturnToLobby]);
+  }, [opponentLeft]);
 
   const CancelSearch = () => {
     setIsSearchingOpponent(false);
@@ -345,9 +360,6 @@ export default function ImprovedFogOfWarShogi() {
       row.map((cell) => ({ piece: cell, isVisible: true } as VisibleCell))
     );
   };
-
-  const [sente時間, setSente時間] = useState(0); // 10分 = 600秒
-  const [gote時間, setGote時間] = useState(0);
 
   // タイマー更新のための useEffect
   useEffect(() => {
@@ -410,6 +422,21 @@ export default function ImprovedFogOfWarShogi() {
       }
     }
   }, [isMuted, volume]);
+
+  // リプレイモードの状態
+  const [isReplayMode, setIsReplayMode] = useState(false);
+
+  // リプレイ開始ハンドラー
+  const handleStartReplay = () => {
+    setIsReplayMode(true);
+    startReplay();
+  };
+
+  // リプレイ終了ハンドラー
+  const handleEndReplay = () => {
+    setIsReplayMode(false);
+    endReplay();
+  };
 
   return (
     <div className="flex justify-center items-center w-full h-full z-10">
@@ -738,64 +765,103 @@ export default function ImprovedFogOfWarShogi() {
                 onCellClick={() => { }} // クリックを無効化
               />
             </div>
-            <div className="flex space-x-4">
-              <button
-                onClick={handleReturnToLobby}
-                disabled={rematchRequested}
-                className="py-1 text-md text-white font-black hover:scale-95 transition-all"
-                style={{
-                  backgroundImage:
-                    "url('/ui/button/button_rectangle_01_hover.png')",
-                  backgroundSize: "100% 100%",
-                  backgroundPosition: "center",
-                  width: "150px",
-                  height: "40px",
-                  opacity: rematchRequested ? 0.5 : 1,
-                  cursor: rematchRequested ? "not-allowed" : "pointer",
-                }}
-              >
-                {isCPUMode ? "ゲームを抜ける" : "ルームを抜ける"}
-              </button>
-              {!rematchRequested &&
-                !opponentRequestedRematch &&
-                !opponentLeft && (
+            <div className="flex justify-between gap-4 max-w-[400px] w-full ">
+              {playerSide && isReplayMode && (
+                <CapturedPieces
+                  title="あなたの持ち駒"
+                  pieces={capturedPieces[playerSide]}
+                  onPieceClick={() => { }}
+                  selectedPieceIndex={null}
+                />
+              )}
+            </div>
+            {!isReplayMode && (
+              <>
+                <div className="flex space-x-4">
                   <button
-                    onClick={handleRematch}
-                    className="py-1 text-md text-black/70 font-black hover:scale-95 transition-all"
+                    onClick={handleReturnToLobby}
+                    disabled={rematchRequested}
+                    className="py-1 text-md text-white font-black hover:scale-95 transition-all"
                     style={{
                       backgroundImage:
-                        "url('/ui/button/button_rectangle_01.png')",
+                        "url('/ui/button/button_rectangle_01_hover.png')",
                       backgroundSize: "100% 100%",
                       backgroundPosition: "center",
                       width: "150px",
                       height: "40px",
+                      opacity: rematchRequested ? 0.5 : 1,
+                      cursor: rematchRequested ? "not-allowed" : "pointer",
                     }}
                   >
-                    {isCPUMode ? "再戦する" : "再戦をリクエスト"}
+                    {isCPUMode ? "ゲームを抜ける" : "ルームを抜ける"}
                   </button>
+                  {!rematchRequested &&
+                    !opponentRequestedRematch &&
+                    !opponentLeft && (
+                      <button
+                        onClick={handleRematch}
+                        className="py-1 text-md text-black/70 font-black hover:scale-95 transition-all"
+                        style={{
+                          backgroundImage:
+                            "url('/ui/button/button_rectangle_01.png')",
+                          backgroundSize: "100% 100%",
+                          backgroundPosition: "center",
+                          width: "150px",
+                          height: "40px",
+                        }}
+                      >
+                        {isCPUMode ? "再戦する" : "再戦をリクエスト"}
+                      </button>
+                    )}
+                  {opponentRequestedRematch && (
+                    <button
+                      onClick={acceptRematch}
+                      className="py-1 text-md text-white font-black hover:scale-95 transition-all"
+                      style={{
+                        backgroundImage:
+                          "url('/ui/button/button_rectangle_01_click.png')",
+                        backgroundSize: "100% 100%",
+                        backgroundPosition: "center",
+                        width: "150px",
+                        height: "40px",
+                      }}
+                    >
+                      再選する
+                    </button>
+                  )}
+                </div>
+                {rematchRequested && (
+                  <p className="text-white">相手の応答を待っています...</p>
                 )}
-              {opponentRequestedRematch && (
-                <button
-                  onClick={acceptRematch}
-                  className="py-1 text-md text-white font-black hover:scale-95 transition-all"
-                  style={{
-                    backgroundImage:
-                      "url('/ui/button/button_rectangle_01_click.png')",
-                    backgroundSize: "100% 100%",
-                    backgroundPosition: "center",
-                    width: "150px",
-                    height: "40px",
-                  }}
-                >
-                  再選する
-                </button>
-              )}
-            </div>
-            {rematchRequested && (
-              <p className="text-white">相手の応答を待っています...</p>
+                {opponentRequestedRematch && (
+                  <p className="text-white">相手が再戦をリクエストしています</p>
+                )}
+              </>
             )}
-            {opponentRequestedRematch && (
-              <p className="text-white">相手が再戦をリクエストしています</p>
+            {!isReplayMode ? (
+              <Button onClick={handleStartReplay}>リプレイを見る</Button>
+            ) : (
+              <div className="flex space-x-2">
+                <Button onClick={previousMove} disabled={replayIndex === 0}>
+                  <ChevronLeft />
+                </Button>
+                <Button onClick={nextMove} disabled={replayIndex === moveHistory.length - 1}>
+                  <ChevronRight />
+                </Button>
+                <Button onClick={() => startReplay()}>
+                  <SkipBack />
+                </Button>
+                <Button onClick={lastBoard}>
+                  <SkipForward />
+                </Button>
+                <Button onClick={handleEndReplay}>リプレイを終了</Button>
+              </div>
+            )}
+
+            {isReplayMode && (
+              <div className="text-white">
+                手数: {replayIndex ?? 0} / {moveHistory.length - 1}
+              </div>
             )}
           </div>
         )}

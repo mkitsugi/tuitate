@@ -78,13 +78,13 @@ export default function Board({
               disabled={!cell.isVisible && !selectedCapturedPiece}
             >
               {cell.isVisible && cell.piece && (
-                <motion.div
+                <div
                   className={cn(
                     "w-10 h-10 relative",
                     isSelected && "ring-4 ring-yellow-400 bg-yellow-300"
                   )}
-                  layoutId={cell.piece.id}
-                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                // layoutId={cell.piece.id}
+                // transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 >
                   <Image
                     src={`/pieces/v2/${cell.piece.type}.png`}
@@ -99,7 +99,7 @@ export default function Board({
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     draggable="false"
                   />
-                </motion.div>
+                </div>
               )}
             </button>
           );

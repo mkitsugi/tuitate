@@ -158,20 +158,10 @@ export default function useSocket() {
 
     socket.on("rematchRequested", () => {
       setRematchRequested(true);
-      // toast.info("相手が再戦をリクエストしました。", {
-      //   position: "top-right",
-      //   action: {
-      //     label: "承諾",
-      //     onClick: () => acceptRematch(),
-      //   },
-      // });
     });
 
     socket.on("opponentRequestedRematch", () => {
       setOpponentRequestedRematch(true);
-      // toast.info("相手が再戦をリクエストしました。", {
-      //   position: "top-right",
-      // });
     });
 
     socket.on("rematchAccepted", () => {
